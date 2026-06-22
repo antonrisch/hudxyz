@@ -14,7 +14,7 @@
   "dependencies": {
     "@lenswolf/ui": "workspace:*",
     "@tailwindcss/vite": "^4.3.1",
-    "astro": "^6.4.7",
+    "astro": "^7.0.0",
     "tailwindcss": "^4.3.1"
   }
 }
