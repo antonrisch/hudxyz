@@ -1,0 +1,5 @@
+@theme {
+  --color-canvas: #000000;  /* black = transparent on the waveguide */
+  --color-ink: #ffffff;     /* bright = opaque */
+  --color-accent: #6cff9e;  /* focus ring */
+}
