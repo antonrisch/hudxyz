@@ -1,0 +1,31 @@
+---
+// apps/glasses/src/layouts/Layout.astro
+import "../styles/global.css";
+const { title = "Lenswolf" } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=600, height=600, initial-scale=1, user-scalable=no" />
+    <meta name="mrbd-web-app-capable" content="yes" />
+    <title>{title}</title>
+  </head>
+  <body class="text-ink">
+    <main class="canvas"><slot /></main>
+  </body>
+</html>
+
+<style>
+  .canvas {
+    width: 600px; height: 600px; margin: 0 auto;
+    background: var(--color-canvas);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 24px;
+    overflow: hidden;
+  }
+  @media (min-width: 601px) {
+    body { background: #111; display: grid; place-items: center; min-height: 100vh; }
+    .canvas { outline: 1px solid #333; }
+  }
+</style>

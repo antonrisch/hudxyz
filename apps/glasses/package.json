@@ -1,5 +1,5 @@
 {
-  "name": "apps-glasses",
+  "name": "@lenswolf/glasses",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -12,6 +12,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^6.4.7"
+    "@lenswolf/ui": "workspace:*",
+    "@tailwindcss/vite": "^4.3.1",
+    "astro": "^6.4.7",
+    "tailwindcss": "^4.3.1"
   }
 }

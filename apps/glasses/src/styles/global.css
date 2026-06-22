@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@import "@lenswolf/ui/theme.css";
+
+html, body { margin: 0; height: 100%; overflow: hidden; }

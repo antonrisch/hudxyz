@@ -1,17 +1,30 @@
 ---
-
+// apps/glasses/src/pages/index.astro
+import Layout from "../layouts/Layout.astro";
 ---
+<Layout title="Lenswolf">
+  <h1 class="text-3xl font-semibold text-center px-6">Lenswolf</h1>
+  <p class="text-ink/80 text-lg text-center px-6">First light on the Display.</p>
+  <button class="focus-target" data-focusable autofocus>Get started</button>
+</Layout>
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<style>
+  .focus-target {
+    min-height: 88px; min-width: 240px; padding: 0 32px;
+    font-size: 20px; color: var(--color-ink);
+    background: transparent; border: 2px solid var(--color-ink);
+    border-radius: 16px; cursor: pointer;
+  }
+  .focus-target:focus-visible { outline: 4px solid var(--color-accent); outline-offset: 4px; }
+</style>
+
+<script>
+  const items = Array.from(document.querySelectorAll<HTMLElement>("[data-focusable]"));
+  let i = Math.max(0, items.findIndex((el) => el === document.activeElement));
+  items[i]?.focus();
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") { i = (i + 1) % items.length; items[i].focus(); e.preventDefault(); }
+    if (e.key === "ArrowUp" || e.key === "ArrowLeft") { i = (i - 1 + items.length) % items.length; items[i].focus(); e.preventDefault(); }
+    if (e.key === "Enter") (document.activeElement as HTMLElement)?.click();
+  });
+</script>
