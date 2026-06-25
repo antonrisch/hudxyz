@@ -3,6 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @lenswolf/glasses dev",
+    "host": "ngrok http --url=cheerful-python-carefully.ngrok-free.app 4321",
+    "dev:glasses": "pnpm --filter @lenswolf/glasses dev",
     "dev:web": "pnpm --filter @lenswolf/web dev",
     "build": "pnpm -r build",
     "lint": "oxlint"
