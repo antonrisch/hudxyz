@@ -1,18 +1,24 @@
 ---
-import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Lenswolf — a lens for Meta Ray-Ban Display</title>
-    <meta name="description" content="Lenswolf builds glanceable apps for the Meta Ray-Ban Display." />
-  </head>
-  <body class="min-h-screen bg-white text-neutral-900 antialiased">
-    <main class="mx-auto max-w-3xl px-6 py-24">
-      <h1 class="text-5xl font-semibold tracking-tight">Lenswolf</h1>
-      <p class="mt-4 text-xl text-neutral-600">A lens for the Meta Ray-Ban Display.</p>
-    </main>
-  </body>
-</html>
+<Layout>
+  <main class="mx-auto max-w-3xl px-6 py-24">
+    <h1 class="font-heading text-5xl font-semibold tracking-tight">Lenswolf</h1>
+    <p class="mt-4 text-xl text-muted-foreground">Glanceable apps for the Meta Ray-Ban Display.</p>
+
+    <!-- static card (SSR'd, ships no JS) wrapping one hydrated button island -->
+    <div class="mt-12 max-w-md">
+      <Card>
+        <CardHeader>
+          <CardTitle>First light</CardTitle>
+          <CardDescription>Web surface live on the base-luma theme.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button client:load>Get started</Button>
+        </CardContent>
+      </Card>
+    </div>
+  </main>
+</Layout>

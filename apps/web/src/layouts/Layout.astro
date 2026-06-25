@@ -1,0 +1,20 @@
+---
+import "../styles/global.css";
+const {
+  title = "Lenswolf — a lens for Meta Ray-Ban Display",
+  description = "Lenswolf builds glanceable apps for the Meta Ray-Ban Display.",
+} = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body class="min-h-screen bg-background text-foreground antialiased">
+    <slot />
+  </body>
+</html>
