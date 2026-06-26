@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const { url } = await req.json().catch(() => ({}));
   if (!url) return NextResponse.json({ error: "missing url" }, { status: 400 });
-  // re-gate server-side; never mint a paid session for a non-MRBD site
+  // gate server-side before minting a paid session
   const compat = await checkCompat(url);
   if (!compat.compatible) {
     return NextResponse.json({ error: compat.reason ?? "not MRBD-compatible" }, { status: 422 });

@@ -1,9 +1,8 @@
 // MRBD-compatibility gate (server-only): allow a url only if its page declares
-// <meta name="mrbd-web-app-capable" content="yes">; also reads framing headers for transport.
+// <meta name="mrbd-web-app-capable" content="yes">.
 
 export type Compat = {
   compatible: boolean;
-  frameable: boolean;
   reason?: string;
 };
 
@@ -33,12 +32,11 @@ const hasCapableMeta = (html: string): boolean =>
     (m) => /name=["']?mrbd-web-app-capable["']?/i.test(m) && /content=["']?yes["']?/i.test(m),
   );
 
-// gating parked: allow every site through until we decide strictness. probe still
-// runs so transport routing works; flip to true to block on the mrbd meta.
-const ENFORCE_COMPAT = false;
+// gating parked: allow every site through until we decide strictness; flip to true
+// to block on the mrbd-web-app-capable meta.
+const ENFORCE_COMPAT: boolean = false;
 
-// compatibility rarely changes; cache to dedupe the client check + server re-gate
-// and rapid reloads.
+// dedupe rapid reloads of the same url within TTL
 const cache = new Map<string, { at: number; compat: Compat }>();
 const TTL = 60_000;
 
@@ -47,7 +45,7 @@ async function probe(raw: string): Promise<Compat> {
   try {
     url = assertFetchable(raw);
   } catch (e) {
-    return { compatible: false, frameable: false, reason: String((e as Error).message) };
+    return { compatible: false, reason: String((e as Error).message) };
   }
   let res: Response;
   try {
@@ -57,22 +55,17 @@ async function probe(raw: string): Promise<Compat> {
       signal: AbortSignal.timeout(8000),
     });
   } catch {
-    return { compatible: false, frameable: false, reason: "site is unreachable" };
+    return { compatible: false, reason: "site is unreachable" };
   }
-  const xfo = (res.headers.get("x-frame-options") ?? "").toLowerCase();
-  const csp = (res.headers.get("content-security-policy") ?? "").toLowerCase();
-  // any frame-ancestors directive almost always excludes us -> treat as blocked
-  const frameable = !(xfo.includes("deny") || xfo.includes("sameorigin") || csp.includes("frame-ancestors"));
   const compatible = hasCapableMeta(await res.text());
-  return { compatible, frameable, reason: compatible ? undefined : "missing mrbd-web-app-capable meta tag" };
+  return { compatible, reason: compatible ? undefined : "missing mrbd-web-app-capable meta tag" };
 }
 
 export async function checkCompat(raw: string): Promise<Compat> {
+  if (!ENFORCE_COMPAT) return { compatible: true };
   const hit = cache.get(raw);
   if (hit && Date.now() - hit.at < TTL) return hit.compat;
-  const probed = await probe(raw);
-  // allowlist everything until we decide on strictness; keep frameable for routing
-  const compat = ENFORCE_COMPAT ? probed : { ...probed, compatible: true, reason: undefined };
+  const compat = await probe(raw);
   cache.set(raw, { at: Date.now(), compat });
   return compat;
 }

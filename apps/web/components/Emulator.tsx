@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Frames } from "@/components/frames";
@@ -17,10 +17,29 @@ const VIEWPORT = 600;
 // keys the glasses emit; captured at the page level and forwarded to the session
 const KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Escape"];
 
+// 3x3 d-pad grid; null = spacer. order: up / left·pinch·right / down
+const PAD = [
+  null,
+  { key: "ArrowUp", Icon: ArrowUp, label: "Swipe up" },
+  null,
+  { key: "ArrowLeft", Icon: ArrowLeft, label: "Swipe left" },
+  { key: "Enter", Icon: Grab, label: "Pinch (select)" },
+  { key: "ArrowRight", Icon: ArrowRight, label: "Swipe right" },
+  null,
+  { key: "ArrowDown", Icon: ArrowDown, label: "Swipe down" },
+  null,
+] as const;
+
 type Status = "empty" | "loading" | "ready" | "ended" | "error" | "incompatible";
 
-// "glasses" wraps the display in the frames SVG over the right lens; "bare" is a
-// large 600×600 debug box. logic/controls are identical between the two.
+const MSG: Partial<Record<Status, string>> = {
+  loading: "Starting session…",
+  incompatible: "Not MRBD-compatible (no mrbd-web-app-capable tag)",
+  ended: "Idle — press Reload to resume",
+  error: "Couldn't load. Reload to retry.",
+};
+
+// "glasses" embeds the display in the right lens; "bare" is a raw 600×600 debug box.
 export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | "bare" }) {
   const [input, setInput] = useState("");
   const [src, setSrc] = useState("");
@@ -64,7 +83,6 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
       release();
       const url = raw.trim();
       if (!url) return;
-      setSrc("");
       setStatus("loading");
       try {
         const res = await fetch("/api/emulator/session", {
@@ -142,6 +160,10 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
     return () => window.removeEventListener("keydown", onKey);
   }, [sendKey]);
 
+  // keep control buttons from taking focus on click so physical d-pad keys stay live
+  // (focus on body -> the window keydown handler keeps routing arrows/enter)
+  const dropFocus = (e: MouseEvent) => e.preventDefault();
+
   // 600×600 surface scaled to fit its box so it's never cut off; overlay renders
   // at box size since it's chrome, not device content.
   const display =
@@ -162,10 +184,7 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
       </div>
     ) : (
       <div className="grid size-full place-items-center bg-black/80 px-2 text-center text-[10px] leading-tight text-white/70">
-        {status === "loading" && "Starting session…"}
-        {status === "incompatible" && "Not MRBD-compatible (no mrbd-web-app-capable tag)"}
-        {status === "ended" && "Idle — press Reload to resume"}
-        {status === "error" && "Couldn't load. Reload to retry."}
+        {MSG[status]}
       </div>
     );
 
@@ -184,7 +203,7 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
           onChange={(e) => setInput(e.target.value)}
           placeholder="https://your-mrbd-web-app.com"
         />
-        <Button type="submit" variant="outline">
+        <Button type="submit" variant="outline" onMouseDown={dropFocus}>
           Load
         </Button>
         <Button
@@ -192,6 +211,7 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
           variant="outline"
           size="icon"
           aria-label="Reload"
+          onMouseDown={dropFocus}
           onClick={() => load(input)}
         >
           <RotateCw />
@@ -222,27 +242,30 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
       {/* gesture controls: d-pad (UDLR) + pinch (select) + back */}
       <div className="flex items-center gap-8">
         <div className="grid grid-cols-3 gap-2">
-          <span />
-          <Button variant="outline" size="icon" aria-label="Swipe up" onClick={() => sendKey("ArrowUp")}>
-            <ArrowUp />
-          </Button>
-          <span />
-          <Button variant="outline" size="icon" aria-label="Swipe left" onClick={() => sendKey("ArrowLeft")}>
-            <ArrowLeft />
-          </Button>
-          <Button variant="outline" size="icon" aria-label="Pinch (select)" onClick={() => sendKey("Enter")}>
-            <Grab />
-          </Button>
-          <Button variant="outline" size="icon" aria-label="Swipe right" onClick={() => sendKey("ArrowRight")}>
-            <ArrowRight />
-          </Button>
-          <span />
-          <Button variant="outline" size="icon" aria-label="Swipe down" onClick={() => sendKey("ArrowDown")}>
-            <ArrowDown />
-          </Button>
-          <span />
+          {PAD.map((c, i) =>
+            c ? (
+              <Button
+                key={c.key}
+                variant="outline"
+                size="icon"
+                aria-label={c.label}
+                onMouseDown={dropFocus}
+                onClick={() => sendKey(c.key)}
+              >
+                <c.Icon />
+              </Button>
+            ) : (
+              <span key={i} />
+            ),
+          )}
         </div>
-        <Button variant="outline" size="icon" aria-label="Back" onClick={() => sendKey("Escape")}>
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Back"
+          onMouseDown={dropFocus}
+          onClick={() => sendKey("Escape")}
+        >
           <Undo2 />
         </Button>
       </div>

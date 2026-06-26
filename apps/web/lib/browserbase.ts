@@ -20,7 +20,7 @@ const headers = () => ({
   "Content-Type": "application/json",
 });
 
-export type Session = { id: string; connectUrl: string };
+export type Session = { id: string };
 
 // reconstructable CDP endpoint for a session (apiKey + sessionId), so routes that
 // only hold the sessionId can reconnect after a cold start.
@@ -42,7 +42,7 @@ export async function createSession(timeoutSeconds = 600): Promise<Session> {
   });
   if (!res.ok) throw new Error(`createSession ${res.status}: ${await res.text()}`);
   const s = await res.json();
-  return { id: s.id, connectUrl: s.connectUrl };
+  return { id: s.id };
 }
 
 // fullscreen live-view url for the active tab; read/write, embeddable cross-origin.
