@@ -16,6 +16,12 @@ const { title = "Lenswolf" } = Astro.props;
   </body>
 </html>
 
+<script>
+  // let the Lenswolf emulator drive any lens via postMessage gestures
+  import { listenForEmulator } from "../lib/dpad";
+  listenForEmulator();
+</script>
+
 <style>
   .canvas {
     width: 600px; height: 600px; margin: 0 auto;

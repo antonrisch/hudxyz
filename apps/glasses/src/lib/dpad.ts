@@ -33,3 +33,16 @@ export function handleListNav(e: KeyboardEvent, root: ParentNode): boolean {
   e.preventDefault();
   return true;
 }
+
+// bridge for the Lenswolf emulator: a cross-origin iframe can't receive injected
+// key events, so the emulator posts gestures and we re-dispatch them as keydown —
+// existing lens handlers then react with no per-lens changes.
+// contract: postMessage({ source: "lenswolf-emulator", type: "gesture", key: "ArrowUp" })
+export function listenForEmulator(): void {
+  window.addEventListener("message", (e: MessageEvent) => {
+    const d = e.data;
+    if (d?.source === "lenswolf-emulator" && d.type === "gesture" && typeof d.key === "string") {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: d.key, bubbles: true, cancelable: true }));
+    }
+  });
+}
