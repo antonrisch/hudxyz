@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Emulator from "@/components/Emulator";
+import Emulator from "@/components/emulator";
 
 export const metadata: Metadata = {
   title: "Emulator — Lenswolf",
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function EmulatorPage() {
   return (
-    <main className="flex min-h-svh items-center justify-center">
+    <main className="flex min-h-svh items-center justify-center bg-white">
       <Emulator />
     </main>
   );
