@@ -1,5 +1,8 @@
 packages:
   - "apps/*"
 allowBuilds:
+  # scramjet ships prebuilt dist; bufferutil is an optional ws speedup
+  '@mercuryworkshop/scramjet': false
+  bufferutil: false
   esbuild: false
   sharp: false

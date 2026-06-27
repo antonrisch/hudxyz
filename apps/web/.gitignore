@@ -35,3 +35,8 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scramjet proxy vendor bundles (copied from node_modules by scripts/copy-proxy-assets.mjs)
+/public/scram/
+/public/baremux/
+/public/libcurl/
