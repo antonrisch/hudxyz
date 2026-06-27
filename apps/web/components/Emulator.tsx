@@ -5,16 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Frames } from "@/components/frames";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Grab, Undo2, RotateCw } from "lucide-react";
-
-const IDLE_MS = 120_000; // release a remote session after 2 min idle (cost control)
+import { encodeUrl } from "@/lib/proxy";
 
 // display placement over the right lens, as % of the frames container.
 const RIGHT_LENS = { left: 64, top: 26, size: 17 };
 
-// device + Browserbase session render size; keep in sync with createSession
+// device render size (matches the glasses surface)
 const VIEWPORT = 600;
 
-// keys the glasses emit; captured at the page level and forwarded to the session
+// keys the glasses emit; captured at the page level and injected into the frame
 const KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Escape"];
 
 // 3x3 d-pad grid; null = spacer. order: up / left·pinch·right / down
@@ -30,12 +29,10 @@ const PAD = [
   null,
 ] as const;
 
-type Status = "empty" | "loading" | "ready" | "ended" | "error" | "incompatible";
+type Status = "empty" | "loading" | "ready" | "error";
 
 const MSG: Partial<Record<Status, string>> = {
-  loading: "Starting session…",
-  incompatible: "Not MRBD-compatible (no mrbd-web-app-capable tag)",
-  ended: "Idle — press Reload to resume",
+  loading: "Loading…",
   error: "Couldn't load. Reload to retry.",
 };
 
@@ -45,8 +42,7 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
   const [src, setSrc] = useState("");
   const [status, setStatus] = useState<Status>("empty");
   const [scale, setScale] = useState(1);
-  const sessionRef = useRef<string | null>(null);
-  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const roRef = useRef<ResizeObserver | null>(null);
 
   // measure the display box and scale the fixed 600×600 surface to fill it
@@ -58,54 +54,19 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
     roRef.current = ro;
   }, []);
 
-  // tear down the live Browserbase session (idle, new load, or tab close)
-  const release = useCallback((keepalive = false) => {
-    const id = sessionRef.current;
-    sessionRef.current = null;
-    if (idleRef.current) clearTimeout(idleRef.current);
-    if (id) {
-      fetch(`/api/emulator/session?id=${id}`, { method: "DELETE", keepalive }).catch(() => {});
+  // route the target through the same-origin proxy so framing-blocked sites load
+  // and keys can be injected client-side.
+  const load = useCallback(async (raw: string) => {
+    const url = raw.trim();
+    if (!/^https?:\/\//i.test(url)) return;
+    setStatus("loading");
+    try {
+      setSrc(await encodeUrl(url));
+      setStatus("ready");
+    } catch {
+      setStatus("error");
     }
   }, []);
-
-  const armIdle = useCallback(() => {
-    if (idleRef.current) clearTimeout(idleRef.current);
-    idleRef.current = setTimeout(() => {
-      release();
-      setStatus("ended");
-    }, IDLE_MS);
-  }, [release]);
-
-  // every site runs in a Browserbase session so the on-screen d-pad works: a
-  // clicked button can't inject keys into a cross-origin iframe, but the server can.
-  const load = useCallback(
-    async (raw: string) => {
-      release();
-      const url = raw.trim();
-      if (!url) return;
-      setStatus("loading");
-      try {
-        const res = await fetch("/api/emulator/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url }),
-        });
-        if (res.status === 422) {
-          setStatus("incompatible");
-          return;
-        }
-        if (!res.ok) throw new Error(await res.text());
-        const { sessionId, liveViewUrl } = await res.json();
-        sessionRef.current = sessionId;
-        setSrc(liveViewUrl);
-        setStatus("ready");
-        armIdle();
-      } catch {
-        setStatus("error");
-      }
-    },
-    [release, armIdle],
-  );
 
   // deep-link: ?url=... prefills and loads
   useEffect(() => {
@@ -116,38 +77,21 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
     }
   }, [load]);
 
-  // release the session if the tab goes away
-  useEffect(() => {
-    const onHide = () => release(true);
-    window.addEventListener("pagehide", onHide);
-    return () => {
-      window.removeEventListener("pagehide", onHide);
-      release();
-    };
-  }, [release]);
+  // inject a d-pad key into the same-origin proxied frame. build the event in the
+  // frame's realm so the page's listeners accept it; dispatch on its document.
+  const sendKey = useCallback((key: string) => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    try {
+      const Ev = (win as Window & { KeyboardEvent: typeof KeyboardEvent }).KeyboardEvent;
+      win.document.dispatchEvent(new Ev("keydown", { key, bubbles: true, cancelable: true }));
+    } catch {
+      // frame not loaded / not same-origin yet
+    }
+  }, []);
 
-  // dispatch a d-pad key into the session server-side (see api/emulator/input).
-  // used by both the on-screen buttons and the page-level keyboard capture below.
-  const sendKey = useCallback(
-    (key: string) => {
-      const id = sessionRef.current;
-      if (!id) return;
-      armIdle();
-      fetch("/api/emulator/input", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: id, key }),
-      })
-        .then((r) => {
-          if (!r.ok) console.warn("[emulator] input", key, r.status);
-        })
-        .catch((e) => console.warn("[emulator] input error", e));
-    },
-    [armIdle],
-  );
-
-  // forward physical keys to the session even when the live view isn't focused
-  // (focused -> the live view forwards them itself, so the parent never sees them).
+  // forward physical keys to the frame even when it isn't focused
+  // (focused -> the frame gets them natively, so the parent never sees them).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!KEYS.includes(e.key)) return;
@@ -161,7 +105,6 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
   }, [sendKey]);
 
   // keep control buttons from taking focus on click so physical d-pad keys stay live
-  // (focus on body -> the window keydown handler keeps routing arrows/enter)
   const dropFocus = (e: MouseEvent) => e.preventDefault();
 
   // 600×600 surface scaled to fit its box so it's never cut off; overlay renders
@@ -174,9 +117,9 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
           style={{ width: VIEWPORT, height: VIEWPORT, transform: `scale(${scale})` }}
         >
           <iframe
+            ref={iframeRef}
             src={src}
             title="Glasses display"
-            sandbox="allow-same-origin allow-scripts"
             allow="clipboard-read; clipboard-write"
             className="size-full border-0 bg-black"
           />
@@ -190,7 +133,7 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
 
   return (
     <div className="flex flex-col items-center gap-6 p-8">
-      {/* url bar — any site, gated server-side by MRBD-compatibility */}
+      {/* url bar */}
       <form
         className="flex w-150 gap-2"
         onSubmit={(e) => {
