@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function EmulatorPage() {
   return (
-    <main className="flex min-h-svh items-center justify-center bg-white">
+    <main className="flex flex-1 items-center justify-center bg-white">
       <Emulator />
     </main>
   );

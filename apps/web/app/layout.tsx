@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Script from "next/script";
+import { AppHeader } from "@/components/layout/header";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -31,7 +32,8 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body>
+      <body className="flex min-h-svh flex-col">
+        <AppHeader />
         {children}
         <Analytics />
       </body>

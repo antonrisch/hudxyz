@@ -19,10 +19,13 @@ The emulator reproduces the two things that make the device different from a nor
 
 ## The emulator
 
-Two routes render the same `Emulator` component (`components/Emulator.tsx`, via a `chrome` prop):
+A single route, **`/emulator`**, renders the `Emulator` component (`components/emulator.tsx`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
 
-- **`/emulator`** — the display embedded in the right lens of a glasses-frame SVG (`components/frames.tsx`).
-- **`/browser`** — a bare 600×600 box for debugging without the frame.
+- **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`components/frames.tsx`).
+- **Fit** — the 600×600 surface scaled to fill the available area.
+- **1:1** — the surface at its exact 600×600 size, no scaling.
+
+The active view lives in `?view=` (set client-side via `history.replaceState`, so switching never navigates); `?url=` deep-links a target. `/browser` 308-redirects to `/emulator?view=fit`.
 
 **Same-origin proxy.** Third-party sites set `frame-ancestors` / `X-Frame-Options` that scope framing to themselves. The emulator re-serves the target **from our own origin** through a **Scramjet v2** service-worker proxy, so the browser treats it as same-origin and renders it. Same-origin also lets the D-pad inject keystrokes straight into the frame.
 
@@ -34,7 +37,7 @@ Key files:
 - `public/sw.js` — the Scramjet v2 service worker; routes proxied requests and stamps COEP/CORP so the cross-origin-isolated host can embed them.
 - `scripts/copy-proxy-assets.mjs` — copies the Scramjet engine + controller bundles into `/public/scramjet` and `/public/controller` (runs on install/dev/build).
 - `scripts/wisp-server.mjs` — the dev Wisp egress server on `:4000`.
-- `next.config.ts` — sets COOP/COEP on `/emulator` + `/browser` (for Scramjet's wasm) and `Service-Worker-Allowed: /` on `/sw.js`.
+- `next.config.ts` — sets COOP/COEP on `/emulator` (for Scramjet's wasm), `Service-Worker-Allowed: /` on `/sw.js`, and redirects `/browser` → `/emulator?view=fit`.
 
 **Stack pins:** Scramjet engine `2.0.67-alpha.2` (exact-pinned) + scramjet-controller `0.0.14` (the Controller/Frame API, which takes a ProxyTransport directly) + libcurl-transport `2.0.5` + wisp-js. The controller asserts the engine version at construction, so any version drift fails loudly. The v1 stack (Scramjet 1.1.0 + bare-mux + libcurl 1.5.2) lives on branch `feat/emulator-scramjet` as a stable-engine reference.
 
@@ -42,13 +45,21 @@ Key files:
 
 ## Layout (`apps/web`)
 
-- `app/` — App Router routes: `page.tsx` (home), `emulator/page.tsx`, `browser/page.tsx`, `layout.tsx` (Inter + Geist Mono fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
-- `components/` — `Emulator.tsx`, `frames.tsx`, `theme-provider.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
+- `app/` — App Router routes: `page.tsx` (home), `emulator/page.tsx`, `layout.tsx` (Inter + Geist Mono fonts, `AppHeader`, react-grab dev overlay), `globals.css` (shadcn theme tokens).
+- `components/` — `emulator.tsx`, `frames.tsx`, `theme-provider.tsx`, `layout/*` (`header.tsx`, `logo.tsx`), and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
 - `lib/` — `proxy.ts` (emulator proxy), `utils.ts`.
 - `public/` — `sw.js` plus the generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`.
 
 `apps/web/AGENTS.md` flags that this is **Next.js 16** with breaking changes — read `node_modules/next/dist/docs/` before writing Next code.
+
+## Styling
+
+Tailwind v4 + the shadcn theme tokens in `app/globals.css` (`@theme inline` maps `--color-*` to the `:root` values). Style with the **semantic tokens and shadcn defaults**, not hardcoded Tailwind colors:
+
+- Surfaces, text, borders, accents: `bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-primary` — not `bg-white` / `border-black/15`.
+- Brand accent lives in `--volt` (`#CEFF00`), exposed as `bg-volt` / `text-volt`. Add custom colors the same two-step way: raw value in `:root`, then `--color-<name>: var(--<name>)` in `@theme inline`.
+- **Exception:** the 600×600 device surface is genuinely black with white-on-black overlays — the MRBD display is additive, so it stays literal `bg-black` / `text-white`, not themed.
 
 ## Commands
 

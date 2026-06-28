@@ -11,9 +11,12 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/emulator", headers: isolation },
-      { source: "/browser", headers: isolation },
       { source: "/sw.js", headers: [{ key: "Service-Worker-Allowed", value: "/" }] },
     ];
+  },
+  // /browser folded into the emulator spa; its bare debug box is now the "fit" view.
+  async redirects() {
+    return [{ source: "/browser", destination: "/emulator?view=fit", permanent: true }];
   },
 };
 

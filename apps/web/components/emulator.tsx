@@ -1,15 +1,26 @@
 "use client";
 
-import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type MouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Frames } from "@/components/frames";
+import { cn } from "@/lib/utils";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Grab, Undo2, RotateCw } from "lucide-react";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
 
 // display placement over the right lens, as % of the frames container.
-const RIGHT_LENS = { left: 64, top: 26, size: 17 };
+const RIGHT_LENS = { left: 63.75, top: 28, size: 17 };
 
 // device render size (matches the glasses surface)
 const VIEWPORT = 600;
@@ -30,6 +41,38 @@ const PAD = [
   null,
 ] as const;
 
+// cosmetic presentation modes; all wrap the SAME persistent device surface.
+// glasses: framed over the lens. fit: scaled to fill the area. 1:1: exact 600×600.
+const VIEWS = [
+  { key: "glasses", label: "Glasses" },
+  { key: "fit", label: "Fit" },
+  { key: "actual", label: "1:1" },
+] as const;
+type View = (typeof VIEWS)[number]["key"];
+const VIEW_KEYS = VIEWS.map((v) => v.key);
+
+// per-view chrome around the device slot. only the className/style change between
+// views, so the iframe it wraps stays the same element (no proxy reload).
+const SLOT: Record<View, { className: string; style?: CSSProperties }> = {
+  glasses: {
+    className: "absolute overflow-hidden",
+    style: {
+      left: `${RIGHT_LENS.left}%`,
+      top: `${RIGHT_LENS.top}%`,
+      width: `${RIGHT_LENS.size}%`,
+      aspectRatio: "1 / 1",
+      borderRadius: 6,
+    },
+  },
+  fit: {
+    // fills the leftover space (see #hud-device flex-1 below); square, capped to width
+    className: "h-full aspect-square max-w-full overflow-hidden border border-border bg-black",
+  },
+  actual: {
+    className: "relative mx-auto size-150 overflow-hidden border border-border bg-black",
+  },
+};
+
 type Status = "empty" | "loading" | "ready" | "error";
 
 const MSG: Partial<Record<Status, string>> = {
@@ -37,10 +80,10 @@ const MSG: Partial<Record<Status, string>> = {
   error: "Couldn't load. Reload to retry.",
 };
 
-// "glasses" embeds the display in the right lens; "bare" is a raw 600×600 debug box.
-export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | "bare" }) {
+export default function Emulator() {
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<Status>("empty");
+  const [view, setView] = useState<View>("glasses");
   const [scale, setScale] = useState(1);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const frameRef = useRef<Frame | null>(null);
@@ -73,14 +116,29 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
     }
   }, []);
 
-  // deep-link: ?url=... prefills and loads
+  // deep-link on mount: ?view=... selects the chrome, ?url=... prefills and loads
   useEffect(() => {
-    const u = new URLSearchParams(window.location.search).get("url");
+    const p = new URLSearchParams(window.location.search);
+    const v = p.get("view");
+    if (v && VIEW_KEYS.includes(v as View)) setView(v as View);
+    const u = p.get("url");
     if (u) {
       setInput(u);
       load(u);
     }
   }, [load]);
+
+  // switch the cosmetic view and reflect it in the url client-side (no navigation,
+  // so the proxy frame is untouched). preserve other params like ?url=.
+  const selectView = useCallback((v: View) => {
+    setView(v);
+    const p = new URLSearchParams(window.location.search);
+    if (v === "glasses")
+      p.delete("view"); // default view keeps the url clean
+    else p.set("view", v);
+    const qs = p.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, []);
 
   // inject a d-pad key into the same-origin proxied frame. build the event in the
   // frame's realm so the page's listeners accept it; dispatch on its document.
@@ -135,11 +193,19 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
     </div>
   );
 
+  const slot = SLOT[view];
+
   return (
-    <div className="flex flex-col items-center gap-6 p-8">
-      {/* url bar */}
+    <div
+      className={cn(
+        "flex flex-col items-center gap-6 p-8",
+        // fit fills the viewport remainder under the header so the device never scrolls
+        view === "fit" && "h-[calc(100svh-var(--header-h))] w-full",
+      )}
+    >
+      {/* url bar: plain address input + an attached load/reload group, like a browser */}
       <form
-        className="flex w-150 gap-2"
+        className="flex w-150 items-center gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           load(input);
@@ -150,72 +216,102 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
           onChange={(e) => setInput(e.target.value)}
           placeholder="https://your-mrbd-web-app.com"
         />
-        <Button type="submit" variant="outline" onMouseDown={dropFocus}>
-          Load
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label="Reload"
-          onMouseDown={dropFocus}
-          onClick={() => load(input)}
-        >
-          <RotateCw />
-        </Button>
+        <ButtonGroup>
+          <Button type="submit" variant="outline" onMouseDown={dropFocus}>
+            Load
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Reload"
+            onMouseDown={dropFocus}
+            onClick={() => load(input)}
+          >
+            <RotateCw />
+          </Button>
+        </ButtonGroup>
       </form>
 
-      {chrome === "glasses" ? (
-        // display embedded in the right lens of the frames SVG
-        <div className="relative w-full max-w-240">
-          <Frames className="block h-auto w-full" />
-          <div
-            className="absolute overflow-hidden"
-            style={{
-              left: `${RIGHT_LENS.left}%`,
-              top: `${RIGHT_LENS.top}%`,
-              width: `${RIGHT_LENS.size}%`,
-              aspectRatio: "1 / 1",
-            }}
-          >
-            {display}
-          </div>
+      {/* view modes: shadcn toggle group; swaps only the chrome around the persistent device */}
+      <ToggleGroup
+        variant="default"
+        aria-label="Display view"
+        value={[view]}
+        onValueChange={(vals) => {
+          const next = vals[0];
+          if (next) selectView(next as View); // ignore deselect so a view is always active
+        }}
+        className="p-1 border rounded-xl"
+      >
+        {VIEWS.map((v) => (
+          <ToggleGroupItem key={v.key} value={v.key} onMouseDown={dropFocus} className="px-4">
+            {v.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+
+      {/* one persistent device surface; the view only changes the chrome/sizing around it.
+          glasses renders the frames svg as a backdrop, with the slot absolute over the lens. */}
+      <div
+        id="hud-device"
+        className={cn(
+          "relative w-full max-w-240",
+          // fit: absorb the column's leftover height so the slot (h-full) has room to fill
+          view === "fit" && "flex min-h-0 flex-1 items-center justify-center",
+        )}
+      >
+        {view === "glasses" && <Frames className="block h-auto w-full" />}
+        <div className={slot.className} style={slot.style}>
+          {display}
         </div>
-      ) : (
-        // large unobstructed 600×600 box for debugging
-        <div className="size-150 overflow-hidden border border-black/15 bg-black">{display}</div>
-      )}
+      </div>
 
       {/* gesture controls: d-pad (UDLR) + pinch (select) + back */}
-      <div className="flex items-center gap-8">
-        <div className="grid grid-cols-3 gap-2">
-          {PAD.map((c, i) =>
-            c ? (
-              <Button
-                key={c.key}
-                variant="outline"
-                size="icon"
-                aria-label={c.label}
-                onMouseDown={dropFocus}
-                onClick={() => sendKey(c.key)}
-              >
-                <c.Icon />
-              </Button>
-            ) : (
-              <span key={i} />
-            ),
-          )}
+      <TooltipProvider delay={300}>
+        <div className="flex items-center gap-8">
+          <div className="grid grid-cols-3 gap-2">
+            {PAD.map((c, i) =>
+              c ? (
+                <Tooltip key={c.key}>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label={c.label}
+                        onMouseDown={dropFocus}
+                        onClick={() => sendKey(c.key)}
+                      >
+                        <c.Icon />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent>{c.label}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <span key={i} />
+              ),
+            )}
+          </div>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Back"
+                  onMouseDown={dropFocus}
+                  onClick={() => sendKey("Escape")}
+                >
+                  <Undo2 />
+                </Button>
+              }
+            />
+            <TooltipContent>Back</TooltipContent>
+          </Tooltip>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Back"
-          onMouseDown={dropFocus}
-          onClick={() => sendKey("Escape")}
-        >
-          <Undo2 />
-        </Button>
-      </div>
+      </TooltipProvider>
     </div>
   );
 }
