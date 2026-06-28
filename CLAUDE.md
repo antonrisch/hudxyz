@@ -65,4 +65,4 @@ Per-app: `pnpm --filter @hudbox/web <script>`. Type-check with `pnpm --filter @h
 
 - pnpm workspaces throughout. Lint is **oxlint**; format is **oxfmt**.
 - `pnpm-workspace.yaml` scopes the workspace to `apps/*` and lists `allowBuilds` (esbuild / sharp / scramjet / bufferutil ship prebuilt, so they stay unbuilt).
-- **File naming:** PascalCase for files that export a component (`Emulator.tsx`); kebab/lowercase for logic, utils, and config (`proxy.ts`, `wisp-server.mjs`); lowercase for App Router route files. shadcn `components/ui/*` stay lowercase (the CLI regenerates them that way).
+- **File naming:** kebab-case / lowercase for every `.ts` / `.tsx` file, components included (`emulator.tsx`, `theme-provider.tsx`, `proxy.ts`); lowercase for App Router route files (`page.tsx`). Keeps imports stable on case-sensitive build hosts (Vercel/Linux) even though macOS is case-insensitive.
