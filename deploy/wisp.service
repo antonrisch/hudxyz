@@ -1,0 +1,47 @@
+# Hudbox Wisp egress server — deployed on kenobi.hudbox.dev.
+# Copy to /etc/systemd/system/wisp.service, then: daemon-reload && enable --now wisp.
+# ExecStart is the absolute node path from `which node` (nvm here); refresh it if the
+# node version changes. For a different box, adjust User + paths.
+[Unit]
+Description=Hudbox Wisp egress server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=anton
+WorkingDirectory=/home/anton/wisp
+Environment=NODE_ENV=production
+Environment=WISP_HOST=127.0.0.1
+Environment=WISP_PORT=4000
+ExecStart=/home/anton/.nvm/versions/node/v24.18.0/bin/node /home/anton/wisp/wisp-server.mjs
+Restart=on-failure
+RestartSec=2
+
+# sandboxing — V8-safe (no MemoryDenyWriteExecute / SystemCallFilter, which break the JIT).
+# if the service ever fails to start after an edit, comment this block and re-add lines one at a time.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectProc=invisible
+ProcSubset=pid
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

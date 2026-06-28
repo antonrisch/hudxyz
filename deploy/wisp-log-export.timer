@@ -1,0 +1,11 @@
+# Runs the daily wisp log export just after midnight. Persistent=true catches up a
+# missed run after downtime.
+[Unit]
+Description=Daily wisp log export
+
+[Timer]
+OnCalendar=*-*-* 00:05:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

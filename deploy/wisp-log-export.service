@@ -1,0 +1,8 @@
+# Exports the previous day's wisp journal to /var/log/wisp/wisp-YYYY-MM-DD.log and
+# prunes files older than 30 days. Driven by wisp-log-export.timer.
+[Unit]
+Description=Export wisp logs to a daily file
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'mkdir -p /var/log/wisp && journalctl -u wisp --since "yesterday 00:00" --until "today 00:00" --no-pager > /var/log/wisp/wisp-$(date -d yesterday +%%F).log && find /var/log/wisp -name "wisp-*.log" -mtime +30 -delete'

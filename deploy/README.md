@@ -45,6 +45,24 @@ curl -s -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" \
 
 **5. App env** — Vercel: `NEXT_PUBLIC_WISP_URL=wss://kenobi.hudbox.dev/wisp/`, then redeploy (`NEXT_PUBLIC_` is build-time).
 
+## Logs
+
+wisp logs to stdout → journald (timestamped), INFO by default — every stream open + refusal. Set `WISP_LOG_LEVEL=debug` in the unit for more.
+
+```sh
+journalctl -u wisp -f                  # live
+journalctl -u wisp --since today       # by day
+sudo mkdir -p /var/log/journal && sudo systemctl restart systemd-journald   # persist across reboots
+```
+
+Daily files in `/var/log/wisp/` (previous day's journal, 30-day retention):
+```sh
+sudo cp deploy/wisp-log-export.service deploy/wisp-log-export.timer /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now wisp-log-export.timer
+sudo systemctl start wisp-log-export.service    # seed one now
+ls /var/log/wisp/
+```
+
 ## Update / re-verify
 
 After editing `wisp-server.mjs` or the unit:
