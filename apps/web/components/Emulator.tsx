@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Frames } from "@/components/frames";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Grab, Undo2, RotateCw } from "lucide-react";
-import { encodeUrl } from "@/lib/proxy";
+import { createFrame } from "@/lib/proxy";
+import type { Frame } from "@mercuryworkshop/scramjet-controller";
 
 // display placement over the right lens, as % of the frames container.
 const RIGHT_LENS = { left: 64, top: 26, size: 17 };
@@ -39,10 +40,10 @@ const MSG: Partial<Record<Status, string>> = {
 // "glasses" embeds the display in the right lens; "bare" is a raw 600×600 debug box.
 export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | "bare" }) {
   const [input, setInput] = useState("");
-  const [src, setSrc] = useState("");
   const [status, setStatus] = useState<Status>("empty");
   const [scale, setScale] = useState(1);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const frameRef = useRef<Frame | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
 
   // measure the display box and scale the fixed 600×600 surface to fill it
@@ -59,9 +60,13 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
   const load = useCallback(async (raw: string) => {
     const url = raw.trim();
     if (!/^https?:\/\//i.test(url)) return;
+    const el = iframeRef.current;
+    if (!el) return;
     setStatus("loading");
     try {
-      setSrc(await encodeUrl(url));
+      // create the frame once for our iframe, then navigate (v2 has no encodeUrl)
+      const frame = (frameRef.current ??= await createFrame(el));
+      frame.go(url);
       setStatus("ready");
     } catch {
       setStatus("error");
@@ -107,29 +112,28 @@ export default function Emulator({ chrome = "glasses" }: { chrome?: "glasses" | 
   // keep control buttons from taking focus on click so physical d-pad keys stay live
   const dropFocus = (e: MouseEvent) => e.preventDefault();
 
-  // 600×600 surface scaled to fit its box so it's never cut off; overlay renders
-  // at box size since it's chrome, not device content.
-  const display =
-    src && status === "ready" ? (
-      <div ref={fitRef} className="relative size-full overflow-hidden bg-black">
-        <div
-          className="absolute left-0 top-0 origin-top-left"
-          style={{ width: VIEWPORT, height: VIEWPORT, transform: `scale(${scale})` }}
-        >
-          <iframe
-            ref={iframeRef}
-            src={src}
-            title="Glasses display"
-            allow="clipboard-read; clipboard-write"
-            className="size-full border-0 bg-black"
-          />
+  // 600×600 surface scaled to fit its box; the iframe stays mounted so the controller
+  // frame can attach to it. status overlay sits on top until the navigation is ready.
+  const display = (
+    <div ref={fitRef} className="relative size-full overflow-hidden bg-black">
+      <div
+        className="absolute left-0 top-0 origin-top-left"
+        style={{ width: VIEWPORT, height: VIEWPORT, transform: `scale(${scale})` }}
+      >
+        <iframe
+          ref={iframeRef}
+          title="Glasses display"
+          allow="clipboard-read; clipboard-write"
+          className="size-full border-0 bg-black"
+        />
+      </div>
+      {status !== "ready" && (
+        <div className="absolute inset-0 grid place-items-center bg-black/80 px-2 text-center text-[10px] leading-tight text-white/70">
+          {MSG[status]}
         </div>
-      </div>
-    ) : (
-      <div className="grid size-full place-items-center bg-black/80 px-2 text-center text-[10px] leading-tight text-white/70">
-        {MSG[status]}
-      </div>
-    );
+      )}
+    </div>
+  );
 
   return (
     <div className="flex flex-col items-center gap-6 p-8">

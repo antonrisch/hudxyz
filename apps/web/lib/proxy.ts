@@ -1,17 +1,20 @@
 "use client";
 
-// scramjet 1.x same-origin proxy. globals come from the IIFE bundles copied into
-// /public (scripts/copy-proxy-assets.mjs); network egress goes through the wisp server.
+// scramjet v2 same-origin proxy. the IIFE bundles (copied into /public by
+// scripts/copy-proxy-assets.mjs) set self.$scramjet + globalThis.$scramjetController;
+// the Controller takes a ProxyTransport directly (no bare-mux). egress via wisp.
 
-type Controller = { init: () => void; encodeUrl: (url: string) => string };
-type Connection = {
-  getTransport: () => Promise<string | null>;
-  setTransport: (path: string, opts: unknown[]) => Promise<void>;
+import type { Controller, Frame } from "@mercuryworkshop/scramjet-controller";
+
+// controller.api.js sets this global. we read the class off it at runtime instead of
+// importing the npm stub, which eagerly destructures globalThis.$scramjetController at
+// module-eval and would crash under next hydration before the IIFE has run.
+declare const $scramjetController: {
+  Controller: new (init: { serviceworker: ServiceWorker; transport: object }) => Controller;
 };
-declare const $scramjetLoadController: () => { ScramjetController: new (cfg: unknown) => Controller };
-declare const BareMux: { BareMuxConnection: new (worker: string) => Connection };
 
 // dev: a local wisp process on :4000. prod: set NEXT_PUBLIC_WISP_URL to the host.
+// libcurl requires a ws://|wss:// url that ENDS WITH a trailing "/".
 const wispUrl = () =>
   process.env.NEXT_PUBLIC_WISP_URL ||
   (location.hostname === "localhost"
@@ -31,35 +34,47 @@ function loadScript(src: string): Promise<void> {
 
 let ready: Promise<Controller> | null = null;
 
-// idempotent: load bundles, init the controller, register the SW, point bare-mux
-// at the wisp endpoint. resolves to the controller.
+// idempotent: load the engine + controller IIFE bundles (classic scripts so the globals
+// get set), register the classic SW and wait until it controls the page, build the wisp
+// transport, construct the Controller and await wasm + SW handshake.
 function ensure(): Promise<Controller> {
   if (ready) return ready;
   ready = (async () => {
-    await loadScript("/scram/scramjet.all.js");
-    await loadScript("/baremux/index.js");
-    const { ScramjetController } = $scramjetLoadController();
-    const scramjet = new ScramjetController({
-      files: {
-        wasm: "/scram/scramjet.wasm.wasm",
-        all: "/scram/scramjet.all.js",
-        sync: "/scram/scramjet.sync.js",
-      },
-    });
-    scramjet.init();
-    await navigator.serviceWorker.register("/sw.js");
-    const conn = new BareMux.BareMuxConnection("/baremux/worker.js");
-    // libcurl 1.5.x reads either key; pass both so the wisp socket connects
-    const ws = wispUrl();
-    if ((await conn.getTransport()) !== "/libcurl/index.mjs") {
-      await conn.setTransport("/libcurl/index.mjs", [{ wisp: ws, websocket: ws }]);
+    // order matters: scramjet.js sets self.$scramjet, which the Controller constructor
+    // asserts (assertRuntimeScramjetVersion) before controller.api.js exposes the class.
+    await loadScript("/scramjet/scramjet.js");
+    await loadScript("/controller/controller.api.js");
+
+    // classic SW (NOT { type: "module" }): controller.sw.js is an IIFE relying on importScripts.
+    const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    await navigator.serviceWorker.ready;
+    // controller.sw.js calls clients.claim(); wait for it to actually control this page
+    // before constructing the Controller, or the first frame.go() won't be intercepted.
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((r) =>
+        navigator.serviceWorker.addEventListener("controllerchange", () => r(), { once: true }),
+      );
     }
-    return scramjet;
+    const serviceworker = navigator.serviceWorker.controller ?? reg.active;
+    if (!serviceworker) throw new Error("scramjet: no active service worker");
+
+    // wisp-backed transport (replaces bare-mux + the /libcurl worker asset). lazy import
+    // keeps the ~1MB libcurl bundle out of the route's initial JS.
+    const { default: LibcurlClient } = await import("@mercuryworkshop/libcurl-transport");
+    const transport = new LibcurlClient({ wisp: wispUrl() });
+
+    // assets live at the controller's DEFAULT paths (/scramjet/*, /controller/*, prefix
+    // /~/sj/), so no `config` override is needed. wasm is auto-fetched by the constructor.
+    const controller = new $scramjetController.Controller({ serviceworker, transport });
+    await controller.wait(); // wasm load + SW handshake; replaces v1 scramjet.init()
+    return controller;
   })();
   return ready;
 }
 
-// encode a target url into the same-origin proxied path (assign to iframe.src)
-export async function encodeUrl(url: string): Promise<string> {
-  return (await ensure()).encodeUrl(url);
+// attach our own <iframe> to the controller and return its navigable Frame. frame.element
+// === the passed iframe, so the emulator keeps injecting keys via iframe.contentWindow.
+// navigate with frame.go(url) — v2 has no encodeUrl helper.
+export async function createFrame(iframe: HTMLIFrameElement): Promise<Frame> {
+  return (await ensure()).createFrame(iframe);
 }

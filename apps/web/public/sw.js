@@ -1,13 +1,11 @@
-// scramjet 1.x service worker: proxies same-origin requests it owns, passes
-// everything else straight through (so marketing routes are untouched).
-importScripts("/scram/scramjet.all.js");
+// scramjet v2 service worker (CLASSIC — registered without { type: "module" }).
+// controller.sw.js is importScripts()'d and exposes $scramjetController.shouldRoute/route;
+// it self-handles install(skipWaiting)/activate(clients.claim).
+importScripts("/controller/controller.sw.js");
 
-const { ScramjetServiceWorker } = $scramjetLoadWorker();
-const scramjet = new ScramjetServiceWorker();
-
-// the emulator pages are cross-origin isolated (COEP require-corp, for scramjet's
-// wasm/SAB), so every proxied response must opt into isolation or the iframe — and
-// its subresources — get blocked.
+// the emulator host is cross-origin isolated (COEP require-corp). every proxied response
+// must opt into isolation or the same-origin iframe — and its subresources — get blocked.
+// drop this wrapper only if you also drop COEP in next.config.
 function isolate(res) {
   const headers = new Headers(res.headers);
   headers.set("Cross-Origin-Embedder-Policy", "require-corp");
@@ -15,12 +13,9 @@ function isolate(res) {
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
 }
 
-async function handle(event) {
-  await scramjet.loadConfig();
-  if (!scramjet.route(event)) return fetch(event.request);
-  return isolate(await scramjet.fetch(event));
-}
-
 self.addEventListener("fetch", (event) => {
-  event.respondWith(handle(event));
+  // shouldRoute() is false for marketing routes + the host page → fall through to network.
+  if ($scramjetController.shouldRoute(event)) {
+    event.respondWith($scramjetController.route(event).then(isolate));
+  }
 });
