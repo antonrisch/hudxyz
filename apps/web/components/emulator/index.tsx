@@ -171,11 +171,20 @@ export default function Emulator() {
           </div>
         </div>
 
-        {/* device + gesture controls fill the remainder under the subheader, centered.
-            the flex chain (main -> here -> Device flex-1) lets fit fill without a height hack. */}
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6">
+        {/* device canvas fills down to the bottom; the d-pad floats over it as a footer dock.
+            pointer-events: the dock catches its own clicks, the rest falls through to the canvas. */}
+        <div className="relative flex min-h-0 flex-1 flex-col">
           <Device />
-          <Dpad />
+
+          {/* floating toolbar */}
+          <div
+            ref={panZoom.footerRef}
+            className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-4"
+          >
+            <div className="pointer-events-auto rounded-2xl border bg-muted px-3 py-2 shadow-md backdrop-blur supports-backdrop-filter:bg-muted/70">
+              <Dpad />
+            </div>
+          </div>
         </div>
       </div>
     </EmulatorContext.Provider>

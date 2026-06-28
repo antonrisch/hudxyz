@@ -27,6 +27,7 @@ interface Transform {
 export interface PanZoom {
   viewportRef: RefObject<HTMLDivElement | null>;
   contentRef: RefObject<HTMLDivElement | null>;
+  footerRef: RefObject<HTMLDivElement | null>; // the floating dock; subtracted from fit's height
   style: CSSProperties; // transform for the content; origin top-left
   scale: number;
   zoomIn: () => void;
@@ -45,6 +46,7 @@ export interface PanZoom {
 export function usePanZoom(view: View): PanZoom {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState<Transform>({ scale: 1, x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number } | null>(null);
 
@@ -65,8 +67,11 @@ export function usePanZoom(view: View): PanZoom {
       const ly = (LENS_CENTER.y / 100) * ch;
       return { scale, x: vw / 2 - lx * scale, y: vh / 2 - ly * scale };
     }
-    const scale = view === "fit" ? Math.min(vw / cw, vh / ch) * 0.92 : 1;
-    return { scale, x: (vw - cw * scale) / 2, y: (vh - ch * scale) / 2 };
+    // fit subtracts the floating dpad dock from the bottom so the device fits above it
+    const bottom = view === "fit" ? (footerRef.current?.offsetHeight ?? 0) : 0;
+    const ah = vh - bottom;
+    const scale = view === "fit" ? Math.min(vw / cw, ah / ch) * 0.92 : 1;
+    return { scale, x: (vw - cw * scale) / 2, y: (ah - ch * scale) / 2 };
   }, [view]);
 
   const reset = useCallback(() => setT(computeDefault()), [computeDefault]);
@@ -153,6 +158,7 @@ export function usePanZoom(view: View): PanZoom {
   return {
     viewportRef,
     contentRef,
+    footerRef,
     style: {
       transform: `translate(${t.x}px, ${t.y}px) scale(${t.scale})`,
       transformOrigin: "0 0",

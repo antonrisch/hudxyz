@@ -26,26 +26,17 @@ export const VIEWS = [
   { key: "actual", label: "1:1" },
 ] as const satisfies ReadonlyArray<{ key: View; label: string }>;
 
-// per-view chrome around the device slot. only className/style change between views,
-// so the iframe it wraps stays the same element (no proxy reload).
-export const SLOT: Record<View, { className: string; style?: CSSProperties }> = {
-  glasses: {
-    className: "absolute overflow-hidden",
-    style: {
-      left: `${RIGHT_LENS.left}%`,
-      top: `${RIGHT_LENS.top}%`,
-      width: `${RIGHT_LENS.size}%`,
-      aspectRatio: "1 / 1",
-      borderRadius: 6,
-    },
-  },
-  fit: {
-    // fills the leftover space (see #hud-device flex-1); square, capped to width
-    className: "h-full aspect-square max-w-full overflow-hidden border border-border bg-black",
-  },
-  actual: {
-    className: "relative mx-auto size-150 overflow-hidden border border-border bg-black",
-  },
+// the device surface: black, clipped, rounded — consistent across every view (it's what
+// shows whenever an app isn't covering it). only the positioning differs, so device.tsx
+// composes this base with per-view layout classes.
+export const DEVICE_SURFACE = "overflow-hidden rounded-xl bg-black";
+
+// glasses: place the surface over the right lens, as % of the framed plane.
+export const LENS_SLOT: CSSProperties = {
+  left: `${RIGHT_LENS.left}%`,
+  top: `${RIGHT_LENS.top}%`,
+  width: `${RIGHT_LENS.size}%`,
+  aspectRatio: "1 / 1",
 };
 
 // physical keys the glasses emit, mapped to device intents (window keydown -> intent).

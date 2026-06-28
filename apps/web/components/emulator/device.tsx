@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Frames } from "@/components/frames";
-import { SLOT, VIEWPORT } from "@/lib/emulator/config";
+import { DEVICE_SURFACE, LENS_SLOT, VIEWPORT } from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { cn } from "@/lib/utils";
@@ -46,43 +46,40 @@ export function Device() {
         style={panZoom.style}
       >
         {isGlasses && <Frames className="block h-auto w-full" />}
+        {/* device surface: the 600×600 plane scaled to fit; the iframe stays mounted so the
+            controller frame can attach. black + rounded shows whenever an app isn't covering it.
+            os + status overlays sit on top of the same surface. */}
         <div
-          className={
-            isGlasses
-              ? SLOT.glasses.className
-              : "size-full overflow-hidden border border-border"
-          }
-          style={isGlasses ? SLOT.glasses.style : undefined}
+          ref={fitRef}
+          className={cn(
+            DEVICE_SURFACE,
+            isGlasses ? "absolute" : "relative size-full border border-border",
+          )}
+          style={isGlasses ? LENS_SLOT : undefined}
         >
-          {/* 600×600 surface scaled to fit; the iframe stays mounted so the controller frame
-              can attach to it. os + status overlays sit on top of the same surface. */}
-          <div ref={fitRef} className="relative size-full overflow-hidden">
-            <div
-              className="absolute left-0 top-0 origin-top-left"
-              style={{ width: VIEWPORT, height: VIEWPORT, transform: `scale(${scale})` }}
-            >
-              <iframe
-                ref={iframeRef}
-                title="Glasses display"
-                allow="clipboard-read; clipboard-write"
-                className="size-full border-0"
-              />
-            </div>
-
-            {/* baby mrbd os mounts here when the device exits an app (mode==='os'); stub for now */}
-            {mode === "os" && (
-              <div className="absolute inset-0 grid place-items-center text-center text-xs text-primary">
-                hudbox os
-              </div>
-            )}
-
-            {/* app load status overlay until the navigation is ready */}
-            {mode === "app" && (status === "loading" || status === "error") && (
-              <div className="absolute inset-0 grid place-items-center px-2 text-center text-[10px] leading-tight text-primary">
-                {STATUS_MSG[status]}
-              </div>
-            )}
+          <div
+            className="absolute left-0 top-0 origin-top-left"
+            style={{ width: VIEWPORT, height: VIEWPORT, transform: `scale(${scale})` }}
+          >
+            <iframe
+              ref={iframeRef}
+              title="Glasses display"
+              allow="clipboard-read; clipboard-write"
+              className="size-full border-0 bg-black"
+            />
           </div>
+
+          {mode === "os" && (
+            <div className="absolute inset-0 grid place-items-center bg-black text-center text-xs text-white/60">
+              hudbox os
+            </div>
+          )}
+
+          {mode === "app" && (status === "loading" || status === "error") && (
+            <div className="absolute inset-0 grid place-items-center bg-black/80 px-2 text-center text-[10px] leading-tight text-white/70">
+              {STATUS_MSG[status]}
+            </div>
+          )}
         </div>
       </div>
 

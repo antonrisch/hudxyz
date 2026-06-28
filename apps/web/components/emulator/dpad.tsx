@@ -35,9 +35,9 @@ export function Dpad() {
   const { press } = useEmulator();
 
   return (
-    <TooltipProvider delay={300}>
+    <TooltipProvider delay={1000}>
       <div className="flex items-center gap-8">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1.5">
           {PAD.map((c, i) =>
             c ? (
               <Tooltip key={c.intent}>
