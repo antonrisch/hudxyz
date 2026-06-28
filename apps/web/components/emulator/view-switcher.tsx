@@ -15,17 +15,22 @@ export function ViewSwitcher() {
 
   return (
     <ToggleGroup
-      variant="default"
+      variant="outline"
       aria-label="Display view"
       value={[view]}
       onValueChange={(vals) => {
         const next = vals[0];
         if (next) store.getState().setView(next as View); // ignore deselect so a view is always active
       }}
-      className="p-1 border rounded-xl"
+      className="p-0.5 gap-1 border rounded-xl bg-muted"
     >
       {VIEWS.map((v) => (
-        <ToggleGroupItem key={v.key} value={v.key} onMouseDown={dropFocus} className="px-4">
+        <ToggleGroupItem
+          key={v.key}
+          value={v.key}
+          onMouseDown={dropFocus}
+          className="px-4 hover:bg-background/60 border-muted aria-pressed:bg-background! aria-pressed:border-border!"
+        >
           {v.label}
         </ToggleGroupItem>
       ))}

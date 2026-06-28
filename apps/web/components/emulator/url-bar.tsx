@@ -17,7 +17,7 @@ export function UrlBar() {
 
   return (
     <form
-      className="flex w-150 items-center gap-2"
+      className="flex w-150 items-center gap-1 bg-muted p-0.5 border rounded-xl"
       onSubmit={(e) => {
         e.preventDefault();
         load(url);
@@ -27,6 +27,7 @@ export function UrlBar() {
         value={url}
         onChange={(e) => store.getState().setUrl(e.target.value)}
         placeholder="https://your-mrbd-web-app.com"
+        className="border-none"
       />
       <ButtonGroup>
         <Button type="submit" variant="outline" onMouseDown={dropFocus}>
