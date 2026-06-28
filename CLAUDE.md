@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Lenswolf builds glanceable apps for the **Meta Ray-Ban Display** (a monocular waveguide smart-glasses screen). pnpm monorepo, Astro + Tailwind v4. Node >= 22.12.
+Hudbox builds glanceable apps for the **Meta Ray-Ban Display** (a monocular waveguide smart-glasses screen). pnpm monorepo, Astro + Tailwind v4. Node >= 22.12.
 
 Timeline: now → late September 2026, targeting Meta's dev conference (likely Gen 2 Display hardware + third-party app showcase). Bias toward shipping several small polished lenses over one big app.
 
 ## Decisions already made (don't relitigate)
 
 - **WebApps over native DAT SDK.** Meta offers two routes: native (DAT SDK, iOS/Android, BLE) and WebApps (HTML/CSS/JS in a 600×600 webview). We chose WebApps: the native "Display" API is a fixed component tree (FlexBox/Text/Image/Button/Icon/Video) serialized over Bluetooth — *less* visual control than a real webview, not more. Native is the **escape hatch only if** an app needs the camera, microphone, or speaker audio — those are hard-blocked in WebApps. Informational/visual/glanceable lenses stay web.
-- **One glasses origin, paths per app.** Every glasses lens is a path under one origin (`glasses.lenswolf.com/<lens>`), never a subdomain each. Reason: `localStorage` is per-origin, so one anonymous session + one device-pairing must cover all lenses. This is non-negotiable. New lenses go under `apps/glasses/src/pages/<name>/`.
-- **Domain topology.** `lenswolf.com` (apex) = `apps/web` (marketing, indexed; later the dashboard, device-link page, and `/api/auth/*` as SSR + noindexed routes). `glasses.lenswolf.com` = `apps/glasses` (all lenses, noindexed). Two Vercel projects sharing this repo. Rejected: single-origin `/apps/*`, microfrontends (over-engineered; a plain Vercel rewrite suffices if a unified URL is ever needed).
+- **One glasses origin, paths per app.** Every glasses lens is a path under one origin (`glasses.hudbox.com/<lens>`), never a subdomain each. Reason: `localStorage` is per-origin, so one anonymous session + one device-pairing must cover all lenses. This is non-negotiable. New lenses go under `apps/glasses/src/pages/<name>/`.
+- **Domain topology.** `hudbox.com` (apex) = `apps/web` (marketing, indexed; later the dashboard, device-link page, and `/api/auth/*` as SSR + noindexed routes). `glasses.hudbox.com` = `apps/glasses` (all lenses, noindexed). Two Vercel projects sharing this repo. Rejected: single-origin `/apps/*`, microfrontends (over-engineered; a plain Vercel rewrite suffices if a unified URL is ever needed).
 - **shadcn/React is web-only; glasses lenses use Solid islands.** shadcn assumes pointer/hover/desktop keyboard and ships React's weight — wrong for the glasses surface. Interactive lenses are **Solid** islands (tiny runtime): inline Tailwind + reactive `snapshot()`, hosted by a zero-JS `.astro` shell. Not React/shadcn.
 
 ## Planned stack (not built yet — still static prototyping)
@@ -21,9 +21,9 @@ Auth via **Better Auth** (one backend, MIT, self-hostable): `anonymous` plugin f
 
 ## Layout
 
-- `apps/glasses` (`@lenswolf/glasses`) — the device app that runs on the Display. Astro 7 + **Solid** islands (interactive lenses) over a zero-JS `.astro` shell; no React. Primary app (`pnpm dev` targets it).
-- `apps/web` (`@lenswolf/web`) — marketing/landing site. Astro 7 + React 19. shadcn/ui installed (`base-luma` preset, **Base UI** primitives not Radix, Lucide icons, Inter font); components in `src/components/ui`, config in `components.json`, theme vars in `src/styles/global.css`. Add components with `pnpm dlx shadcn@latest add <name>` from this dir.
-- `packages/ui` (`@lenswolf/ui`) — shared design tokens; exports only `theme.css`.
+- `apps/glasses` (`@hudbox/glasses`) — the device app that runs on the Display. Astro 7 + **Solid** islands (interactive lenses) over a zero-JS `.astro` shell; no React. Primary app (`pnpm dev` targets it).
+- `apps/web` (`@hudbox/web`) — marketing/landing site. Astro 7 + React 19. shadcn/ui installed (`base-luma` preset, **Base UI** primitives not Radix, Lucide icons, Inter font); components in `src/components/ui`, config in `components.json`, theme vars in `src/styles/global.css`. Add components with `pnpm dlx shadcn@latest add <name>` from this dir.
+- `packages/ui` (`@hudbox/ui`) — shared design tokens; exports only `theme.css`.
 
 ## Commands
 
@@ -34,7 +34,7 @@ pnpm build        # build all workspaces (pnpm -r build)
 pnpm lint         # oxlint over the repo
 ```
 
-Per-app: `pnpm --filter @lenswolf/glasses <script>` (dev / build / preview / astro). Type-check a workspace with `pnpm --filter @lenswolf/<app> astro check`. No test runner is configured.
+Per-app: `pnpm --filter @hudbox/glasses <script>` (dev / build / preview / astro). Type-check a workspace with `pnpm --filter @hudbox/<app> astro check`. No test runner is configured.
 
 ## Device constraints (the part that's easy to get wrong)
 
@@ -56,7 +56,7 @@ The Display has no pointer — navigation is D-pad/focus based. `apps/glasses/sr
 
 **Lens architecture (deep modules).** Keep lens *logic* DOM-free in `apps/glasses/src/lib/*.ts` (pure classes/functions — e.g. the tracker's `Tracker` state machine + `SpeedKalman` filter). The **view** is a Solid component in `src/components/*.tsx` (inline Tailwind, reactive), hosted as a `client:load` island from the lens's `.astro` page; it subscribes to the logic via a `snapshot()` signal and holds no domain logic. Keeps lenses testable and the logic promotable to a shared package once a 2nd lens needs it. Reference: `src/pages/speedometer/_README.md`.
 
-**Shared glasses UI.** Reusable focus-nav lives in `apps/glasses/src/lib/dpad.ts` (`focusFirst` / `handleListNav`); shared CSS primitives (`.opt` button + focus ring, `.title`, `.hint`, `.stat`, …) live in `@lenswolf/ui/glasses.css` (imported by `apps/glasses/src/styles/global.css` after `theme.css`). Lenses use these semantic classes + Tailwind utilities for one-offs; keep `[data-state]` styling in the lens `<style>`. Don't re-declare a primitive locally — add it to `glasses.css`.
+**Shared glasses UI.** Reusable focus-nav lives in `apps/glasses/src/lib/dpad.ts` (`focusFirst` / `handleListNav`); shared CSS primitives (`.opt` button + focus ring, `.title`, `.hint`, `.stat`, …) live in `@hudbox/ui/glasses.css` (imported by `apps/glasses/src/styles/global.css` after `theme.css`). Lenses use these semantic classes + Tailwind utilities for one-offs; keep `[data-state]` styling in the lens `<style>`. Don't re-declare a primitive locally — add it to `glasses.css`.
 
 ## Dev on real hardware
 
