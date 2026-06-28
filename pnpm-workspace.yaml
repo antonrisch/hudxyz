@@ -1,10 +1,8 @@
 packages:
   - "apps/*"
-  - "packages/*"
 allowBuilds:
+  # scramjet ships prebuilt dist; bufferutil is an optional ws speedup
+  '@mercuryworkshop/scramjet': false
+  bufferutil: false
   esbuild: false
   sharp: false
-minimumReleaseAgeExclude:
-  - '@astrojs/markdown-satteri@0.3.1'
-  - astro@7.0.0
-  - '@astrojs/react@6.0.0'

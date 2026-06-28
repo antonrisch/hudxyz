@@ -1,15 +1,14 @@
 {
-  "name": "lenswolf",
+  "name": "hudbox",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter @lenswolf/glasses dev",
-    "host": "ngrok http --url=cheerful-python-carefully.ngrok-free.app 4321",
-    "dev:glasses": "pnpm --filter @lenswolf/glasses dev",
-    "dev:web": "pnpm --filter @lenswolf/web dev",
+    "dev": "pnpm --filter @hudbox/web dev",
     "build": "pnpm -r build",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "format": "oxfmt"
   },
   "devDependencies": {
+    "oxfmt": "^0.56.0",
     "oxlint": "^1.70.0"
   }
 }
