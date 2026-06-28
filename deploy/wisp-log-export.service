@@ -5,4 +5,4 @@ Description=Export wisp logs to a daily file
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c 'mkdir -p /var/log/wisp && journalctl -u wisp --since "yesterday 00:00" --until "today 00:00" --no-pager > /var/log/wisp/wisp-$(date -d yesterday +%%F).log && find /var/log/wisp -name "wisp-*.log" -mtime +30 -delete'
+ExecStart=/bin/sh -c 'mkdir -p /var/log/wisp; journalctl -u wisp --since "yesterday 00:00" --until "today 00:00" --no-pager > /var/log/wisp/wisp-$(date -d yesterday +%%F).log; find /var/log/wisp -name "wisp-*.log" -mtime +30 -delete; exit 0'
