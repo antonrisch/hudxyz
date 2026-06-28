@@ -20,11 +20,12 @@ import {
 import { INTENT_BY_KEY, KEY_BY_INTENT, VIEWS } from "@/lib/emulator/config";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
-import { cn } from "@/lib/utils";
 import { UrlBar } from "@/components/emulator/url-bar";
 import { ViewSwitcher } from "@/components/emulator/view-switcher";
+import { ZoomControls } from "@/components/emulator/zoom-controls";
 import { Dpad } from "@/components/emulator/dpad";
 import { Device } from "@/components/emulator/device";
+import { usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
 
 // -- context ------------------------------------------------
 // stable handles for the leaf components: the store (read via useEmulatorState),
@@ -34,6 +35,7 @@ interface EmulatorContextValue {
   iframeRef: RefObject<HTMLIFrameElement | null>;
   load: (raw: string) => void;
   press: (intent: Intent) => void;
+  panZoom: PanZoom;
 }
 
 const EmulatorContext = createContext<EmulatorContextValue | null>(null);
@@ -55,6 +57,8 @@ export default function Emulator() {
   const store = (storeRef.current ??= createEmulatorStore());
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const frameRef = useRef<Frame | null>(null);
+  const view = useStore(store, (s) => s.view);
+  const panZoom = usePanZoom(view);
 
   // navigate: route the target through the same-origin proxy. created once, reused.
   const load = useCallback(
@@ -137,7 +141,6 @@ export default function Emulator() {
 
   // reflect the view in ?view= client-side (no navigation). skip the first run so the
   // mount deep-link above stays authoritative; default glasses keeps the url clean.
-  const view = useStore(store, (s) => s.view);
   const firstSync = useRef(true);
   useEffect(() => {
     if (firstSync.current) {
@@ -152,23 +155,28 @@ export default function Emulator() {
   }, [view]);
 
   const ctx = useMemo<EmulatorContextValue>(
-    () => ({ store, iframeRef, load, press }),
-    [store, load, press],
+    () => ({ store, iframeRef, load, press, panZoom }),
+    [store, load, press, panZoom],
   );
 
   return (
     <EmulatorContext.Provider value={ctx}>
-      <div
-        className={cn(
-          "flex flex-col items-center gap-6 p-8",
-          // fit fills the viewport remainder under the header so the device never scrolls
-          view === "fit" && "h-[calc(100svh-var(--header-h))] w-full",
-        )}
-      >
-        <UrlBar />
-        <ViewSwitcher />
-        <Device />
-        <Dpad />
+      <div className="flex flex-1 flex-col">
+        {/* subheader: url bar + view switcher inline, sticky just below the app header */}
+        <div className="sticky top-(--header-h) z-40 border-b bg-background">
+          <div className="flex items-center justify-center gap-4 px-6 py-3">
+            <UrlBar />
+            <ViewSwitcher />
+            <ZoomControls />
+          </div>
+        </div>
+
+        {/* device + gesture controls fill the remainder under the subheader, centered.
+            the flex chain (main -> here -> Device flex-1) lets fit fill without a height hack. */}
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6">
+          <Device />
+          <Dpad />
+        </div>
       </div>
     </EmulatorContext.Provider>
   );

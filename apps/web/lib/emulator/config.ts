@@ -7,6 +7,17 @@ export const RIGHT_LENS = { left: 63.75, top: 28, size: 17 };
 // device render size (matches the glasses surface)
 export const VIEWPORT = 600;
 
+// frames svg aspect (viewBox 3696 × 1120.52); converts the square lens slot's height
+// (a % of stage width) into a % of stage height.
+export const FRAMES_ASPECT = 3696 / 1120.52;
+
+// glasses zoom focal point: the right-lens iframe midpoint, as % of the device stage.
+// the view is translated to center this point, and zoom scales about it.
+export const LENS_CENTER = {
+  x: RIGHT_LENS.left + RIGHT_LENS.size / 2,
+  y: RIGHT_LENS.top + (RIGHT_LENS.size / 2) * FRAMES_ASPECT,
+};
+
 // cosmetic presentation modes; all wrap the SAME persistent device surface.
 // glasses: framed over the lens. fit: scaled to fill the area. 1:1: exact 600×600.
 export const VIEWS = [

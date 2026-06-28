@@ -1,8 +1,9 @@
 import { createStore } from "zustand/vanilla";
 
 // headless emulator core: a DOM-free state machine. all side effects (proxy, iframe,
-// history) live in the shell hooks that subscribe to this store, so the core stays
-// unit-testable in node and liftable into a package later.
+// history, pan/zoom) live in the shell hooks that subscribe to this store, so the core
+// stays unit-testable in node and liftable into a package later. (pan/zoom needs DOM
+// measurement, so it lives in usePanZoom, not here.)
 
 export type Mode = "os" | "app"; // what the device screen shows: a proxied app, or the baby os
 export type Status = "idle" | "loading" | "ready" | "error"; // app load lifecycle
