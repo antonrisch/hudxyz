@@ -1,82 +1,94 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import type { ComponentProps, MouseEvent } from "react";
 import {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
   ArrowRight,
-  Grab,
   Undo2,
+  LayoutGrid,
   type LucideIcon,
+  Home,
+  SlidersHorizontal,
 } from "lucide-react";
+import { Pinch } from "@/components/icons/pinch";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { Intent } from "@/lib/emulator/store";
 import { useEmulator } from "@/components/emulator";
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
 
-// 3x3 d-pad grid; null = spacer. order: up / left·pinch·right / down
-const PAD: (null | { intent: Intent; Icon: LucideIcon; label: string })[] = [
-  null,
-  { intent: "up", Icon: ArrowUp, label: "Swipe up" },
-  null,
-  { intent: "left", Icon: ArrowLeft, label: "Swipe left" },
-  { intent: "select", Icon: Grab, label: "Pinch (select)" },
-  { intent: "right", Icon: ArrowRight, label: "Swipe right" },
-  null,
-  { intent: "down", Icon: ArrowDown, label: "Swipe down" },
-  null,
-];
+function ControlButton({
+  size,
+  Icon,
+  label,
+  onClick,
+  active,
+  disabled,
+}: {
+  size?: ComponentProps<typeof Button>["size"];
+  Icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant={active ? "default" : "outline"}
+            size={size ? size : "icon"}
+            aria-label={label}
+            disabled={disabled}
+            onMouseDown={dropFocus}
+            onClick={onClick}
+          >
+            <Icon />
+          </Button>
+        }
+      />
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
-// gesture controls: d-pad (UDLR) + pinch (select) + back. each emits an intent.
+// gesture controls + os nav. the d-pad emits intents; the nav buttons switch the screen.
 export function Dpad() {
-  const { press } = useEmulator();
+  const { press, store } = useEmulator();
+  const setScreen = store.getState().setScreen;
 
   return (
     <TooltipProvider delay={1000}>
-      <div className="flex items-center gap-8 bg-muted rounded-lg p-0.5 border">
+      <div className="flex items-center gap-6 bg-muted rounded-lg px-2 py-0.5 border">
+        {/* os nav */}
         <div className="grid grid-cols-3 gap-1.5">
-          {PAD.map((c, i) =>
-            c ? (
-              <Tooltip key={c.intent}>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      aria-label={c.label}
-                      onMouseDown={dropFocus}
-                      onClick={() => press(c.intent)}
-                    >
-                      <c.Icon />
-                    </Button>
-                  }
-                />
-                <TooltipContent>{c.label}</TooltipContent>
-              </Tooltip>
-            ) : (
-              <span key={i} />
-            ),
-          )}
+          <ControlButton Icon={SlidersHorizontal} label="Settings" onClick={() => setScreen("settings")} />
+          <ControlButton Icon={Home} label="Home" onClick={() => setScreen("home")} />
+          <ControlButton Icon={LayoutGrid} label="Apps" onClick={() => setScreen("apps")} />
         </div>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Back"
-                onMouseDown={dropFocus}
-                onClick={() => press("back")}
-              >
-                <Undo2 />
-              </Button>
-            }
+
+        {/* d-pad */}
+        <div className="grid grid-cols-3 gap-1.5">
+          <span />
+          <ControlButton Icon={ArrowUp} label="Swipe up" onClick={() => press("up")} />
+          <span />
+          <ControlButton Icon={ArrowLeft} label="Swipe left" onClick={() => press("left")} />
+          <ControlButton Icon={ArrowDown} label="Swipe down" onClick={() => press("down")} />
+          <ControlButton Icon={ArrowRight} label="Swipe right" onClick={() => press("right")} />
+        </div>
+
+        {/* pinch (select) + back — pinch is a larger outline button */}
+        <div className="grid grid-cols-2 gap-1.5">
+          <ControlButton
+            Icon={Pinch}
+            label="Select (Index pinch)"
+            onClick={() => press("select")}
           />
-          <TooltipContent>Back</TooltipContent>
-        </Tooltip>
+          <ControlButton Icon={Undo2} label="Back (Middle pinch)" onClick={() => press("back")} />
+        </div>
       </div>
     </TooltipProvider>
   );

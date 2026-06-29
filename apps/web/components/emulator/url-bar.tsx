@@ -14,6 +14,8 @@ const dropFocus = (e: MouseEvent) => e.preventDefault();
 export function UrlBar() {
   const { store, load } = useEmulator();
   const url = useEmulatorState((s) => s.url);
+  // reload only with a loaded app while on the app screen
+  const canReload = useEmulatorState((s) => s.screen === "app" && s.url.trim().length > 0);
 
   return (
     <form
@@ -38,6 +40,7 @@ export function UrlBar() {
           variant="outline"
           size="icon"
           aria-label="Reload"
+          disabled={!canReload}
           onMouseDown={dropFocus}
           onClick={() => load(url)}
         >

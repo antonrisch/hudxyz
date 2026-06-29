@@ -17,12 +17,10 @@ import {
   type Intent,
   type View,
 } from "@/lib/emulator/store";
-import { DEVICE_MODEL, INTENT_BY_KEY, KEY_BY_INTENT, VIEWS } from "@/lib/emulator/config";
+import { INTENT_BY_KEY, KEY_BY_INTENT, VIEWS } from "@/lib/emulator/config";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
-import { UrlBar } from "@/components/emulator/url-bar";
-import { ViewSwitcher } from "@/components/emulator/view-switcher";
-import { ZoomControls } from "@/components/emulator/zoom-controls";
+import { Subheader } from "@/components/emulator/subheader";
 import { Dpad } from "@/components/emulator/dpad";
 import { Device } from "@/components/emulator/device";
 import { usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
@@ -74,7 +72,7 @@ export default function Emulator() {
   // realm so its listeners accept it. os mode -> drive the baby os (stub seam).
   const press = useCallback(
     (intent: Intent) => {
-      if (store.getState().mode !== "app") return; // os input lands here later
+      if (store.getState().screen !== "app") return; // os input lands here later
       const win = iframeRef.current?.contentWindow;
       if (!win) return;
       try {
@@ -162,31 +160,17 @@ export default function Emulator() {
   return (
     <EmulatorContext.Provider value={ctx}>
       <div className="flex min-h-0 flex-1 flex-col">
-        {/* toolbar: device label (left) + controls (centered) */}
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 w-full sm:px-6 px-3 py-3">
-          <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold leading-snug">
-              {DEVICE_MODEL}
-              <br />
-              <span className="text-muted-foreground font-medium">Emulator</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <UrlBar />
-            <ViewSwitcher />
-            <ZoomControls />
-          </div>
-        </div>
+        <Subheader />
 
-        {/* canvas fills the rest; the d-pad floats over its bottom as a dock. the dock catches
-            its own clicks (pointer-events-auto), the rest falls through to pan the canvas. */}
-        <div className="relative flex min-h-0 flex-1 flex-col bg-linear-to-b from-[#325269] to-[#BAC4C7] mx-3 mb-3 rounded-2xl">
+        {/* device canvas fills the rest; the d-pad floats over its bottom as a dock. the dock
+            catches its own clicks (pointer-events-auto), the rest falls through to pan the canvas. */}
+        <div className="relative mx-3 mb-3 flex min-h-0 flex-1 flex-col rounded-2xl bg-linear-to-b from-canvas-from to-canvas-to">
           <Device />
           <div
             ref={panZoom.footerRef}
             className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center"
           >
-            <div className="pointer-events-auto rounded-t-2xl px-2 pt-2 bg-background">
+            <div className="dock-flare pointer-events-auto rounded-t-2xl bg-background px-2 pt-2">
               <Dpad />
             </div>
           </div>

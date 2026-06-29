@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { Home, LayoutGrid, RotateCw } from "lucide-react";
 import { Frames } from "@/components/frames";
 import { DEVICE_BG, DEVICE_SURFACE, LENS_SLOT, VIEWPORT } from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
@@ -16,9 +17,9 @@ const STATUS_MSG: Partial<Record<Status, string>> = {
 // (the glasses frame, or the bare 600 surface) pinned at the viewport top-left and
 // transformed by usePanZoom. the iframe stays the same element across views/modes/zoom.
 export function Device() {
-  const { iframeRef, panZoom } = useEmulator();
+  const { iframeRef, panZoom, store } = useEmulator();
   const view = useEmulatorState((s) => s.view);
-  const mode = useEmulatorState((s) => s.mode);
+  const screen = useEmulatorState((s) => s.screen);
   const status = useEmulatorState((s) => s.status);
   const [scale, setScale] = useState(1);
   const roRef = useRef<ResizeObserver | null>(null);
@@ -66,15 +67,38 @@ export function Device() {
             />
           </div>
 
-          {mode === "os" && (
-            <div
-              className={cn("absolute inset-0 grid place-items-center text-center text-xs", DEVICE_BG)}
-            >
-              hudbox os
+          {/* settings: a blurred control overlay over the running app */}
+          {screen === "settings" && (
+            <div className="absolute inset-0 flex flex-col justify-end bg-background/10 backdrop-blur-md">
+              <div className="flex justify-center gap-2 p-3">
+                {[
+                  { Icon: RotateCw, label: "Reload", onClick: () => store.getState().reload() },
+                  { Icon: Home, label: "Home", onClick: () => store.getState().setScreen("home") },
+                  { Icon: LayoutGrid, label: "Apps", onClick: () => store.getState().setScreen("apps") },
+                ].map(({ Icon, label, onClick }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    aria-label={label}
+                    onClick={onClick}
+                    className="grid size-9 place-items-center rounded-full border bg-background/80"
+                  >
+                    <Icon className="size-4" />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
-          {mode === "app" && (status === "loading" || status === "error") && (
+          {/* baby-os screens (stubs for now) */}
+          {(screen === "home" || screen === "apps") && (
+            <div className="absolute inset-0 grid place-items-center bg-background text-sm font-medium capitalize">
+              {screen}
+            </div>
+          )}
+
+          {/* app load status */}
+          {screen === "app" && (status === "loading" || status === "error") && (
             <div
               className={cn(
                 "absolute inset-0 grid place-items-center px-2 text-center text-[10px] leading-tight",
@@ -90,7 +114,10 @@ export function Device() {
       {/* capture overlay: the device takes no mouse input (d-pad only), so the cursor always
           drives the canvas. drag = pan; pinch / cmd-scroll = zoom (handled on the viewport). */}
       <div
-        className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
+        className={cn(
+          "absolute inset-0 touch-none",
+          screen === "app" ? "cursor-grab active:cursor-grabbing" : "pointer-events-none",
+        )}
         {...panZoom.bind}
       />
     </div>
