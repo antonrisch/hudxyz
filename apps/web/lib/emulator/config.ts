@@ -1,6 +1,10 @@
 import type { CSSProperties } from "react";
 import type { Intent, View } from "@/lib/emulator/store";
 
+// device identity shown in the emulator chrome (model + os build). placeholders — set real values.
+export const DEVICE_MODEL = "Meta Ray-Ban Display";
+export const OS_VERSION = "125.1";
+
 // display placement over the right lens, as % of the frames container.
 export const RIGHT_LENS = { left: 63.75, top: 28, size: 17 };
 
@@ -26,10 +30,13 @@ export const VIEWS = [
   { key: "actual", label: "1:1" },
 ] as const satisfies ReadonlyArray<{ key: View; label: string }>;
 
-// the device surface: black, clipped, rounded — consistent across every view (it's what
+// standardized device surface tint, shared by the surface box, the iframe and the overlays.
+export const DEVICE_BG = "bg-muted/10";
+
+// the device surface: clipped, rounded, tinted — consistent across every view (it's what
 // shows whenever an app isn't covering it). only the positioning differs, so device.tsx
 // composes this base with per-view layout classes.
-export const DEVICE_SURFACE = "overflow-hidden rounded-xl bg-black";
+export const DEVICE_SURFACE = `overflow-hidden rounded-lg ${DEVICE_BG}`;
 
 // glasses: place the surface over the right lens, as % of the framed plane.
 export const LENS_SLOT: CSSProperties = {

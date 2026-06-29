@@ -17,7 +17,7 @@ import {
   type Intent,
   type View,
 } from "@/lib/emulator/store";
-import { INTENT_BY_KEY, KEY_BY_INTENT, VIEWS } from "@/lib/emulator/config";
+import { DEVICE_MODEL, INTENT_BY_KEY, KEY_BY_INTENT, VIEWS } from "@/lib/emulator/config";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
 import { UrlBar } from "@/components/emulator/url-bar";
@@ -161,27 +161,32 @@ export default function Emulator() {
 
   return (
     <EmulatorContext.Provider value={ctx}>
-      <div className="flex flex-1 flex-col">
-        {/* subheader: url bar + view switcher inline, sticky just below the app header */}
-        <div className="sticky top-(--header-h) z-40 border-b bg-background">
-          <div className="flex items-center justify-center gap-4 px-6 py-3">
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* toolbar: device label (left) + controls (centered) */}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 w-full sm:px-6 px-3 py-3">
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-semibold leading-snug">
+              {DEVICE_MODEL}
+              <br />
+              <span className="text-muted-foreground font-medium">Emulator</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
             <UrlBar />
             <ViewSwitcher />
             <ZoomControls />
           </div>
         </div>
 
-        {/* device canvas fills down to the bottom; the d-pad floats over it as a footer dock.
-            pointer-events: the dock catches its own clicks, the rest falls through to the canvas. */}
-        <div className="relative flex min-h-0 flex-1 flex-col">
+        {/* canvas fills the rest; the d-pad floats over its bottom as a dock. the dock catches
+            its own clicks (pointer-events-auto), the rest falls through to pan the canvas. */}
+        <div className="relative flex min-h-0 flex-1 flex-col bg-linear-to-b from-[#325269] to-[#BAC4C7] mx-3 mb-3 rounded-2xl">
           <Device />
-
-          {/* floating toolbar */}
           <div
             ref={panZoom.footerRef}
-            className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-4"
+            className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center"
           >
-            <div className="pointer-events-auto rounded-2xl border bg-muted px-3 py-2 shadow-md backdrop-blur supports-backdrop-filter:bg-muted/70">
+            <div className="pointer-events-auto rounded-t-2xl px-2 pt-2 bg-background">
               <Dpad />
             </div>
           </div>

@@ -1,9 +1,10 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { Minus, Plus } from "lucide-react";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEmulator } from "@/components/emulator";
+import { ButtonGroup } from "@/components/ui/button-group";
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
 
@@ -12,27 +13,27 @@ export function ZoomControls() {
   const { panZoom } = useEmulator();
 
   return (
-    <div className="flex items-center rounded-xl border bg-muted p-0.5">
+    <ButtonGroup className="flex items-center rounded-xl border border-border/50 p-0.5 bg-muted">
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon"
         aria-label="Zoom out"
         onMouseDown={dropFocus}
         onClick={panZoom.zoomOut}
         className="hover:bg-background/60"
       >
-        <Minus />
+        <ZoomOut />
       </Button>
 
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon"
         aria-label="Zoom in"
         onMouseDown={dropFocus}
         onClick={panZoom.zoomIn}
         className="hover:bg-background/60"
       >
-        <Plus />
+        <ZoomIn />
       </Button>
       <button
         type="button"
@@ -40,10 +41,10 @@ export function ZoomControls() {
         aria-label="Reset zoom"
         onMouseDown={dropFocus}
         onClick={panZoom.reset}
-        className="min-w-12 rounded-md px-1 text-center text-sm font-medium tabular-nums text-muted-foreground/80 transition-colors hover:text-foreground"
+        className="min-w-12 rounded-md ml-1 px-1 text-center text-sm font-medium tabular-nums text-muted-foreground transition-colors hover:text-foreground"
       >
         {Math.round(panZoom.scale * 100)}%
       </button>
-    </div>
+    </ButtonGroup>
   );
 }

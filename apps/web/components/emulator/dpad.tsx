@@ -36,7 +36,7 @@ export function Dpad() {
 
   return (
     <TooltipProvider delay={1000}>
-      <div className="flex items-center gap-8">
+      <div className="flex items-center gap-8 bg-muted rounded-lg p-0.5 border">
         <div className="grid grid-cols-3 gap-1.5">
           {PAD.map((c, i) =>
             c ? (

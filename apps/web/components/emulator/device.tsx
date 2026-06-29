@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Frames } from "@/components/frames";
-import { DEVICE_SURFACE, LENS_SLOT, VIEWPORT } from "@/lib/emulator/config";
+import { DEVICE_BG, DEVICE_SURFACE, LENS_SLOT, VIEWPORT } from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { cn } from "@/lib/utils";
@@ -35,10 +35,7 @@ export function Device() {
   const isGlasses = view === "glasses";
 
   return (
-    <div
-      ref={panZoom.viewportRef}
-      className="relative min-h-0 w-full flex-1 overflow-hidden"
-    >
+    <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden">
       <div
         ref={panZoom.contentRef}
         id="hud-device"
@@ -53,7 +50,7 @@ export function Device() {
           ref={fitRef}
           className={cn(
             DEVICE_SURFACE,
-            isGlasses ? "absolute" : "relative size-full border border-border",
+            isGlasses ? "absolute" : "relative size-full rounded-xl",
           )}
           style={isGlasses ? LENS_SLOT : undefined}
         >
@@ -65,18 +62,25 @@ export function Device() {
               ref={iframeRef}
               title="Glasses display"
               allow="clipboard-read; clipboard-write"
-              className="size-full border-0 bg-black"
+              className={cn("size-full border-0", DEVICE_BG)}
             />
           </div>
 
           {mode === "os" && (
-            <div className="absolute inset-0 grid place-items-center bg-black text-center text-xs text-white/60">
+            <div
+              className={cn("absolute inset-0 grid place-items-center text-center text-xs", DEVICE_BG)}
+            >
               hudbox os
             </div>
           )}
 
           {mode === "app" && (status === "loading" || status === "error") && (
-            <div className="absolute inset-0 grid place-items-center bg-black/80 px-2 text-center text-[10px] leading-tight text-white/70">
+            <div
+              className={cn(
+                "absolute inset-0 grid place-items-center px-2 text-center text-[10px] leading-tight",
+                DEVICE_BG,
+              )}
+            >
               {STATUS_MSG[status]}
             </div>
           )}
