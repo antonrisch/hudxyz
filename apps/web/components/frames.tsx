@@ -12,7 +12,7 @@ const LEFT_LENS_PATH =
 // (no extra request) and can inherit color via currentColor. lensClassName tints the
 // lenses (set to e.g. "fill-transparent" to disable). usage: <Frames className="w-full" />
 export function Frames({
-  lensClassName = "fill-[#6D808A]/50",
+  lensClassName = "fill-[#6D808A]",
   ...props
 }: ComponentProps<"svg"> & { lensClassName?: string }) {
   return (
