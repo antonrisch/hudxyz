@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps, MouseEvent, ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import {
   ArrowUp,
   ArrowDown,
@@ -13,13 +13,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator } from "@/components/emulator";
+import type { Intent } from "@/lib/emulator/store";
+import { cn } from "@/lib/utils";
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
 
 const dpadArm =
   "flex size-8 items-center justify-center bg-transparent outline-none transition-none hover:bg-accent/60 active:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset";
 
-// 3×32 grid, r=8 outer corners — one continuous cross silhouette.
 const dpadCrossPath =
   "M40 0H56Q64 0 64 8V32H88Q96 32 96 40V56Q96 64 88 64H64V88Q64 96 56 96H40Q32 96 32 88V64H8Q0 64 0 56V40Q0 32 8 32H32V8Q32 0 40 0Z";
 
@@ -28,10 +29,12 @@ const dpadCrossClip = `path("${dpadCrossPath}")`;
 function DpadArm({
   Icon,
   label,
+  pressed,
   onClick,
 }: {
   Icon: LucideIcon;
   label: string;
+  pressed?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -41,9 +44,10 @@ function DpadArm({
           <button
             type="button"
             aria-label={label}
+            aria-pressed={pressed}
             onMouseDown={dropFocus}
             onClick={onClick}
-            className={dpadArm}
+            className={cn(dpadArm, pressed && "bg-muted")}
           >
             <Icon className="size-4 shrink-0" />
           </button>
@@ -56,8 +60,10 @@ function DpadArm({
 
 function DpadCross({
   onPress,
+  pressedIntents,
 }: {
   onPress: (direction: "up" | "down" | "left" | "right") => void;
+  pressedIntents: ReadonlySet<Intent>;
 }) {
   return (
     <div className="relative inline-block size-24">
@@ -79,13 +85,33 @@ function DpadCross({
         style={{ clipPath: dpadCrossClip }}
       >
         <div />
-        <DpadArm Icon={ArrowUp} label="Swipe up" onClick={() => onPress("up")} />
+        <DpadArm
+          Icon={ArrowUp}
+          label="Swipe up"
+          pressed={pressedIntents.has("up")}
+          onClick={() => onPress("up")}
+        />
         <div />
-        <DpadArm Icon={ArrowLeft} label="Swipe left" onClick={() => onPress("left")} />
+        <DpadArm
+          Icon={ArrowLeft}
+          label="Swipe left"
+          pressed={pressedIntents.has("left")}
+          onClick={() => onPress("left")}
+        />
         <div aria-hidden className="size-8" />
-        <DpadArm Icon={ArrowRight} label="Swipe right" onClick={() => onPress("right")} />
+        <DpadArm
+          Icon={ArrowRight}
+          label="Swipe right"
+          pressed={pressedIntents.has("right")}
+          onClick={() => onPress("right")}
+        />
         <div />
-        <DpadArm Icon={ArrowDown} label="Swipe down" onClick={() => onPress("down")} />
+        <DpadArm
+          Icon={ArrowDown}
+          label="Swipe down"
+          pressed={pressedIntents.has("down")}
+          onClick={() => onPress("down")}
+        />
         <div />
       </div>
     </div>
@@ -93,17 +119,15 @@ function DpadCross({
 }
 
 function ControlButton({
-  size = "icon-xl",
   label,
   onClick,
-  active,
+  pressed,
   disabled,
   children,
 }: {
-  size?: ComponentProps<typeof Button>["size"];
   label: string;
   onClick: () => void;
-  active?: boolean;
+  pressed?: boolean;
   disabled?: boolean;
   children: ReactNode;
 }) {
@@ -112,13 +136,17 @@ function ControlButton({
       <TooltipTrigger
         render={
           <Button
-            variant={active ? "default" : "outline"}
-            size={size}
+            variant="outline"
+            size="icon-xl"
             aria-label={label}
+            aria-pressed={pressed}
             disabled={disabled}
             onMouseDown={dropFocus}
             onClick={onClick}
-            className="transition-none hover:bg-accent/60 active:bg-accent"
+            className={cn(
+              "transition-none hover:bg-accent/60 active:bg-accent",
+              pressed && "bg-accent",
+            )}
           >
             {children}
           </Button>
@@ -131,21 +159,27 @@ function ControlButton({
 
 // gesture controls + os nav. the d-pad emits intents; the nav buttons switch the screen.
 export function Dpad() {
-  const { press } = useEmulator();
+  const { press, pressedIntents } = useEmulator();
 
   return (
     <TooltipProvider delay={1000}>
       <div className="pointer-events-auto flex items-center gap-6 rounded-2xl bg-muted py-1 px-3 shadow-md">
-        {/* host controls: reload + waveguide capture (app mode only) */}
-        <ControlButton size="icon-2xl" label="Back (Middle pinch)" onClick={() => press("back")}>
+        <ControlButton
+          label="Back (Middle pinch)"
+          pressed={pressedIntents.has("back")}
+          onClick={() => press("back")}
+        >
           <Undo2 />
         </ControlButton>
 
-        <DpadCross onPress={press} />
+        <DpadCross onPress={press} pressedIntents={pressedIntents} />
 
-        {/* A (select) + B (back) */}
-        <ControlButton size="icon-2xl" label="Select (Index pinch)" onClick={() => press("select")}>
-          <MousePointer2 fill="currentColor" />
+        <ControlButton
+          label="Select (Index pinch)"
+          pressed={pressedIntents.has("select")}
+          onClick={() => press("select")}
+        >
+          <MousePointer2 className="-scale-x-100" fill="currentColor" />
         </ControlButton>
       </div>
     </TooltipProvider>

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useRef, type RefObject } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type RefObject } from "react";
 import { useStore } from "zustand";
 import {
   createEmulatorStore,
@@ -30,6 +30,7 @@ interface EmulatorContextValue {
   displayRef: RefObject<HTMLDivElement | null>;
   load: (raw: string) => void;
   press: (intent: Intent) => void;
+  pressedIntents: ReadonlySet<Intent>;
   captureDisplay: () => Promise<void>;
   setView: (view: View) => void;
   panZoom: PanZoom;
@@ -88,6 +89,8 @@ export default function Emulator() {
 
   const pressRef = useRef(press);
   pressRef.current = press;
+
+  const [pressedIntents, setPressedIntents] = useState<ReadonlySet<Intent>>(() => new Set());
 
   const captureDisplay = useCallback(async () => {
     const { screen, status } = store.getState();
@@ -148,28 +151,102 @@ export default function Emulator() {
     };
   });
 
-  // forward physical d-pad keys to the device even when the frame isn't focused
+  // host keys inject into the frame; frame keys only mirror the visual pressed state.
   useMountEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
+    const setIntentPressed = (intent: Intent, pressed: boolean) => {
+      setPressedIntents((prev) => {
+        if (prev.has(intent) === pressed) return prev;
+        const next = new Set(prev);
+        if (pressed) next.add(intent);
+        else next.delete(intent);
+        return next;
+      });
+    };
+
+    const clearPressed = () => setPressedIntents((prev) => (prev.size ? new Set() : prev));
+    const getIntent = (e: KeyboardEvent) => (e.isTrusted ? INTENT_BY_KEY[e.key] : undefined);
+
+    const isEditable = (el: EventTarget | null) => {
+      const tag = (el as HTMLElement | null)?.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON";
+    };
+
+    const iframeFocused = () => document.activeElement === iframeRef.current;
+
+    const onHostKeyDown = (e: KeyboardEvent) => {
+      if (!e.isTrusted) return;
       if (e.metaKey && e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
         void captureRef.current();
         return;
       }
-      const intent = INTENT_BY_KEY[e.key];
+      const intent = getIntent(e);
       if (!intent) return;
-      const tag = (document.activeElement as HTMLElement | null)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON") return;
+      if (isEditable(document.activeElement)) return;
+      if (iframeFocused()) return; // iframe window listener owns trusted keys + visuals
       e.preventDefault();
+      setIntentPressed(intent, true);
       pressRef.current(intent);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+
+    const onHostKeyUp = (e: KeyboardEvent) => {
+      const intent = getIntent(e);
+      if (!intent) return;
+      setIntentPressed(intent, false);
+    };
+
+    const onFrameKeyDown = (e: KeyboardEvent) => {
+      const intent = getIntent(e); // ignore keys we inject from the host handler
+      if (!intent) return;
+      if (isEditable(e.target)) return;
+      setIntentPressed(intent, true);
+    };
+
+    const onFrameKeyUp = (e: KeyboardEvent) => {
+      const intent = getIntent(e);
+      if (!intent) return;
+      setIntentPressed(intent, false);
+    };
+
+    let detachFrame = () => {};
+
+    const attachFrame = () => {
+      detachFrame();
+      const win = iframeRef.current?.contentWindow;
+      if (!win) return;
+      win.addEventListener("keydown", onFrameKeyDown);
+      win.addEventListener("keyup", onFrameKeyUp);
+      win.addEventListener("blur", clearPressed);
+      detachFrame = () => {
+        win.removeEventListener("keydown", onFrameKeyDown);
+        win.removeEventListener("keyup", onFrameKeyUp);
+        win.removeEventListener("blur", clearPressed);
+      };
+    };
+
+    const iframe = iframeRef.current;
+    iframe?.addEventListener("load", attachFrame);
+    attachFrame();
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") clearPressed();
+    };
+
+    window.addEventListener("keydown", onHostKeyDown);
+    window.addEventListener("keyup", onHostKeyUp);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      iframe?.removeEventListener("load", attachFrame);
+      detachFrame();
+      window.removeEventListener("keydown", onHostKeyDown);
+      window.removeEventListener("keyup", onHostKeyUp);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   });
 
   const ctx = useMemo<EmulatorContextValue>(
-    () => ({ store, iframeRef, displayRef, load, press, captureDisplay, setView, panZoom }),
-    [store, load, press, captureDisplay, setView, panZoom],
+    () => ({ store, iframeRef, displayRef, load, press, pressedIntents, captureDisplay, setView, panZoom }),
+    [store, load, press, pressedIntents, captureDisplay, setView, panZoom],
   );
 
   return (
@@ -180,7 +257,7 @@ export default function Emulator() {
         {/* device canvas fills the rest; the d-pad is a floating panel over the bottom edge. */}
         <div className="relative mx-3 mb-3 flex min-h-0 flex-1 flex-col rounded-2xl bg-linear-to-b from-canvas-from to-canvas-to">
           <Device />
-          <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-4">
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center px-4">
             <Dpad />
           </div>
         </div>
