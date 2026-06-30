@@ -231,15 +231,25 @@ export default function Emulator() {
 
     const attachFrame = () => {
       detachFrame();
+      detachFrame = () => {};
       const win = iframeRef.current?.contentWindow;
       if (!win) return;
-      win.addEventListener("keydown", onFrameKeyDown);
-      win.addEventListener("keyup", onFrameKeyUp);
-      win.addEventListener("blur", clearPressed);
+      try {
+        win.addEventListener("keydown", onFrameKeyDown);
+        win.addEventListener("keyup", onFrameKeyUp);
+        win.addEventListener("blur", clearPressed);
+      } catch {
+        // the iframe can briefly expose a cross-origin WindowProxy while navigating.
+        return;
+      }
       detachFrame = () => {
-        win.removeEventListener("keydown", onFrameKeyDown);
-        win.removeEventListener("keyup", onFrameKeyUp);
-        win.removeEventListener("blur", clearPressed);
+        try {
+          win.removeEventListener("keydown", onFrameKeyDown);
+          win.removeEventListener("keyup", onFrameKeyUp);
+          win.removeEventListener("blur", clearPressed);
+        } catch {
+          // the frame may have navigated cross-origin since the listeners were attached.
+        }
       };
     };
 
