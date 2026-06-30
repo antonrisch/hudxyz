@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { useStore } from "zustand";
 import {
   createEmulatorStore,
@@ -133,6 +141,12 @@ export default function Emulator() {
       const { url } = store.getState();
       (async () => {
         try {
+          if (new URL(url).origin === window.location.origin) {
+            el.src = url;
+            store.getState().appReady();
+            return;
+          }
+
           const frame = (frameRef.current ??= await createFrame(el));
           if (cancelled) return;
           frame.go(url);
@@ -250,7 +264,17 @@ export default function Emulator() {
   });
 
   const ctx = useMemo<EmulatorContextValue>(
-    () => ({ store, iframeRef, displayRef, load, press, pressedIntents, captureDisplay, setView, panZoom }),
+    () => ({
+      store,
+      iframeRef,
+      displayRef,
+      load,
+      press,
+      pressedIntents,
+      captureDisplay,
+      setView,
+      panZoom,
+    }),
     [store, load, press, pressedIntents, captureDisplay, setView, panZoom],
   );
 
