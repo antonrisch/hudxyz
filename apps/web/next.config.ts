@@ -14,10 +14,10 @@ const nextConfig: NextConfig = {
       { source: "/sw.js", headers: [{ key: "Service-Worker-Allowed", value: "/" }] },
     ];
   },
-  // /browser folded into the emulator spa; its bare debug box is now the "fit" view.
+  // /browser folded into the emulator spa.
   async redirects() {
     return [
-      { source: "/browser", destination: "/emulator?view=fit", permanent: true },
+      { source: "/browser", destination: "/emulator", permanent: true },
       // index.html keeps relative asset paths under /apps/snake/
       { source: "/apps/snake", destination: "/apps/snake/index.html", permanent: false },
     ];

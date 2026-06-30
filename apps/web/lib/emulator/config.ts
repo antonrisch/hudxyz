@@ -27,10 +27,9 @@ export const LENS_CENTER = {
 };
 
 // cosmetic presentation modes; all wrap the SAME persistent device surface.
-// glasses: framed over the lens. fit: scaled to fill the area. 1:1: exact 600×600.
+// glasses: framed over the lens. 1:1: exact 600×600.
 export const VIEWS = [
   { key: "glasses", label: "Glasses" },
-  { key: "fit", label: "Fit" },
   { key: "actual", label: "1:1" },
 ] as const satisfies ReadonlyArray<{ key: View; label: string }>;
 

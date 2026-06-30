@@ -9,7 +9,7 @@ import { createStore } from "zustand/vanilla";
 // a blurred control overlay over the app. home / apps: baby-os screens (stubs for now).
 export type Screen = "app" | "settings" | "home" | "apps";
 export type Status = "idle" | "loading" | "ready" | "error"; // app load lifecycle
-export type View = "glasses" | "fit" | "actual"; // host chrome around the device
+export type View = "glasses" | "actual"; // host chrome around the device
 export type Intent = "up" | "down" | "left" | "right" | "select" | "back"; // d-pad gestures
 
 export interface EmulatorState {
