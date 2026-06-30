@@ -3,7 +3,13 @@
 import { useCallback, useRef, useState } from "react";
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
 import { Frames } from "@/components/frames";
-import { DEVICE_BG, DEVICE_SURFACE, LENS_SLOT, VIEWPORT } from "@/lib/emulator/config";
+import {
+  DEVICE_BG,
+  DEVICE_SURFACE,
+  FRAMES_STAGE_UNITS,
+  LENS_SLOT,
+  VIEWPORT,
+} from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { cn } from "@/lib/utils";
@@ -36,12 +42,15 @@ export function Device() {
   const isGlasses = view === "glasses";
 
   return (
-    <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden">
+    <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden rounded-lg">
       <div
         ref={panZoom.contentRef}
         id="hud-device"
-        className={cn("absolute left-0 top-0", isGlasses ? "w-240" : "size-150")}
-        style={panZoom.style}
+        className={cn("absolute left-0 top-0", !isGlasses && "size-150")}
+        style={{
+          ...panZoom.style,
+          ...(isGlasses ? { width: `calc(var(--spacing) * ${FRAMES_STAGE_UNITS})` } : undefined),
+        }}
       >
         {isGlasses && <Frames className="block h-auto w-full" />}
         {/* device surface: the 600×600 plane scaled to fit; the iframe stays mounted so the
@@ -51,7 +60,7 @@ export function Device() {
           ref={fitRef}
           className={cn(
             DEVICE_SURFACE,
-            isGlasses ? "absolute" : "relative size-full rounded-xl",
+            isGlasses ? "absolute" : "relative size-full",
           )}
           style={isGlasses ? LENS_SLOT : undefined}
         >

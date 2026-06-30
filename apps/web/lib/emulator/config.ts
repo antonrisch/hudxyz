@@ -5,15 +5,19 @@ import type { Intent, View } from "@/lib/emulator/store";
 export const DEVICE_MODEL = "Meta Ray-Ban Display";
 export const OS_VERSION = "125.1";
 
+// glasses stage scale; frame + lens slot share the same container so this scales both.
+export const FRAMES_SCALE = 1.8;
+export const FRAMES_STAGE_UNITS = 240 * FRAMES_SCALE; // tailwind spacing multiplier (was w-240)
+
 // display placement over the right lens, as % of the frames container.
-export const RIGHT_LENS = { left: 63.75, top: 28, size: 17 };
+export const RIGHT_LENS = { left: 58.5, top: 44.5, size: 10.5 };
 
 // device render size (matches the glasses surface)
 export const VIEWPORT = 600;
 
-// frames svg aspect (viewBox 3696 × 1120.52); converts the square lens slot's height
+// frames svg aspect (viewBox 6476 × 2959); converts the square lens slot's height
 // (a % of stage width) into a % of stage height.
-export const FRAMES_ASPECT = 3696 / 1120.52;
+export const FRAMES_ASPECT = 6476 / 2959;
 
 // glasses zoom focal point: the right-lens iframe midpoint, as % of the device stage.
 // the view is translated to center this point, and zoom scales about it.
