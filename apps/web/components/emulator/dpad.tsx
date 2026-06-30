@@ -9,10 +9,11 @@ import {
   Undo2,
   LayoutGrid,
   type LucideIcon,
-  Home,
-  SlidersHorizontal,
+  // Home,
+  // SlidersHorizontal,
+  MousePointer2,
+  RotateCw,
 } from "lucide-react";
-import { Pinch } from "@/components/icons/pinch";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator } from "@/components/emulator";
@@ -45,6 +46,7 @@ function ControlButton({
             disabled={disabled}
             onMouseDown={dropFocus}
             onClick={onClick}
+            className="transition-none"
           >
             <Icon />
           </Button>
@@ -59,19 +61,31 @@ function ControlButton({
 export function Dpad() {
   const { press, store } = useEmulator();
   const setScreen = store.getState().setScreen;
+  const reload = store.getState().reload;
 
   return (
     <TooltipProvider delay={1000}>
-      <div className="flex items-center gap-6 bg-muted rounded-lg px-2 py-0.5 border">
-        {/* os nav */}
-        <div className="grid grid-cols-3 gap-1.5">
-          <ControlButton Icon={SlidersHorizontal} label="Settings" onClick={() => setScreen("settings")} />
-          <ControlButton Icon={Home} label="Home" onClick={() => setScreen("home")} />
+      <div className="pointer-events-auto flex items-center gap-6 rounded-2xl border bg-background/95 p-2 shadow-lg backdrop-blur-sm">
+        {/* os nav + reload */}
+        <div className="flex items-center gap-1.5">
+          {/* <ControlButton
+            Icon={SlidersHorizontal}
+            label="Settings"
+            onClick={() => setScreen("settings")}
+          />
+          <ControlButton Icon={Home} label="Home" onClick={() => setScreen("home")} /> */}
           <ControlButton Icon={LayoutGrid} label="Apps" onClick={() => setScreen("apps")} />
+          <ControlButton
+            Icon={RotateCw}
+            label="Reload"
+            onClick={() => {
+              if (store.getState().url.trim()) reload();
+            }}
+          />
         </div>
 
         {/* d-pad */}
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-0.5">
           <span />
           <ControlButton Icon={ArrowUp} label="Swipe up" onClick={() => press("up")} />
           <span />
@@ -80,10 +94,10 @@ export function Dpad() {
           <ControlButton Icon={ArrowRight} label="Swipe right" onClick={() => press("right")} />
         </div>
 
-        {/* pinch (select) + back — pinch is a larger outline button */}
+        {/* pinch (select) + back */}
         <div className="grid grid-cols-2 gap-1.5">
           <ControlButton
-            Icon={Pinch}
+            Icon={MousePointer2}
             label="Select (Index pinch)"
             onClick={() => press("select")}
           />

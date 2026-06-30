@@ -143,25 +143,3 @@
     @apply font-sans;
     }
 }
-
-/* concave (inverse-rounded) flares on the bottom-outer corners, matching the element's bg.
-   each pseudo is a 1rem square just outside the corner with a quarter-circle cut out. */
-@utility dock-flare {
-  position: relative;
-  &::before,
-  &::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    width: 1rem;
-    height: 1rem;
-  }
-  &::before {
-    left: -1rem;
-    background: radial-gradient(circle at top left, transparent 1rem, var(--background) 0);
-  }
-  &::after {
-    right: -1rem;
-    background: radial-gradient(circle at top right, transparent 1rem, var(--background) 0);
-  }
-}
