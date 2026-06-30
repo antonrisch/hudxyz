@@ -24,10 +24,10 @@ export function UrlBar() {
   };
 
   return (
-    <div className="group relative w-150">
-      <div className="overflow-hidden rounded-xl border bg-muted hover:bg-input focus-within:bg-muted focus-within:hover:bg-muted group-focus-within:rounded-b-none group-focus-within:border-b-transparent">
+    <div className="group relative min-w-0 w-96 max-w-full">
+      <div className="overflow-hidden rounded-xl border bg-muted hover:bg-input/80 focus-within:bg-muted focus-within:hover:bg-muted group-focus-within:rounded-b-none group-focus-within:border-b-transparent">
         <form
-          className="flex items-center gap-1 p-0.5"
+          className="flex min-w-0 items-center gap-1 p-0.5"
           onSubmit={(e) => {
             e.preventDefault();
             load(url);
@@ -42,9 +42,9 @@ export function UrlBar() {
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck={false}
-            className="border-none focus-visible:border-transparent focus-visible:ring-0"
+            className="min-w-0 w-full border-none focus-visible:border-transparent focus-visible:ring-0"
           />
-          <div className="flex gap-0.5">
+          <div className="flex">
             <Button
               type="button"
               variant="ghost"
@@ -70,6 +70,7 @@ export function UrlBar() {
                 setReloadSpin((n) => n + 1);
                 load(url);
               }}
+              className="transition-none"
             >
               <RotateCw key={reloadSpin} className="motion-safe:animate-[spin_0.45s_ease-in-out_1]" />
             </Button>
