@@ -262,7 +262,7 @@ export default function Emulator() {
         {/* device canvas fills the rest; the d-pad is a floating panel over the bottom edge. */}
         <div className="relative mx-2 mb-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-linear-to-b from-canvas-from to-canvas-to">
           <Device />
-          <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center px-4">
+          <div className="pointer-events-none absolute inset-x-0 bottom-2.5 flex justify-center px-4">
             <Dpad />
           </div>
         </div>

@@ -27,7 +27,7 @@ export function UrlBar() {
     <div className="group relative min-w-0 w-96 max-w-full">
       <div className="overflow-hidden rounded-xl border bg-muted hover:bg-input/80 focus-within:bg-muted focus-within:hover:bg-muted group-focus-within:rounded-b-none group-focus-within:border-b-transparent">
         <form
-          className="flex min-w-0 items-center gap-1 p-0.5"
+          className="flex min-w-0 items-center sm:gap-1 p-0.5"
           onSubmit={(e) => {
             e.preventDefault();
             load(url);
@@ -37,7 +37,7 @@ export function UrlBar() {
             ref={inputRef}
             value={url}
             onChange={(e) => store.getState().setUrl(e.target.value)}
-            placeholder="https://my-mrbd-web-app.com"
+            placeholder="https://my-mrbd-app.com"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
@@ -50,6 +50,7 @@ export function UrlBar() {
               variant="ghost"
               size="icon"
               aria-label="Clear"
+              className="sm:flex hidden"
               onMouseDown={dropFocus}
               onClick={() => {
                 store.getState().setUrl("");

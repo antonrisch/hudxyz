@@ -8,7 +8,7 @@ export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, 
     <Link
       href="/emulator"
       className={cn(
-        "inline-flex items-center gap-2 text-2xl font-bold tracking-tighter hover:underline",
+        "inline-flex items-center gap-2 sm:text-2xl text-lg font-bold tracking-tighter hover:underline",
         className,
       )}
       {...props}
