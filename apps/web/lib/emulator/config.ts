@@ -60,6 +60,26 @@ export const INTENT_BY_KEY: Record<string, Intent> = {
   Escape: "back",
 };
 
+export type SuggestedApp = {
+  name: string;
+  url: string;
+  iconUrl: string;
+};
+
+export const SUGGESTED_APPS = [
+  {
+    name: "Snake game",
+    url: "https://hud.xyz/apps/snake",
+    // same-origin: /emulator sets COEP require-corp, which blocks cross-origin images without CORP.
+    iconUrl: "/hudxyz_icon.svg",
+  },
+  {
+    name: "Block Stack",
+    url: "https://ikkou.jp/MRBD/apps/block-stack/",
+    iconUrl: "/suggested-apps/block-stack.png",
+  },
+] as const satisfies ReadonlyArray<SuggestedApp>;
+
 // reverse: the key we inject into the proxied app for each intent (app mode).
 export const KEY_BY_INTENT: Record<Intent, string> = {
   up: "ArrowUp",
