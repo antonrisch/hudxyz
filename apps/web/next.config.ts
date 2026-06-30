@@ -16,7 +16,11 @@ const nextConfig: NextConfig = {
   },
   // /browser folded into the emulator spa; its bare debug box is now the "fit" view.
   async redirects() {
-    return [{ source: "/browser", destination: "/emulator?view=fit", permanent: true }];
+    return [
+      { source: "/browser", destination: "/emulator?view=fit", permanent: true },
+      // index.html keeps relative asset paths under /apps/snake/
+      { source: "/apps/snake", destination: "/apps/snake/index.html", permanent: false },
+    ];
   },
 };
 
