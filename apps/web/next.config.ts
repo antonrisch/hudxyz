@@ -7,10 +7,17 @@ const isolation = [
   { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
 ];
 
+// first-party MRBD apps can be embedded by the isolated emulator.
+const appIsolation = [
+  { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+];
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/emulator", headers: isolation },
+      { source: "/apps/:path*", headers: appIsolation },
       { source: "/sw.js", headers: [{ key: "Service-Worker-Allowed", value: "/" }] },
     ];
   },
