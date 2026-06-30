@@ -21,7 +21,7 @@ export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, 
         height={20}
         className="size-7 shrink-0 [image-rendering:pixelated]"
       />
-      hud.xyz
+      HUD.XYZ
     </Link>
   );
 }
