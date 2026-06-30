@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-Guidance for Claude Code (claude.ai/code) when working in this repo.
+Guidance for AI agents when working in this repo.
 
 ## What this is
 
@@ -72,10 +72,20 @@ pnpm lint         # oxlint over the repo
 pnpm format       # oxfmt
 ```
 
-Per-app: `pnpm --filter @hudbox/web <script>`. Type-check with `pnpm --filter @hudbox/web typecheck`.
+Per-app: `pnpm --filter @hudxyz/web <script>`. Type-check with `pnpm --filter @hudxyz/web typecheck`.
 
 ## Tooling
 
 - pnpm workspaces throughout. Lint is **oxlint**; format is **oxfmt**.
 - `pnpm-workspace.yaml` scopes the workspace to `apps/*` and lists `allowBuilds` (esbuild / sharp / scramjet / bufferutil ship prebuilt, so they stay unbuilt).
 - **File naming:** kebab-case / lowercase for every `.ts` / `.tsx` file, components included (`emulator.tsx`, `theme-provider.tsx`, `proxy.ts`); lowercase for App Router route files (`page.tsx`). Keeps imports stable on case-sensitive build hosts (Vercel/Linux) even though macOS is case-insensitive.
+
+## Existing `apps/web/AGENTS.md`
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+
+<!-- END:nextjs-agent-rules -->
