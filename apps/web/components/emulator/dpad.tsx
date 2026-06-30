@@ -7,10 +7,11 @@ import {
   ArrowLeft,
   ArrowRight,
   Undo2,
-  LayoutGrid,
+  // LayoutGrid,
   type LucideIcon,
   // Home,
   // SlidersHorizontal,
+  Fullscreen,
   MousePointer2,
   RotateCw,
 } from "lucide-react";
@@ -59,14 +60,13 @@ function ControlButton({
 
 // gesture controls + os nav. the d-pad emits intents; the nav buttons switch the screen.
 export function Dpad() {
-  const { press, store } = useEmulator();
-  const setScreen = store.getState().setScreen;
+  const { press, store, captureDisplay } = useEmulator();
   const reload = store.getState().reload;
 
   return (
     <TooltipProvider delay={1000}>
       <div className="pointer-events-auto flex items-center gap-6 rounded-2xl border bg-background/95 p-2 shadow-lg backdrop-blur-sm">
-        {/* os nav + reload */}
+        {/* host controls: reload + waveguide capture (app mode only) */}
         <div className="flex items-center gap-1.5">
           {/* <ControlButton
             Icon={SlidersHorizontal}
@@ -74,13 +74,18 @@ export function Dpad() {
             onClick={() => setScreen("settings")}
           />
           <ControlButton Icon={Home} label="Home" onClick={() => setScreen("home")} /> */}
-          <ControlButton Icon={LayoutGrid} label="Apps" onClick={() => setScreen("apps")} />
+          {/* <ControlButton Icon={LayoutGrid} label="Apps" onClick={() => setScreen("apps")} /> */}
           <ControlButton
             Icon={RotateCw}
             label="Reload"
             onClick={() => {
               if (store.getState().url.trim()) reload();
             }}
+          />
+          <ControlButton
+            Icon={Fullscreen}
+            label="Screenshot"
+            onClick={() => void captureDisplay()}
           />
         </div>
 

@@ -25,6 +25,7 @@ import { Subheader } from "@/components/emulator/subheader";
 import { Dpad } from "@/components/emulator/dpad";
 import { Device } from "@/components/emulator/device";
 import { usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
+import { downloadDisplay } from "@/lib/emulator/capture";
 
 // -- context ------------------------------------------------
 // stable handles for the leaf components: the store (read via useEmulatorState),
@@ -32,8 +33,10 @@ import { usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
 interface EmulatorContextValue {
   store: EmulatorStore;
   iframeRef: RefObject<HTMLIFrameElement | null>;
+  displayRef: RefObject<HTMLDivElement | null>;
   load: (raw: string) => void;
   press: (intent: Intent) => void;
+  captureDisplay: () => Promise<void>;
   setView: (view: View) => void;
   panZoom: PanZoom;
 }
@@ -56,6 +59,7 @@ export default function Emulator() {
   const storeRef = useRef<EmulatorStore>(undefined);
   const store = (storeRef.current ??= createEmulatorStore(readEmulatorSearchSeed()));
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const displayRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
   const view = useStore(store, (s) => s.view);
   const panZoom = usePanZoom(view);
@@ -90,6 +94,17 @@ export default function Emulator() {
 
   const pressRef = useRef(press);
   pressRef.current = press;
+
+  const captureDisplay = useCallback(async () => {
+    const { screen, status } = store.getState();
+    if (screen !== "app" || status !== "ready") return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    await downloadDisplay(iframe);
+  }, [store]);
+
+  const captureRef = useRef(captureDisplay);
+  captureRef.current = captureDisplay;
 
   // switch chrome, mirror it to the url, and recenter for the target view on the next frame
   // (after the new chrome has laid out so the measurement is correct).
@@ -143,6 +158,11 @@ export default function Emulator() {
   // forward physical d-pad keys to the device even when the frame isn't focused
   useMountEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey && e.shiftKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void captureRef.current();
+        return;
+      }
       const intent = INTENT_BY_KEY[e.key];
       if (!intent) return;
       const tag = (document.activeElement as HTMLElement | null)?.tagName;
@@ -155,8 +175,8 @@ export default function Emulator() {
   });
 
   const ctx = useMemo<EmulatorContextValue>(
-    () => ({ store, iframeRef, load, press, setView, panZoom }),
-    [store, load, press, setView, panZoom],
+    () => ({ store, iframeRef, displayRef, load, press, captureDisplay, setView, panZoom }),
+    [store, load, press, captureDisplay, setView, panZoom],
   );
 
   return (

@@ -35,6 +35,9 @@ importers:
       '@vercel/analytics':
         specifier: ^2.0.1
         version: 2.0.1(next@16.2.6(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@zumer/snapdom':
+        specifier: ^2.12.9
+        version: 2.12.9
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -946,6 +949,9 @@ packages:
         optional: true
       vue-router:
         optional: true
+
+  '@zumer/snapdom@2.12.9':
+    resolution: {integrity: sha512-Zufl1vEthT931kcZfmAaRSnucAGIRLGi9N6JI8ZsdyHww5hHHLk4t5LU1DxS5pNAPi1MptPHcGON1pkXEBf5iw==}
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -3107,6 +3113,8 @@ snapshots:
     optionalDependencies:
       next: 16.2.6(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
+
+  '@zumer/snapdom@2.12.9': {}
 
   accepts@2.0.0:
     dependencies:

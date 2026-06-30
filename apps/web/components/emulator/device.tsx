@@ -23,7 +23,7 @@ const STATUS_MSG: Partial<Record<Status, string>> = {
 // (the glasses frame, or the bare 600 surface) pinned at the viewport top-left and
 // transformed by usePanZoom. the iframe stays the same element across views/modes/zoom.
 export function Device() {
-  const { iframeRef, panZoom, store } = useEmulator();
+  const { iframeRef, displayRef, panZoom, store } = useEmulator();
   const view = useEmulatorState((s) => s.view);
   const screen = useEmulatorState((s) => s.screen);
   const status = useEmulatorState((s) => s.status);
@@ -66,14 +66,21 @@ export function Device() {
         >
           <div
             className="absolute left-0 top-0 origin-top-left"
-            style={{ width: VIEWPORT, height: VIEWPORT, transform: `scale(${scale})` }}
+            style={{ transform: `scale(${scale})` }}
           >
-            <iframe
-              ref={iframeRef}
-              title="Glasses display"
-              allow="clipboard-read; clipboard-write"
-              className={cn("size-full border-0", DEVICE_BG)}
-            />
+            <div
+              ref={displayRef}
+              id="hud-display"
+              className={cn("relative", DEVICE_BG)}
+              style={{ width: VIEWPORT, height: VIEWPORT }}
+            >
+              <iframe
+                ref={iframeRef}
+                title="Glasses display"
+                allow="clipboard-read; clipboard-write"
+                className="size-full border-0"
+              />
+            </div>
           </div>
 
           {/* settings: a blurred control overlay over the running app */}
