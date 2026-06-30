@@ -6,7 +6,7 @@ export function Logo({ className, ...props }: ComponentProps<"span">) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 text-2xl font-bold tracking-tighter font-mono leading-relaxed",
+        "inline-flex items-center gap-2 text-xl font-bold tracking-tighter font-mono leading-relaxed hover:underline",
         className,
       )}
       {...props}
@@ -17,7 +17,7 @@ export function Logo({ className, ...props }: ComponentProps<"span">) {
         aria-hidden
         width={20}
         height={20}
-        className="size-8 shrink-0 [image-rendering:pixelated]"
+        className="size-7 shrink-0 [image-rendering:pixelated]"
       />
       hud.xyz
     </span>

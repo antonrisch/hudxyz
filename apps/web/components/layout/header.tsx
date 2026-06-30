@@ -12,7 +12,7 @@ export function AppHeader() {
         </Link>
 
         <nav className="justify-self-center">
-          <Link href="/emulator" className={buttonVariants({ variant: "ghost" })}>
+          <Link href="/emulator" className={buttonVariants({ variant: "link" })}>
             Emulator
           </Link>
         </nav>
