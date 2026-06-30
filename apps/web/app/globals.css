@@ -49,6 +49,7 @@
 
   /* custom colors */
   --color-volt: var(--volt);
+  --color-teal: var(--teal);
   --color-canvas-from: var(--canvas-from);
   --color-canvas-to: var(--canvas-to);
   --color-canvas-frame-lens: var(--canvas-frame-lens);
@@ -93,6 +94,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   --volt: #ceff00;
+  --teal: #1cb6ac;
 
   /* device canvas */
   --canvas-from: #325269; /* backdrop gradient (top) */
