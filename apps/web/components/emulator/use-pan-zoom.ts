@@ -19,6 +19,37 @@ const BUTTON_STEP = 1.25;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
+const isTypingTarget = (el: EventTarget | null) => {
+  const node = el as HTMLElement | null;
+  if (!node) return false;
+  const tag = node.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || node.isContentEditable;
+};
+
+// cmd/ctrl +/-/0 → canvas zoom; returns true when handled (caller should not fall through).
+export function applyPanZoomShortcut(
+  e: KeyboardEvent,
+  pan: Pick<PanZoom, "zoomIn" | "zoomOut" | "reset">,
+): boolean {
+  if (!e.metaKey && !e.ctrlKey) return false;
+  if (isTypingTarget(e.target)) return false;
+
+  if (e.key === "0") {
+    e.preventDefault();
+    pan.reset();
+    return true;
+  }
+
+  const zoomIn = e.key === "+" || e.key === "=";
+  const zoomOut = e.key === "-" || e.key === "_";
+  if (!zoomIn && !zoomOut) return false;
+
+  e.preventDefault();
+  if (zoomIn) pan.zoomIn();
+  else pan.zoomOut();
+  return true;
+}
+
 interface Transform {
   scale: number;
   x: number;
@@ -131,6 +162,24 @@ export function usePanZoom(view: View): PanZoom {
     },
     [zoomAt],
   );
+
+  const zoomCenterRef = useRef(zoomCenter);
+  zoomCenterRef.current = zoomCenter;
+  const resetRef = useRef(reset);
+  resetRef.current = reset;
+
+  const panShortcutRef = useRef({
+    zoomIn: () => zoomCenterRef.current(BUTTON_STEP),
+    zoomOut: () => zoomCenterRef.current(1 / BUTTON_STEP),
+    reset: () => resetRef.current(),
+  });
+
+  // cmd/ctrl +/-/0 on the host page (blocks browser page zoom).
+  useMountEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => applyPanZoomShortcut(e, panShortcutRef.current);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   // pinch (ctrlKey) / cmd-scroll = zoom to cursor; plain wheel = pan. native non-passive
   // listener so preventDefault works (react's onWheel is passive).

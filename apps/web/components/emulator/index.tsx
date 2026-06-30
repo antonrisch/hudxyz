@@ -18,7 +18,7 @@ import type { Frame } from "@mercuryworkshop/scramjet-controller";
 import { AppHeader } from "@/components/emulator/app-header";
 import { Dpad } from "@/components/emulator/dpad";
 import { Device } from "@/components/emulator/device";
-import { usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
+import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
 import { downloadDisplay } from "@/lib/emulator/capture";
 
 // -- context ------------------------------------------------
@@ -58,6 +58,8 @@ export default function Emulator() {
   const frameRef = useRef<Frame | null>(null);
   const view = useStore(store, (s) => s.view);
   const panZoom = usePanZoom(view);
+  const panZoomRef = useRef(panZoom);
+  panZoomRef.current = panZoom;
 
   // navigate: route the target through the same-origin proxy. created once, reused.
   const load = useCallback(
@@ -196,6 +198,7 @@ export default function Emulator() {
     };
 
     const onFrameKeyDown = (e: KeyboardEvent) => {
+      if (applyPanZoomShortcut(e, panZoomRef.current)) return;
       const intent = getIntent(e); // ignore keys we inject from the host handler
       if (!intent) return;
       if (isEditable(e.target)) return;
