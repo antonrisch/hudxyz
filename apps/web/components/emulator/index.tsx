@@ -21,7 +21,7 @@ import { readEmulatorSearchSeed, syncViewToUrl } from "@/lib/emulator/search-par
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
-import { Subheader } from "@/components/emulator/subheader";
+import { AppHeader } from "@/components/emulator/app-header";
 import { Dpad } from "@/components/emulator/dpad";
 import { Device } from "@/components/emulator/device";
 import { usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
@@ -182,7 +182,7 @@ export default function Emulator() {
   return (
     <EmulatorContext.Provider value={ctx}>
       <div className="flex min-h-0 flex-1 flex-col">
-        <Subheader />
+        <AppHeader />
 
         {/* device canvas fills the rest; the d-pad is a floating panel over the bottom edge. */}
         <div className="relative mx-3 mb-3 flex min-h-0 flex-1 flex-col rounded-2xl bg-linear-to-b from-canvas-from to-canvas-to">
