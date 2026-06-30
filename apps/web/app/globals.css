@@ -51,6 +51,10 @@
   --color-volt: var(--volt);
   --color-canvas-from: var(--canvas-from);
   --color-canvas-to: var(--canvas-to);
+  --color-canvas-frame-lens: var(--canvas-frame-lens);
+  --color-canvas-frame: var(--canvas-frame);
+  --color-canvas-frame-temple: var(--canvas-frame-temple);
+  --color-canvas-frame-temple-dark: var(--canvas-frame-temple-dark);
 }
 
 :root {
@@ -90,9 +94,13 @@
 
   --volt: #ceff00;
 
-  /* device canvas backdrop gradient (top -> bottom) */
-  --canvas-from: #325269;
-  --canvas-to: #bac4c7;
+  /* device canvas */
+  --canvas-from: #325269; /* backdrop gradient (top) */
+  --canvas-to: #bac4c7; /* backdrop gradient (bottom) */
+  --canvas-frame-lens: #385f72;
+  --canvas-frame: oklch(0.145 0 0);
+  --canvas-frame-temple: oklch(0.205 0 0);
+  --canvas-frame-temple-dark: oklch(0.175 0 0);
 }
 
 .dark {
