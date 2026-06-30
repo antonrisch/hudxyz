@@ -13,7 +13,7 @@ import { ZoomControls } from "@/components/emulator/zoom-controls";
 export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 bg-background">
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 py-3">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 p-2">
         <Logo className="justify-self-start" />
         <div className="flex min-w-0 max-w-[calc(100vw-12rem)] items-center gap-2">
           <UrlBar />

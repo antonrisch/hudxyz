@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { LENS_CENTER } from "@/lib/emulator/config";
+import { LENS_CENTER, RIGHT_LENS, VIEWPORT } from "@/lib/emulator/config";
 import type { View } from "@/lib/emulator/store";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
@@ -18,6 +18,15 @@ const SCALE_MAX = 10;
 const BUTTON_STEP = 1.25;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
+
+// glasses fit the 600×600 display into the lens slot; 1:1 pans the surface directly.
+const innerScale = (cw: number) => ((RIGHT_LENS.size / 100) * cw) / VIEWPORT;
+
+const panScaleFromDevice = (deviceScale: number, v: View, cw: number) =>
+  v === "glasses" ? deviceScale / innerScale(cw) : deviceScale;
+
+const deviceScaleFromPan = (panScale: number, v: View, cw: number) =>
+  v === "glasses" ? panScale * innerScale(cw) : panScale;
 
 const isTypingTarget = (el: EventTarget | null) => {
   const node = el as HTMLElement | null;
@@ -61,7 +70,7 @@ export interface PanZoom {
   contentRef: RefObject<HTMLDivElement | null>;
   style: CSSProperties; // transform for the content; origin top-left
   revealed: boolean; // false while layout is applied; fades in on the next frame
-  scale: number;
+  scale: number; // 600×600 magnification; 1 = true device pixels on screen
   zoomIn: () => void;
   zoomOut: () => void;
   reset: (view?: View) => void; // pass the target view to recenter after a switch
@@ -72,19 +81,22 @@ export interface PanZoom {
   };
 }
 
-// canvas pan/zoom over the device plane. drag pans; pinch / cmd-scroll zooms to the cursor;
-// the buttons zoom about the viewport center. content is positioned at the viewport's
-// top-left with origin 0 0, so screen = (x + localX*scale, y + localY*scale).
+// canvas pan/zoom over the device plane. zoom is expressed as 600×600 deviceScale (1 = true
+// pixels); glasses maps that through the lens-slot fit. drag pans; pinch / cmd-scroll zooms
+// to the cursor; the buttons zoom about the viewport center.
 export function usePanZoom(view: View): PanZoom {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const deviceScaleRef = useRef(1);
+  const [deviceScale, setDeviceScale] = useState(1);
   const [t, setT] = useState<Transform>({ scale: 1, x: 0, y: 0 });
   const [revealed, setRevealed] = useState(false);
   const drag = useRef<{ x: number; y: number } | null>(null);
 
-  // per-view default: center the content; glasses centers the right-lens iframe midpoint
-  // at 2× so ~half the frame crops off, 1:1 is actual pixels.
-  const computeDefault = useCallback((v: View): Transform => {
+  // per-view framing at a given 600×600 magnification; glasses centers the lens midpoint.
+  const computeDefault = useCallback((v: View, ds: number): Transform => {
     const vp = viewportRef.current;
     const c = contentRef.current;
     if (!vp || !c) return { scale: 1, x: 0, y: 0 };
@@ -93,20 +105,25 @@ export function usePanZoom(view: View): PanZoom {
     const cw = c.offsetWidth;
     const ch = c.offsetHeight;
     if (!cw || !ch) return { scale: 1, x: 0, y: 0 };
+    const scale = panScaleFromDevice(ds, v, cw);
     if (v === "glasses") {
-      const scale = 2;
       const lx = (LENS_CENTER.x / 100) * cw;
       const ly = (LENS_CENTER.y / 100) * ch;
       return { scale, x: vw / 2 - lx * scale, y: vh / 2 - ly * scale };
     }
-    return { scale: 1, x: (vw - cw) / 2, y: (vh - ch) / 2 };
+    return { scale, x: (vw - cw * scale) / 2, y: (vh - ch * scale) / 2 };
   }, []);
 
-  const reset = useCallback((v: View = view) => setT(computeDefault(v)), [computeDefault, view]);
+  const reset = useCallback(
+    (v: View = view) => {
+      deviceScaleRef.current = 1;
+      setDeviceScale(1);
+      setT(computeDefault(v, 1));
+    },
+    [computeDefault, view],
+  );
 
-  // apply the per-view default before the first paint; if the frames plane hasn't laid out
-  // yet, wait for content dimensions then disconnect (view switches re-run this effect).
-  // stay hidden until layout is correct, then fade in on the next frame.
+  // apply per-view framing before paint; preserve deviceScale across view switches.
   useLayoutEffect(() => {
     const c = contentRef.current;
     if (!c) return;
@@ -115,7 +132,9 @@ export function usePanZoom(view: View): PanZoom {
     let frame = 0;
 
     const apply = () => {
-      setT(computeDefault(view));
+      const ds = deviceScaleRef.current;
+      setDeviceScale(ds);
+      setT(computeDefault(view, ds));
       frame = requestAnimationFrame(() => setRevealed(true));
     };
 
@@ -144,7 +163,12 @@ export function usePanZoom(view: View): PanZoom {
     const px = clientX - r.left;
     const py = clientY - r.top;
     setT((cur) => {
-      const scale = clamp(cur.scale * factor, SCALE_MIN, SCALE_MAX);
+      const cw = contentRef.current?.offsetWidth ?? 0;
+      const v = viewRef.current;
+      const nextDevice = clamp(deviceScaleFromPan(cur.scale, v, cw) * factor, SCALE_MIN, SCALE_MAX);
+      deviceScaleRef.current = nextDevice;
+      setDeviceScale(nextDevice);
+      const scale = panScaleFromDevice(nextDevice, v, cw);
       const k = scale / cur.scale;
       return { scale, x: px - (px - cur.x) * k, y: py - (py - cur.y) * k };
     });
@@ -217,6 +241,29 @@ export function usePanZoom(view: View): PanZoom {
     return () => ro.disconnect();
   });
 
+  // if the content plane resizes (frames stage), retarget pan scale to hold deviceScale.
+  useMountEffect(() => {
+    const c = contentRef.current;
+    if (!c) return;
+    const ro = new ResizeObserver(() => {
+      const cw = c.offsetWidth;
+      if (!cw) return;
+      setT((cur) => {
+        const v = viewRef.current;
+        const scale = panScaleFromDevice(deviceScaleRef.current, v, cw);
+        if (scale === cur.scale) return cur;
+        const vp = viewportRef.current;
+        if (!vp) return { ...cur, scale };
+        const px = vp.clientWidth / 2;
+        const py = vp.clientHeight / 2;
+        const k = scale / cur.scale;
+        return { scale, x: px - (px - cur.x) * k, y: py - (py - cur.y) * k };
+      });
+    });
+    ro.observe(c);
+    return () => ro.disconnect();
+  });
+
   const onPointerDown = useCallback((e: ReactPointerEvent) => {
     drag.current = { x: e.clientX, y: e.clientY };
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -242,7 +289,7 @@ export function usePanZoom(view: View): PanZoom {
       transform: `translate(${t.x}px, ${t.y}px) scale(${t.scale})`,
       transformOrigin: "0 0",
     },
-    scale: t.scale,
+    scale: deviceScale,
     zoomIn: () => zoomCenter(BUTTON_STEP),
     zoomOut: () => zoomCenter(1 / BUTTON_STEP),
     reset,

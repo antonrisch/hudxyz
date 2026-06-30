@@ -56,7 +56,7 @@ export function Device() {
   return (
     <div
       ref={panZoom.viewportRef}
-      className="relative min-h-0 w-full flex-1 overflow-hidden rounded-lg"
+      className="relative min-h-0 w-full flex-1 overflow-hidden"
     >
       <div
         ref={panZoom.contentRef}
