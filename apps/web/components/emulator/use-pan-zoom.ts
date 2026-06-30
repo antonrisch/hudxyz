@@ -5,6 +5,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
   useCallback,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -28,6 +29,7 @@ export interface PanZoom {
   viewportRef: RefObject<HTMLDivElement | null>;
   contentRef: RefObject<HTMLDivElement | null>;
   style: CSSProperties; // transform for the content; origin top-left
+  revealed: boolean; // false while layout is applied; fades in on the next frame
   scale: number;
   zoomIn: () => void;
   zoomOut: () => void;
@@ -46,6 +48,7 @@ export function usePanZoom(view: View): PanZoom {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState<Transform>({ scale: 1, x: 0, y: 0 });
+  const [revealed, setRevealed] = useState(false);
   const drag = useRef<{ x: number; y: number } | null>(null);
 
   // per-view default: center the content; glasses centers the right-lens iframe midpoint
@@ -72,9 +75,37 @@ export function usePanZoom(view: View): PanZoom {
 
   const reset = useCallback((v: View = view) => setT(computeDefault(v)), [computeDefault, view]);
 
-  useMountEffect(() => {
-    reset();
-  });
+  // apply the per-view default before the first paint; if the frames plane hasn't laid out
+  // yet, wait for content dimensions then disconnect (view switches re-run this effect).
+  // stay hidden until layout is correct, then fade in on the next frame.
+  useLayoutEffect(() => {
+    const c = contentRef.current;
+    if (!c) return;
+
+    setRevealed(false);
+    let frame = 0;
+
+    const apply = () => {
+      setT(computeDefault(view));
+      frame = requestAnimationFrame(() => setRevealed(true));
+    };
+
+    if (c.offsetWidth && c.offsetHeight) {
+      apply();
+      return () => cancelAnimationFrame(frame);
+    }
+
+    const ro = new ResizeObserver(() => {
+      if (!c.offsetWidth || !c.offsetHeight) return;
+      apply();
+      ro.disconnect();
+    });
+    ro.observe(c);
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+    };
+  }, [computeDefault, view]);
 
   // zoom about a viewport point, keeping the content point under it fixed
   const zoomAt = useCallback((clientX: number, clientY: number, factor: number) => {
@@ -159,6 +190,7 @@ export function usePanZoom(view: View): PanZoom {
   return {
     viewportRef,
     contentRef,
+    revealed,
     style: {
       transform: `translate(${t.x}px, ${t.y}px) scale(${t.scale})`,
       transformOrigin: "0 0",

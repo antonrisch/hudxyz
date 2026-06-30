@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
 import { Frames } from "@/components/frames";
 import {
@@ -27,19 +27,31 @@ export function Device() {
   const view = useEmulatorState((s) => s.view);
   const screen = useEmulatorState((s) => s.screen);
   const status = useEmulatorState((s) => s.status);
+  const slotRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const roRef = useRef<ResizeObserver | null>(null);
-
-  // measure the slot and scale the fixed 600×600 surface to fill it
-  const fitRef = useCallback((el: HTMLDivElement | null) => {
-    roRef.current?.disconnect();
-    if (!el) return;
-    const ro = new ResizeObserver(() => setScale(el.clientWidth / VIEWPORT));
-    ro.observe(el);
-    roRef.current = ro;
-  }, []);
-
   const isGlasses = view === "glasses";
+
+  // measure the lens slot and scale the fixed 600×600 surface to fill it — synchronously
+  // before paint so the display doesn't flash at scale(1) inside the percentage-sized slot.
+  useLayoutEffect(() => {
+    const el = slotRef.current;
+    if (!el) return;
+
+    if (!isGlasses) {
+      setScale(1);
+      return;
+    }
+
+    const update = () => {
+      const w = el.clientWidth;
+      if (w) setScale(w / VIEWPORT);
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isGlasses]);
 
   return (
     <div
@@ -49,7 +61,12 @@ export function Device() {
       <div
         ref={panZoom.contentRef}
         id="hud-device"
-        className={cn("absolute left-0 top-0", !isGlasses && "size-150")}
+        className={cn(
+          "absolute left-0 top-0",
+          !isGlasses && "size-150",
+          panZoom.revealed ? "opacity-100" : "opacity-0",
+          panZoom.revealed && "transition-opacity duration-200 ease-out",
+        )}
         style={{
           ...panZoom.style,
           ...(isGlasses ? { width: `calc(var(--spacing) * ${FRAMES_STAGE_UNITS})` } : undefined),
@@ -60,7 +77,7 @@ export function Device() {
             controller frame can attach. black + rounded shows whenever an app isn't covering it.
             os + status overlays sit on top of the same surface. */}
         <div
-          ref={fitRef}
+          ref={slotRef}
           className={cn(DEVICE_SURFACE, isGlasses ? "absolute" : "relative size-full")}
           style={isGlasses ? LENS_SLOT : undefined}
         >

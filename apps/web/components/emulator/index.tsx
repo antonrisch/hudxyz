@@ -105,9 +105,8 @@ export default function Emulator() {
     (next: View) => {
       store.getState().setView(next);
       syncViewToUrl(next);
-      requestAnimationFrame(() => panZoom.reset(next));
     },
-    [store, panZoom],
+    [store],
   );
 
   // proxy navigation: react to loadToken (bumped by requestLoad/launchApp/reload).
