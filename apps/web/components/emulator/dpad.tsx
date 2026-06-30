@@ -6,18 +6,17 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
-  Undo2,
   // LayoutGrid,
   type LucideIcon,
   // Home,
   // SlidersHorizontal,
   Fullscreen,
-  MousePointer2,
   RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator } from "@/components/emulator";
+import { Pinch } from "../icons/pinch";
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
 
@@ -42,7 +41,7 @@ function ControlButton({
         render={
           <Button
             variant={active ? "default" : "outline"}
-            size={size ? size : "icon"}
+            size={size ?? "icon-xl"}
             aria-label={label}
             disabled={disabled}
             onMouseDown={dropFocus}
@@ -65,7 +64,7 @@ export function Dpad() {
 
   return (
     <TooltipProvider delay={1000}>
-      <div className="pointer-events-auto flex items-center gap-6 rounded-2xl border bg-background/95 p-2 shadow-lg backdrop-blur-sm">
+      <div className="pointer-events-auto flex items-center gap-6 rounded-2xl bg-muted py-1 px-3 shadow-md">
         {/* host controls: reload + waveguide capture (app mode only) */}
         <div className="flex items-center gap-1.5">
           {/* <ControlButton
@@ -100,13 +99,21 @@ export function Dpad() {
         </div>
 
         {/* pinch (select) + back */}
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="flex gap-1.5">
           <ControlButton
-            Icon={MousePointer2}
+            size="icon-2xl"
+            Icon={Pinch}
             label="Select (Index pinch)"
             onClick={() => press("select")}
           />
-          <ControlButton Icon={Undo2} label="Back (Middle pinch)" onClick={() => press("back")} />
+          <Button
+            variant="outline"
+            className="size-12 transition-none text-xs!"
+            onMouseDown={dropFocus}
+            onClick={() => press("back")}
+          >
+            Back
+          </Button>
         </div>
       </div>
     </TooltipProvider>
