@@ -2,10 +2,12 @@
 
 import { useRef, useState, type MouseEvent } from "react";
 import { ArrowUpRight, RotateCw, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { SUGGESTED_APPS } from "@/lib/emulator/config";
+import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 
 // keep controls from taking focus so physical d-pad keys stay live
 const dropFocus = (e: MouseEvent) => e.preventDefault();
@@ -17,10 +19,22 @@ export function UrlBar() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [reloadSpin, setReloadSpin] = useState(0);
 
-  const selectUrl = (nextUrl: string) => {
+  const submitUrl = (rawUrl: string) => {
+    const nextUrl = normalizeWebUrl(rawUrl);
+    if (!nextUrl) {
+      toast.message("Enter a web app URL like https://example.com");
+      inputRef.current?.focus();
+      return false;
+    }
+
     store.getState().setUrl(nextUrl);
     load(nextUrl);
     (document.activeElement as HTMLElement | null)?.blur();
+    return true;
+  };
+
+  const selectUrl = (nextUrl: string) => {
+    submitUrl(nextUrl);
   };
 
   return (
@@ -30,13 +44,18 @@ export function UrlBar() {
           className="flex min-w-0 items-center sm:gap-1 p-0.5"
           onSubmit={(e) => {
             e.preventDefault();
-            load(url);
+            submitUrl(url);
           }}
         >
           <Input
             ref={inputRef}
             value={url}
             onChange={(e) => store.getState().setUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }}
             placeholder="https://my-mrbd-app.com"
             autoComplete="off"
             autoCorrect="off"
@@ -66,12 +85,13 @@ export function UrlBar() {
               aria-label="Reload"
               onMouseDown={dropFocus}
               onClick={() => {
-                if (!url.trim()) return;
-                setReloadSpin((n) => n + 1);
-                load(url);
+                if (submitUrl(url)) setReloadSpin((n) => n + 1);
               }}
             >
-              <RotateCw key={reloadSpin} className="motion-safe:animate-[spin_0.45s_ease-in-out_1]" />
+              <RotateCw
+                key={reloadSpin}
+                className="motion-safe:animate-[spin_0.45s_ease-in-out_1]"
+              />
             </Button>
           </div>
         </form>
