@@ -26,6 +26,12 @@ export const LENS_CENTER = {
   y: RIGHT_LENS.top + (RIGHT_LENS.size / 2) * FRAMES_ASPECT,
 };
 
+// default 600×600 magnification per chrome view (1 = true pixels).
+export const DEFAULT_DEVICE_SCALE = { glasses: 0.67, actual: 1 } as const satisfies Record<
+  View,
+  number
+>;
+
 // cosmetic presentation modes; all wrap the SAME persistent device surface.
 // glasses: framed over the lens. 1:1: exact 600×600.
 export const VIEWS = [

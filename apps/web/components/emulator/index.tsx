@@ -105,12 +105,14 @@ export default function Emulator() {
   const captureRef = useRef(captureDisplay);
   captureRef.current = captureDisplay;
 
-  // switch chrome, mirror it to the url, and recenter for the target view on the next frame
-  // (after the new chrome has laid out so the measurement is correct).
+  // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
+  // reset in usePanZoom once the new chrome has laid out).
   const setView = useCallback(
     (next: View) => {
+      const same = store.getState().view === next;
       store.getState().setView(next);
       syncViewToUrl(next);
+      if (same) panZoomRef.current.reset(next);
     },
     [store],
   );

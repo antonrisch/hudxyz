@@ -29,6 +29,7 @@ export function ViewSwitcher() {
           key={v.key}
           value={v.key}
           onMouseDown={dropFocus}
+          onClick={() => setView(v.key)}
           className="hover:bg-background/60 border-muted aria-pressed:bg-background! aria-pressed:border-border!"
         >
           {v.label}

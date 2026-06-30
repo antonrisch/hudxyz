@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { LENS_CENTER, RIGHT_LENS, VIEWPORT } from "@/lib/emulator/config";
+import { DEFAULT_DEVICE_SCALE, LENS_CENTER, RIGHT_LENS, VIEWPORT } from "@/lib/emulator/config";
 import type { View } from "@/lib/emulator/store";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
@@ -27,6 +27,8 @@ const panScaleFromDevice = (deviceScale: number, v: View, cw: number) =>
 
 const deviceScaleFromPan = (panScale: number, v: View, cw: number) =>
   v === "glasses" ? panScale * innerScale(cw) : panScale;
+
+const defaultDeviceScale = (v: View) => DEFAULT_DEVICE_SCALE[v];
 
 const isTypingTarget = (el: EventTarget | null) => {
   const node = el as HTMLElement | null;
@@ -89,8 +91,8 @@ export function usePanZoom(view: View): PanZoom {
   const contentRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef(view);
   viewRef.current = view;
-  const deviceScaleRef = useRef(1);
-  const [deviceScale, setDeviceScale] = useState(1);
+  const deviceScaleRef = useRef<number>(defaultDeviceScale(view));
+  const [deviceScale, setDeviceScale] = useState<number>(() => defaultDeviceScale(view));
   const [t, setT] = useState<Transform>({ scale: 1, x: 0, y: 0 });
   const [revealed, setRevealed] = useState(false);
   const drag = useRef<{ x: number; y: number } | null>(null);
@@ -116,14 +118,15 @@ export function usePanZoom(view: View): PanZoom {
 
   const reset = useCallback(
     (v: View = view) => {
-      deviceScaleRef.current = 1;
-      setDeviceScale(1);
-      setT(computeDefault(v, 1));
+      const ds = defaultDeviceScale(v);
+      deviceScaleRef.current = ds;
+      setDeviceScale(ds);
+      setT(computeDefault(v, ds));
     },
     [computeDefault, view],
   );
 
-  // apply per-view framing before paint; preserve deviceScale across view switches.
+  // apply per-view default zoom + framing before paint (view toggle always lands here).
   useLayoutEffect(() => {
     const c = contentRef.current;
     if (!c) return;
@@ -132,7 +135,8 @@ export function usePanZoom(view: View): PanZoom {
     let frame = 0;
 
     const apply = () => {
-      const ds = deviceScaleRef.current;
+      const ds = defaultDeviceScale(view);
+      deviceScaleRef.current = ds;
       setDeviceScale(ds);
       setT(computeDefault(view, ds));
       frame = requestAnimationFrame(() => setRevealed(true));
