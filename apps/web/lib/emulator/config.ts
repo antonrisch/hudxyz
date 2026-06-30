@@ -76,7 +76,7 @@ export const SUGGESTED_APPS = [
     name: "Snake game",
     url: "https://hud.xyz/apps/snake",
     // same-origin: /emulator sets COEP require-corp, which blocks cross-origin images without CORP.
-    iconUrl: "/hudxyz_icon.svg",
+    iconUrl: "/icon.svg",
   },
 ] as const satisfies ReadonlyArray<SuggestedApp>;
 
