@@ -11,6 +11,7 @@ import {
 } from "@/lib/emulator/store";
 import { INTENT_BY_KEY, KEY_BY_INTENT } from "@/lib/emulator/config";
 import { readEmulatorSearchSeed, syncViewToUrl } from "@/lib/emulator/search-params";
+import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
@@ -60,8 +61,8 @@ export default function Emulator() {
   // navigate: route the target through the same-origin proxy. created once, reused.
   const load = useCallback(
     (raw: string) => {
-      const url = raw.trim();
-      if (!/^https?:\/\//i.test(url)) return;
+      const url = normalizeWebUrl(raw);
+      if (!url) return;
       store.getState().requestLoad(url);
     },
     [store],

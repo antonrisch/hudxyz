@@ -1,10 +1,9 @@
 "use client";
 
-import type { MouseEvent } from "react";
-import { ArrowUpRight, RotateCw } from "lucide-react";
+import { useRef, useState, type MouseEvent } from "react";
+import { ArrowUpRight, RotateCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ButtonGroup } from "@/components/ui/button-group";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { SUGGESTED_APPS } from "@/lib/emulator/config";
 
@@ -15,6 +14,8 @@ const dropFocus = (e: MouseEvent) => e.preventDefault();
 export function UrlBar() {
   const { store, load } = useEmulator();
   const url = useEmulatorState((s) => s.url);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [reloadSpin, setReloadSpin] = useState(0);
 
   const selectUrl = (nextUrl: string) => {
     store.getState().setUrl(nextUrl);
@@ -24,7 +25,7 @@ export function UrlBar() {
 
   return (
     <div className="group relative w-150">
-      <div className="overflow-hidden rounded-xl border bg-muted group-focus-within:rounded-b-none group-focus-within:border-b-transparent">
+      <div className="overflow-hidden rounded-xl border bg-muted hover:bg-input focus-within:bg-muted focus-within:hover:bg-muted group-focus-within:rounded-b-none group-focus-within:border-b-transparent">
         <form
           className="flex items-center gap-1 p-0.5"
           onSubmit={(e) => {
@@ -33,48 +34,59 @@ export function UrlBar() {
           }}
         >
           <Input
+            ref={inputRef}
             value={url}
             onChange={(e) => store.getState().setUrl(e.target.value)}
             placeholder="https://your-mrbd-web-app.com"
-            className="border-none"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            className="border-none focus-visible:border-transparent focus-visible:ring-0"
           />
-          <ButtonGroup>
-            <Button type="submit" variant="outline" onMouseDown={dropFocus}>
-              Load
+          <div className="flex gap-0.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Clear"
+              onMouseDown={dropFocus}
+              onClick={() => {
+                store.getState().setUrl("");
+                inputRef.current?.focus();
+              }}
+              className="transition-none"
+            >
+              <X />
             </Button>
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="icon"
               aria-label="Reload"
               onMouseDown={dropFocus}
               onClick={() => {
-                if (url.trim()) load(url);
+                if (!url.trim()) return;
+                setReloadSpin((n) => n + 1);
+                load(url);
               }}
             >
-              <RotateCw />
+              <RotateCw key={reloadSpin} className="motion-safe:animate-[spin_0.45s_ease-in-out_1]" />
             </Button>
-          </ButtonGroup>
+          </div>
         </form>
       </div>
 
       <div className="pointer-events-none absolute top-full right-0 left-0 z-50 hidden overflow-hidden rounded-b-xl border-border border-b border-l border-r p-1 bg-muted group-focus-within:pointer-events-auto group-focus-within:block">
         {SUGGESTED_APPS.map((app) => (
-          <div
-            key={app.url}
-            className="flex items-center rounded-lg hover:bg-input"
-          >
+          <div key={app.url} className="flex items-center rounded-lg hover:bg-input">
             <button
               type="button"
               className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left text-sm"
               onMouseDown={dropFocus}
               onClick={() => selectUrl(app.url)}
             >
-              <img
-                src={app.iconUrl}
-                alt=""
-                className="size-5 shrink-0 rounded-sm object-cover"
-              />
+              <img src={app.iconUrl} alt="" className="size-5 shrink-0 rounded-sm object-cover" />
               <div className="flex min-w-0 flex-1 items-center gap-1.5">
                 <span className="shrink-0">{app.name}</span>
                 <span title={app.url} className="max-w-40 truncate text-muted-foreground">
