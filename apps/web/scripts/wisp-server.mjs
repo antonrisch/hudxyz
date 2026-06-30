@@ -3,7 +3,12 @@ import { server as wisp, logging } from "@mercuryworkshop/wisp-js/server";
 
 // log level via WISP_LOG_LEVEL (debug|info|warn|error). default info logs every stream
 // open + refusal — what you want for egress troubleshooting. journald captures it.
-const LEVELS = { debug: logging.DEBUG, info: logging.INFO, warn: logging.WARN, error: logging.ERROR };
+const LEVELS = {
+  debug: logging.DEBUG,
+  info: logging.INFO,
+  warn: logging.WARN,
+  error: logging.ERROR,
+};
 logging.set_level(LEVELS[process.env.WISP_LOG_LEVEL?.toLowerCase()] ?? logging.INFO);
 
 // network egress for the proxy (this host makes the outbound requests). wisp-js

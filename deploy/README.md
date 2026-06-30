@@ -20,6 +20,7 @@ browser ──wss──> nginx (:443 TLS) ──> 127.0.0.1:4000 (wisp) ──> 
 **1. Node** (skip if present): NodeSource 22; note `which node` for the unit.
 
 **2. App**
+
 ```sh
 ssh anton@kenobi.hudbox.dev 'mkdir -p ~/wisp'
 scp apps/web/scripts/wisp-server.mjs deploy/wisp/package.json anton@kenobi.hudbox.dev:~/wisp/
@@ -27,6 +28,7 @@ ssh anton@kenobi.hudbox.dev 'cd ~/wisp && npm install'
 ```
 
 **3. systemd** — edit `wisp.service` for the box (`User`, paths, `which node`), then:
+
 ```sh
 sudo cp deploy/wisp.service /etc/systemd/system/wisp.service
 sudo systemctl daemon-reload && sudo systemctl enable --now wisp
@@ -34,6 +36,7 @@ curl -s 127.0.0.1:4000        # -> wisp up
 ```
 
 **4. nginx** (kenobi already has TLS via certbot) — from `nginx-wisp.conf`: put the `map` + `limit_conn_zone` in `/etc/nginx/conf.d/wisp-map.conf`, add the `location /wisp/` to the 443 server block, then:
+
 ```sh
 sudo nginx -t && sudo systemctl reload nginx
 curl -s https://kenobi.hudbox.dev/wisp/    # -> wisp up
@@ -56,6 +59,7 @@ sudo mkdir -p /var/log/journal && sudo systemctl restart systemd-journald   # pe
 ```
 
 Daily files in `/var/log/wisp/` (previous day's journal, 30-day retention):
+
 ```sh
 sudo cp deploy/wisp-log-export.service deploy/wisp-log-export.timer /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now wisp-log-export.timer
@@ -66,6 +70,7 @@ ls /var/log/wisp/
 ## Update / re-verify
 
 After editing `wisp-server.mjs` or the unit:
+
 ```sh
 scp apps/web/scripts/wisp-server.mjs anton@kenobi.hudbox.dev:~/wisp/
 sudo cp deploy/wisp.service /etc/systemd/system/wisp.service   # only if the unit changed

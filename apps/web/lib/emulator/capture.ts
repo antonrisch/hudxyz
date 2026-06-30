@@ -17,7 +17,8 @@ async function waitForIframeDocument(iframe: HTMLIFrameElement): Promise<Documen
   for (let i = 0; i < 100; i++) {
     try {
       const doc = iframe.contentDocument;
-      if (doc?.body && (doc.body.childNodes.length > 0 || doc.readyState === "complete")) return doc;
+      if (doc?.body && (doc.body.childNodes.length > 0 || doc.readyState === "complete"))
+        return doc;
     } catch {
       return null;
     }

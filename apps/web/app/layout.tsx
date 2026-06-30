@@ -25,10 +25,7 @@ export default function RootLayout({
         {children}
         <Analytics />
         {process.env.NODE_ENV === "development" && (
-          <Script
-            src="https://unpkg.com/react-grab/dist/index.global.js"
-            crossOrigin="anonymous"
-          />
+          <Script src="https://unpkg.com/react-grab/dist/index.global.js" crossOrigin="anonymous" />
         )}
       </body>
     </html>

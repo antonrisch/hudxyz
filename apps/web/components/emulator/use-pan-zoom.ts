@@ -51,32 +51,26 @@ export function usePanZoom(view: View): PanZoom {
   // per-view default: center the content; glasses centers the right-lens iframe midpoint
   // at 2× so ~half the frame crops off, fit scales the device to the viewport, 1:1 is actual.
   // takes the view explicitly so a switch can center for the target without a stale closure.
-  const computeDefault = useCallback(
-    (v: View): Transform => {
-      const vp = viewportRef.current;
-      const c = contentRef.current;
-      if (!vp || !c) return { scale: 1, x: 0, y: 0 };
-      const vw = vp.clientWidth;
-      const vh = vp.clientHeight;
-      const cw = c.offsetWidth;
-      const ch = c.offsetHeight;
-      if (!cw || !ch) return { scale: 1, x: 0, y: 0 };
-      if (v === "glasses") {
-        const scale = 2;
-        const lx = (LENS_CENTER.x / 100) * cw;
-        const ly = (LENS_CENTER.y / 100) * ch;
-        return { scale, x: vw / 2 - lx * scale, y: vh / 2 - ly * scale };
-      }
-      const scale = v === "fit" ? Math.min(vw / cw, vh / ch) * 0.92 : 1;
-      return { scale, x: (vw - cw * scale) / 2, y: (vh - ch * scale) / 2 };
-    },
-    [],
-  );
+  const computeDefault = useCallback((v: View): Transform => {
+    const vp = viewportRef.current;
+    const c = contentRef.current;
+    if (!vp || !c) return { scale: 1, x: 0, y: 0 };
+    const vw = vp.clientWidth;
+    const vh = vp.clientHeight;
+    const cw = c.offsetWidth;
+    const ch = c.offsetHeight;
+    if (!cw || !ch) return { scale: 1, x: 0, y: 0 };
+    if (v === "glasses") {
+      const scale = 2;
+      const lx = (LENS_CENTER.x / 100) * cw;
+      const ly = (LENS_CENTER.y / 100) * ch;
+      return { scale, x: vw / 2 - lx * scale, y: vh / 2 - ly * scale };
+    }
+    const scale = v === "fit" ? Math.min(vw / cw, vh / ch) * 0.92 : 1;
+    return { scale, x: (vw - cw * scale) / 2, y: (vh - ch * scale) / 2 };
+  }, []);
 
-  const reset = useCallback(
-    (v: View = view) => setT(computeDefault(v)),
-    [computeDefault, view],
-  );
+  const reset = useCallback((v: View = view) => setT(computeDefault(v)), [computeDefault, view]);
 
   useMountEffect(() => {
     reset();

@@ -42,7 +42,10 @@ export function Device() {
   const isGlasses = view === "glasses";
 
   return (
-    <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden rounded-lg">
+    <div
+      ref={panZoom.viewportRef}
+      className="relative min-h-0 w-full flex-1 overflow-hidden rounded-lg"
+    >
       <div
         ref={panZoom.contentRef}
         id="hud-device"
@@ -58,10 +61,7 @@ export function Device() {
             os + status overlays sit on top of the same surface. */}
         <div
           ref={fitRef}
-          className={cn(
-            DEVICE_SURFACE,
-            isGlasses ? "absolute" : "relative size-full",
-          )}
+          className={cn(DEVICE_SURFACE, isGlasses ? "absolute" : "relative size-full")}
           style={isGlasses ? LENS_SLOT : undefined}
         >
           <div
@@ -90,7 +90,11 @@ export function Device() {
                 {[
                   { Icon: RotateCw, label: "Reload", onClick: () => store.getState().reload() },
                   { Icon: Home, label: "Home", onClick: () => store.getState().setScreen("home") },
-                  { Icon: LayoutGrid, label: "Apps", onClick: () => store.getState().setScreen("apps") },
+                  {
+                    Icon: LayoutGrid,
+                    label: "Apps",
+                    onClick: () => store.getState().setScreen("apps"),
+                  },
                 ].map(({ Icon, label, onClick }) => (
                   <button
                     key={label}

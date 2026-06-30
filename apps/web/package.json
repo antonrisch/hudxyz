@@ -1,8 +1,8 @@
 {
   "name": "@hudbox/web",
   "version": "0.0.1",
-  "type": "module",
   "private": true,
+  "type": "module",
   "scripts": {
     "predev": "node scripts/copy-proxy-assets.mjs",
     "dev": "concurrently -n next,wisp \"next dev\" \"node scripts/wisp-server.mjs\"",

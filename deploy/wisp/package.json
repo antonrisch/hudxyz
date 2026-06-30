@@ -2,13 +2,13 @@
   "name": "hudbox-wisp",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=22"
-  },
   "scripts": {
     "start": "node wisp-server.mjs"
   },
   "dependencies": {
     "@mercuryworkshop/wisp-js": "0.4.1"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
