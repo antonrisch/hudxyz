@@ -8,7 +8,7 @@ export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, 
     <Link
       href="/emulator"
       className={cn(
-        "inline-flex items-center gap-2 text-xl font-bold tracking-tighter hover:underline",
+        "inline-flex items-center gap-2 text-2xl font-bold tracking-tighter hover:underline",
         className,
       )}
       {...props}
@@ -17,7 +17,7 @@ export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, 
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 20 20"
         aria-hidden="true"
-        className="size-6.5 shrink-0 [image-rendering:pixelated] rounded-md"
+        className="size-7 shrink-0 [image-rendering:pixelated] rounded-md"
       >
         <rect width="20" height="20" className="fill-teal" />
         <path
