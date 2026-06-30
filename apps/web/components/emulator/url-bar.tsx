@@ -37,7 +37,7 @@ export function UrlBar() {
             ref={inputRef}
             value={url}
             onChange={(e) => store.getState().setUrl(e.target.value)}
-            placeholder="https://your-mrbd-web-app.com"
+            placeholder="https://my-mrbd-web-app.com"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
