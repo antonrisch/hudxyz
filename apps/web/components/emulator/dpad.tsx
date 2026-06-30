@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 const dropFocus = (e: MouseEvent) => e.preventDefault();
 
 const dpadArm =
-  "flex size-8 items-center justify-center bg-transparent outline-none transition-none hover:bg-accent/60 active:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset";
+  "flex size-8 items-center justify-center bg-transparent outline-nonehover:bg-accent/60 active:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset";
 
 const dpadCrossPath =
   "M40 0H56Q64 0 64 8V32H88Q96 32 96 40V56Q96 64 88 64H64V88Q64 96 56 96H40Q32 96 32 88V64H8Q0 64 0 56V40Q0 32 8 32H32V8Q32 0 40 0Z";
@@ -144,7 +144,7 @@ function ControlButton({
             onMouseDown={dropFocus}
             onClick={onClick}
             className={cn(
-              "transition-none hover:bg-accent/60 active:bg-accent",
+              "hover:bg-accent/60 active:bg-accent",
               pressed && "bg-accent",
             )}
           >

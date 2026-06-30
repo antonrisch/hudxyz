@@ -41,7 +41,7 @@ export function ZoomControls() {
         aria-label="Reset zoom"
         onMouseDown={dropFocus}
         onClick={() => panZoom.reset()}
-        className="min-w-12 rounded-md ml-1 px-1 text-center text-sm font-medium tabular-nums text-muted-foreground transition-colors hover:text-foreground"
+        className="min-w-12 rounded-md ml-1 px-1 text-center text-sm font-medium tabular-nums text-muted-foreground hover:text-foreground"
       >
         {Math.round(panZoom.scale * 100)}%
       </button>

@@ -55,7 +55,6 @@ export function UrlBar() {
                 store.getState().setUrl("");
                 inputRef.current?.focus();
               }}
-              className="transition-none"
             >
               <X />
             </Button>
@@ -70,7 +69,6 @@ export function UrlBar() {
                 setReloadSpin((n) => n + 1);
                 load(url);
               }}
-              className="transition-none"
             >
               <RotateCw key={reloadSpin} className="motion-safe:animate-[spin_0.45s_ease-in-out_1]" />
             </Button>
@@ -99,7 +97,7 @@ export function UrlBar() {
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="mr-1 shrink-0 transition-none"
+              className="mr-1 shrink-0"
               aria-label={`Open ${app.name} in a new tab`}
               onMouseDown={dropFocus}
               onClick={() => window.open(app.url, "_blank", "noopener,noreferrer")}
