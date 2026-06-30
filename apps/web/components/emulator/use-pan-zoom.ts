@@ -5,12 +5,12 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
   useCallback,
-  useEffect,
   useRef,
   useState,
 } from "react";
 import { LENS_CENTER } from "@/lib/emulator/config";
 import type { View } from "@/lib/emulator/store";
+import { useMountEffect } from "@/lib/use-mount-effect";
 
 const SCALE_MIN = 0.2;
 const SCALE_MAX = 10;
@@ -27,12 +27,11 @@ interface Transform {
 export interface PanZoom {
   viewportRef: RefObject<HTMLDivElement | null>;
   contentRef: RefObject<HTMLDivElement | null>;
-  footerRef: RefObject<HTMLDivElement | null>; // the floating dock; subtracted from fit's height
   style: CSSProperties; // transform for the content; origin top-left
   scale: number;
   zoomIn: () => void;
   zoomOut: () => void;
-  reset: () => void;
+  reset: (view?: View) => void; // pass the target view to recenter after a switch
   bind: {
     onPointerDown: (e: ReactPointerEvent) => void;
     onPointerMove: (e: ReactPointerEvent) => void;
@@ -46,40 +45,42 @@ export interface PanZoom {
 export function usePanZoom(view: View): PanZoom {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const footerRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState<Transform>({ scale: 1, x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number } | null>(null);
 
   // per-view default: center the content; glasses centers the right-lens iframe midpoint
   // at 2× so ~half the frame crops off, fit scales the device to the viewport, 1:1 is actual.
-  const computeDefault = useCallback((): Transform => {
-    const vp = viewportRef.current;
-    const c = contentRef.current;
-    if (!vp || !c) return { scale: 1, x: 0, y: 0 };
-    const vw = vp.clientWidth;
-    const vh = vp.clientHeight;
-    const cw = c.offsetWidth;
-    const ch = c.offsetHeight;
-    if (!cw || !ch) return { scale: 1, x: 0, y: 0 };
-    if (view === "glasses") {
-      const scale = 2;
-      const lx = (LENS_CENTER.x / 100) * cw;
-      const ly = (LENS_CENTER.y / 100) * ch;
-      return { scale, x: vw / 2 - lx * scale, y: vh / 2 - ly * scale };
-    }
-    // fit subtracts the floating dpad dock from the bottom so the device fits above it
-    const bottom = view === "fit" ? (footerRef.current?.offsetHeight ?? 0) : 0;
-    const ah = vh - bottom;
-    const scale = view === "fit" ? Math.min(vw / cw, ah / ch) * 0.92 : 1;
-    return { scale, x: (vw - cw * scale) / 2, y: (ah - ch * scale) / 2 };
-  }, [view]);
+  // takes the view explicitly so a switch can center for the target without a stale closure.
+  const computeDefault = useCallback(
+    (v: View): Transform => {
+      const vp = viewportRef.current;
+      const c = contentRef.current;
+      if (!vp || !c) return { scale: 1, x: 0, y: 0 };
+      const vw = vp.clientWidth;
+      const vh = vp.clientHeight;
+      const cw = c.offsetWidth;
+      const ch = c.offsetHeight;
+      if (!cw || !ch) return { scale: 1, x: 0, y: 0 };
+      if (v === "glasses") {
+        const scale = 2;
+        const lx = (LENS_CENTER.x / 100) * cw;
+        const ly = (LENS_CENTER.y / 100) * ch;
+        return { scale, x: vw / 2 - lx * scale, y: vh / 2 - ly * scale };
+      }
+      const scale = v === "fit" ? Math.min(vw / cw, vh / ch) * 0.92 : 1;
+      return { scale, x: (vw - cw * scale) / 2, y: (vh - ch * scale) / 2 };
+    },
+    [],
+  );
 
-  const reset = useCallback(() => setT(computeDefault()), [computeDefault]);
+  const reset = useCallback(
+    (v: View = view) => setT(computeDefault(v)),
+    [computeDefault, view],
+  );
 
-  // (re)center on view change (content is re-laid-out by the time this effect runs)
-  useEffect(() => {
+  useMountEffect(() => {
     reset();
-  }, [reset]);
+  });
 
   // zoom about a viewport point, keeping the content point under it fixed
   const zoomAt = useCallback((clientX: number, clientY: number, factor: number) => {
@@ -95,6 +96,9 @@ export function usePanZoom(view: View): PanZoom {
     });
   }, []);
 
+  const zoomAtRef = useRef(zoomAt);
+  zoomAtRef.current = zoomAt;
+
   const zoomCenter = useCallback(
     (factor: number) => {
       const vp = viewportRef.current;
@@ -107,21 +111,24 @@ export function usePanZoom(view: View): PanZoom {
 
   // pinch (ctrlKey) / cmd-scroll = zoom to cursor; plain wheel = pan. native non-passive
   // listener so preventDefault works (react's onWheel is passive).
-  useEffect(() => {
+  useMountEffect(() => {
     const vp = viewportRef.current;
     if (!vp) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (e.ctrlKey || e.metaKey) zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.01));
-      else setT((cur) => ({ ...cur, x: cur.x - e.deltaX, y: cur.y - e.deltaY }));
+      if (e.ctrlKey || e.metaKey) {
+        zoomAtRef.current(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.01));
+      } else {
+        setT((cur) => ({ ...cur, x: cur.x - e.deltaX, y: cur.y - e.deltaY }));
+      }
     };
     vp.addEventListener("wheel", onWheel, { passive: false });
     return () => vp.removeEventListener("wheel", onWheel);
-  }, [zoomAt]);
+  });
 
   // keep the viewport center anchored on resize (don't left-align): shift the pan by half
   // the size delta so the world point under the center stays put, preserving the pan/zoom.
-  useEffect(() => {
+  useMountEffect(() => {
     const vp = viewportRef.current;
     if (!vp) return;
     let prev = { w: vp.clientWidth, h: vp.clientHeight };
@@ -136,7 +143,7 @@ export function usePanZoom(view: View): PanZoom {
     });
     ro.observe(vp);
     return () => ro.disconnect();
-  }, []);
+  });
 
   const onPointerDown = useCallback((e: ReactPointerEvent) => {
     drag.current = { x: e.clientX, y: e.clientY };
@@ -158,7 +165,6 @@ export function usePanZoom(view: View): PanZoom {
   return {
     viewportRef,
     contentRef,
-    footerRef,
     style: {
       transform: `translate(${t.x}px, ${t.y}px) scale(${t.scale})`,
       transformOrigin: "0 0",

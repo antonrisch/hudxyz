@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
+import { useMountEffect } from "@/lib/use-mount-effect"
 
 function ThemeProvider({
   children,
@@ -36,8 +37,10 @@ function isTypingTarget(target: EventTarget | null) {
 
 function ThemeHotkey() {
   const { resolvedTheme, setTheme } = useTheme()
+  const themeRef = React.useRef(resolvedTheme)
+  themeRef.current = resolvedTheme
 
-  React.useEffect(() => {
+  useMountEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.repeat) {
         return
@@ -55,7 +58,7 @@ function ThemeHotkey() {
         return
       }
 
-      setTheme(resolvedTheme === "dark" ? "light" : "dark")
+      setTheme(themeRef.current === "dark" ? "light" : "dark")
     }
 
     window.addEventListener("keydown", onKeyDown)
@@ -63,7 +66,7 @@ function ThemeHotkey() {
     return () => {
       window.removeEventListener("keydown", onKeyDown)
     }
-  }, [resolvedTheme, setTheme])
+  })
 
   return null
 }
