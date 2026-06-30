@@ -54,10 +54,7 @@ export function Device() {
   }, [isGlasses]);
 
   return (
-    <div
-      ref={panZoom.viewportRef}
-      className="relative min-h-0 w-full flex-1 overflow-hidden"
-    >
+    <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden">
       <div
         ref={panZoom.contentRef}
         id="hud-device"

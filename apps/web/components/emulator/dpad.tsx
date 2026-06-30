@@ -143,10 +143,7 @@ function ControlButton({
             disabled={disabled}
             onMouseDown={dropFocus}
             onClick={onClick}
-            className={cn(
-              "hover:bg-accent/60 active:bg-accent",
-              pressed && "bg-accent",
-            )}
+            className={cn("hover:bg-accent/60 active:bg-accent", pressed && "bg-accent")}
           >
             {children}
           </Button>

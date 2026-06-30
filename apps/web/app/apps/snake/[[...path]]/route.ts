@@ -10,10 +10,7 @@ const MIME: Record<string, string> = {
   ".md": "text/markdown; charset=utf-8",
 };
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ path?: string[] }> },
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ path?: string[] }> }) {
   const { path: segments = [] } = await params;
   const file = segments.length === 0 ? "index.html" : segments.join("/");
 
