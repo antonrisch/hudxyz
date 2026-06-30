@@ -13,7 +13,7 @@ import { DEFAULT_DEVICE_SCALE, LENS_CENTER, RIGHT_LENS, VIEWPORT } from "@/lib/e
 import type { View } from "@/lib/emulator/store";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
-const SCALE_MIN = 0.2;
+const SCALE_MIN = 0.3;
 const SCALE_MAX = 10;
 const BUTTON_STEP = 1.25;
 
@@ -75,6 +75,7 @@ export interface PanZoom {
   scale: number; // 600×600 magnification; 1 = true device pixels on screen
   zoomIn: () => void;
   zoomOut: () => void;
+  zoomTo: (scale: number) => void;
   reset: (view?: View) => void; // pass the target view to recenter after a switch
   bind: ReturnType<typeof useGesture>;
 }
@@ -205,6 +206,16 @@ export function usePanZoom(view: View): PanZoom {
     [zoomAt],
   );
 
+  const zoomTo = useCallback(
+    (nextDeviceScale: number) => {
+      const vp = viewportRef.current;
+      if (!vp) return;
+      const r = vp.getBoundingClientRect();
+      setDeviceScaleAt(r.left + r.width / 2, r.top + r.height / 2, nextDeviceScale);
+    },
+    [setDeviceScaleAt],
+  );
+
   const zoomCenterRef = useRef(zoomCenter);
   zoomCenterRef.current = zoomCenter;
   const resetRef = useRef(reset);
@@ -315,6 +326,7 @@ export function usePanZoom(view: View): PanZoom {
     scale: deviceScale,
     zoomIn: () => zoomCenter(BUTTON_STEP),
     zoomOut: () => zoomCenter(1 / BUTTON_STEP),
+    zoomTo,
     reset,
     bind,
   };
