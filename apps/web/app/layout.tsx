@@ -1,9 +1,10 @@
 import { Analytics } from "@vercel/analytics/next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Script from "next/script";
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const archivo = Archivo({ subsets: ["latin"], variable: "--font-sans" });
+
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -19,7 +20,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", jetbrainsMono.variable, "font-sans", inter.variable)}
+      className={cn("antialiased", archivo.variable, jetbrainsMono.variable, "font-sans")}
     >
       <body className="flex min-h-svh flex-col">
         {children}

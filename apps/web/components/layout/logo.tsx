@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 // hudbox logo: pixel mark + wordmark; always routes to the emulator.
 export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, "href">) {
@@ -8,20 +9,20 @@ export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, 
     <Link
       href="/emulator"
       className={cn(
-        "inline-flex items-center gap-2 text-xl font-bold tracking-tighter font-mono leading-relaxed hover:underline",
+        "inline-flex items-center gap-2 text-xl font-bold tracking-tighter hover:underline",
         className,
       )}
       {...props}
     >
-      <img
-        src="/hudxyz_icon.svg"
+      <Image
+        src="/icon.svg"
         alt=""
         aria-hidden
         width={20}
         height={20}
-        className="size-7 shrink-0 [image-rendering:pixelated]"
+        className="size-6.5 shrink-0 [image-rendering:pixelated] rounded-xs"
       />
-      HUD.XYZ
+      hud.xyz
     </Link>
   );
 }
