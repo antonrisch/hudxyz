@@ -31,15 +31,15 @@ export interface EmulatorState {
 
 export type EmulatorStore = ReturnType<typeof createEmulatorStore>;
 
-type Seed = Partial<Pick<EmulatorState, "screen" | "view" | "url">>;
+type Seed = Partial<Pick<EmulatorState, "screen" | "view" | "url" | "status" | "loadToken">>;
 
 export function createEmulatorStore(seed?: Seed) {
   return createStore<EmulatorState>()((set) => ({
     screen: seed?.screen ?? "app",
     view: seed?.view ?? "glasses",
     url: seed?.url ?? "",
-    status: "idle",
-    loadToken: 0,
+    status: seed?.status ?? "idle",
+    loadToken: seed?.loadToken ?? 0,
 
     setScreen: (screen) => set({ screen }),
     setView: (view) => set({ view }),

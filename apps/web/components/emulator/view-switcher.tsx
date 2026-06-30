@@ -10,7 +10,7 @@ const dropFocus = (e: MouseEvent) => e.preventDefault();
 
 // swaps only the cosmetic chrome around the persistent device surface.
 export function ViewSwitcher() {
-  const { store } = useEmulator();
+  const { setView } = useEmulator();
   const view = useEmulatorState((s) => s.view);
 
   return (
@@ -20,7 +20,7 @@ export function ViewSwitcher() {
       value={[view]}
       onValueChange={(vals) => {
         const next = vals[0];
-        if (next) store.getState().setView(next as View); // ignore deselect so a view is always active
+        if (next) setView(next as View); // ignore deselect so a view is always active
       }}
       className="p-0.5 gap-1 border rounded-xl bg-muted"
     >

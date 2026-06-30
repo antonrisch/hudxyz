@@ -40,7 +40,7 @@ export function ZoomControls() {
         title="Reset zoom"
         aria-label="Reset zoom"
         onMouseDown={dropFocus}
-        onClick={panZoom.reset}
+        onClick={() => panZoom.reset()}
         className="min-w-12 rounded-md ml-1 px-1 text-center text-sm font-medium tabular-nums text-muted-foreground transition-colors hover:text-foreground"
       >
         {Math.round(panZoom.scale * 100)}%

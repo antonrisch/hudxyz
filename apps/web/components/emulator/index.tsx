@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   type RefObject,
@@ -17,7 +16,9 @@ import {
   type Intent,
   type View,
 } from "@/lib/emulator/store";
-import { INTENT_BY_KEY, KEY_BY_INTENT, VIEWS } from "@/lib/emulator/config";
+import { INTENT_BY_KEY, KEY_BY_INTENT } from "@/lib/emulator/config";
+import { readEmulatorSearchSeed, syncViewToUrl } from "@/lib/emulator/search-params";
+import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
 import { Subheader } from "@/components/emulator/subheader";
@@ -33,6 +34,7 @@ interface EmulatorContextValue {
   iframeRef: RefObject<HTMLIFrameElement | null>;
   load: (raw: string) => void;
   press: (intent: Intent) => void;
+  setView: (view: View) => void;
   panZoom: PanZoom;
 }
 
@@ -52,7 +54,7 @@ export function useEmulatorState<T>(selector: (s: EmulatorState) => T): T {
 // -- root ---------------------------------------------------
 export default function Emulator() {
   const storeRef = useRef<EmulatorStore>(undefined);
-  const store = (storeRef.current ??= createEmulatorStore());
+  const store = (storeRef.current ??= createEmulatorStore(readEmulatorSearchSeed()));
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const frameRef = useRef<Frame | null>(null);
   const view = useStore(store, (s) => s.view);
@@ -86,75 +88,75 @@ export default function Emulator() {
     [store],
   );
 
-  // proxy navigation: react to loadToken (bumped by requestLoad/launchApp, so reload of the
-  // same url re-fires). read url imperatively so typing in the address bar doesn't navigate.
-  const loadToken = useStore(store, (s) => s.loadToken);
-  useEffect(() => {
-    if (loadToken === 0) return;
-    const el = iframeRef.current;
-    if (!el) return;
-    const { url } = store.getState();
-    let cancelled = false;
-    (async () => {
-      try {
-        const frame = (frameRef.current ??= await createFrame(el));
-        if (cancelled) return;
-        frame.go(url); // v2 has no encodeUrl
-        store.getState().appReady();
-      } catch {
-        if (!cancelled) store.getState().appError();
-      }
-    })();
-    return () => {
-      cancelled = true;
+  const pressRef = useRef(press);
+  pressRef.current = press;
+
+  // switch chrome, mirror it to the url, and recenter for the target view on the next frame
+  // (after the new chrome has laid out so the measurement is correct).
+  const setView = useCallback(
+    (next: View) => {
+      store.getState().setView(next);
+      syncViewToUrl(next);
+      requestAnimationFrame(() => panZoom.reset(next));
+    },
+    [store, panZoom],
+  );
+
+  // proxy navigation: react to loadToken (bumped by requestLoad/launchApp/reload).
+  useMountEffect(() => {
+    let cancelNav = () => {};
+
+    const navigate = () => {
+      cancelNav();
+      let cancelled = false;
+      cancelNav = () => {
+        cancelled = true;
+      };
+
+      const el = iframeRef.current;
+      if (!el) return;
+      const { url } = store.getState();
+      (async () => {
+        try {
+          const frame = (frameRef.current ??= await createFrame(el));
+          if (cancelled) return;
+          frame.go(url);
+          store.getState().appReady();
+        } catch {
+          if (!cancelled) store.getState().appError();
+        }
+      })();
     };
-  }, [loadToken, store]);
+
+    const unsub = store.subscribe((state, prev) => {
+      if (state.loadToken !== prev.loadToken && state.loadToken !== 0) navigate();
+    });
+
+    if (store.getState().loadToken > 0) navigate();
+
+    return () => {
+      cancelNav();
+      unsub();
+    };
+  });
 
   // forward physical d-pad keys to the device even when the frame isn't focused
-  // (focused -> the frame gets them natively, so the parent never sees them).
-  useEffect(() => {
+  useMountEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const intent = INTENT_BY_KEY[e.key];
       if (!intent) return;
       const tag = (document.activeElement as HTMLElement | null)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON") return;
       e.preventDefault();
-      press(intent);
+      pressRef.current(intent);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [press]);
-
-  // deep-link on mount: ?view=... selects the chrome, ?url=... prefills + loads
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search);
-    const v = p.get("view");
-    if (v && VIEWS.some((x) => x.key === v)) store.getState().setView(v as View);
-    const u = p.get("url");
-    if (u) {
-      store.getState().setUrl(u);
-      load(u);
-    }
-  }, [store, load]);
-
-  // reflect the view in ?view= client-side (no navigation). skip the first run so the
-  // mount deep-link above stays authoritative; default glasses keeps the url clean.
-  const firstSync = useRef(true);
-  useEffect(() => {
-    if (firstSync.current) {
-      firstSync.current = false;
-      return;
-    }
-    const p = new URLSearchParams(window.location.search);
-    if (view === "glasses") p.delete("view");
-    else p.set("view", view);
-    const qs = p.toString();
-    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, [view]);
+  });
 
   const ctx = useMemo<EmulatorContextValue>(
-    () => ({ store, iframeRef, load, press, panZoom }),
-    [store, load, press, panZoom],
+    () => ({ store, iframeRef, load, press, setView, panZoom }),
+    [store, load, press, setView, panZoom],
   );
 
   return (
@@ -162,17 +164,11 @@ export default function Emulator() {
       <div className="flex min-h-0 flex-1 flex-col">
         <Subheader />
 
-        {/* device canvas fills the rest; the d-pad floats over its bottom as a dock. the dock
-            catches its own clicks (pointer-events-auto), the rest falls through to pan the canvas. */}
+        {/* device canvas fills the rest; the d-pad is a floating panel over the bottom edge. */}
         <div className="relative mx-3 mb-3 flex min-h-0 flex-1 flex-col rounded-2xl bg-linear-to-b from-canvas-from to-canvas-to">
           <Device />
-          <div
-            ref={panZoom.footerRef}
-            className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center"
-          >
-            <div className="dock-flare pointer-events-auto rounded-t-2xl bg-background px-2 pt-2">
-              <Dpad />
-            </div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-4">
+            <Dpad />
           </div>
         </div>
       </div>
