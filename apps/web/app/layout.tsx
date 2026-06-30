@@ -1,5 +1,5 @@
 import { Analytics } from "@vercel/analytics/next";
-import { Geist_Mono, Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Script from "next/script";
@@ -7,7 +7,7 @@ import { AppHeader } from "@/components/layout/header";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
-const fontMono = Geist_Mono({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 });
@@ -21,7 +21,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
+      className={cn("antialiased", jetbrainsMono.variable, "font-sans", inter.variable)}
     >
       <head>
         {process.env.NODE_ENV === "development" && (
