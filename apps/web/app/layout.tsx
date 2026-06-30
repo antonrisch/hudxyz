@@ -23,19 +23,16 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn("antialiased", jetbrainsMono.variable, "font-sans", inter.variable)}
     >
-      <head>
-        {process.env.NODE_ENV === "development" && (
-          <Script
-            src="//unpkg.com/react-grab/dist/index.global.js"
-            crossOrigin="anonymous"
-            strategy="beforeInteractive"
-          />
-        )}
-      </head>
       <body className="flex min-h-svh flex-col">
         <AppHeader />
         {children}
         <Analytics />
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            src="https://unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+          />
+        )}
       </body>
     </html>
   );
