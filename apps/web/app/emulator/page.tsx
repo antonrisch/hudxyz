@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Emulator from "@/components/emulator";
 
 export const metadata: Metadata = {
-  title: "Emulator — Hudbox",
-  description: "Hudbox glasses display emulator.",
+  title: "Emulator — hud.xyz",
+  description: "hud.xyz glasses display emulator.",
 };
 
 export default function EmulatorPage() {
