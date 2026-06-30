@@ -155,7 +155,7 @@ export function Device() {
           "absolute inset-0 touch-none",
           screen === "app" ? "cursor-grab active:cursor-grabbing" : "pointer-events-none",
         )}
-        {...panZoom.bind}
+        {...panZoom.bind()}
       />
     </div>
   );
