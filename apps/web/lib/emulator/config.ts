@@ -73,11 +73,6 @@ export const SUGGESTED_APPS = [
     // same-origin: /emulator sets COEP require-corp, which blocks cross-origin images without CORP.
     iconUrl: "/hudxyz_icon.svg",
   },
-  {
-    name: "Block Stack",
-    url: "https://ikkou.jp/MRBD/apps/block-stack/",
-    iconUrl: "/suggested-apps/block-stack.png",
-  },
 ] as const satisfies ReadonlyArray<SuggestedApp>;
 
 // reverse: the key we inject into the proxied app for each intent (app mode).
