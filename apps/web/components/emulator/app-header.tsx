@@ -4,6 +4,7 @@ import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { UrlBar } from "@/components/emulator/url-bar";
 import { ViewSwitcher } from "@/components/emulator/view-switcher";
+import { ScreenshotButton } from "@/components/emulator/screenshot-button";
 import { ZoomControls } from "@/components/emulator/zoom-controls";
 
 // emulator toolbar: logo left, url bar + view/zoom center, share right.
@@ -22,13 +23,15 @@ export function AppHeader() {
             <ZoomControls />
           </div>
         </div>
-        <Button
-          className="justify-self-end"
-          size="lg"
-          onClick={() => void navigator.clipboard.writeText(window.location.href)}
-        >
-          Share
-        </Button>
+        <div className="flex items-center gap-2 justify-self-end">
+          <ScreenshotButton />
+          <Button
+            size="lg"
+            onClick={() => void navigator.clipboard.writeText(window.location.href)}
+          >
+            Share
+          </Button>
+        </div>
       </div>
     </header>
   );
