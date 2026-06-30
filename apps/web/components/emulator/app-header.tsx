@@ -6,6 +6,7 @@ import { UrlBar } from "@/components/emulator/url-bar";
 import { ViewSwitcher } from "@/components/emulator/view-switcher";
 import { ScreenshotButton } from "@/components/emulator/screenshot-button";
 import { ZoomControls } from "@/components/emulator/zoom-controls";
+import { Share2 } from "lucide-react";
 
 // emulator toolbar: logo left, url bar + view/zoom center, share right.
 // 1fr/auto/1fr grid keeps the center group on the header's true horizontal
@@ -29,7 +30,8 @@ export function AppHeader() {
             size="lg"
             onClick={() => void navigator.clipboard.writeText(window.location.href)}
           >
-            Share
+            <Share2 className="sm:hidden inline" />
+            <span className="sm:inline hidden">Share</span>
           </Button>
         </div>
       </div>
