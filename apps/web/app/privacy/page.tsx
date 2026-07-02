@@ -3,7 +3,7 @@ import { LegalPage } from "@/components/legal/legal-page";
 import { PrivacyContent } from "@/components/legal/privacy-content";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — hud.xyz",
+  title: "Privacy Policy",
   description: "How hud.xyz collects, uses, and discloses personal information.",
   robots: { index: true, follow: true },
 };

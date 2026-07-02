@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Emulator from "@/components/emulator";
 
 export const metadata: Metadata = {
-  title: "Emulator — hud.xyz",
+  title: "Emulator",
   description: "hud.xyz glasses display emulator.",
 };
 
