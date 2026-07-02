@@ -3,6 +3,7 @@
 import { Logo } from "@/components/layout/logo";
 import { UrlBar } from "@/components/emulator/url-bar";
 import { ViewSwitcher } from "@/components/emulator/view-switcher";
+import { ScreenshotButton } from "@/components/emulator/screenshot-button";
 import { ShareMenu } from "@/components/emulator/share-menu";
 import { ZoomControls } from "@/components/emulator/zoom-controls";
 
@@ -23,6 +24,7 @@ export function AppHeader() {
           </div>
         </div>
         <div className="flex items-center gap-2 justify-self-end">
+          <ScreenshotButton />
           <ShareMenu />
         </div>
       </div>

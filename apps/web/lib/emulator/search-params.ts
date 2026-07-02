@@ -1,6 +1,13 @@
 import { VIEWS } from "@/lib/emulator/config";
 import type { View } from "@/lib/emulator/store";
 
+export const EMULATOR_SHARE_PATH = "https://hud.xyz/emulator";
+
+export function buildEmulatorShareUrl(appUrl?: string): string {
+  if (!appUrl) return EMULATOR_SHARE_PATH;
+  return `${EMULATOR_SHARE_PATH}?${new URLSearchParams({ url: appUrl }).toString()}`;
+}
+
 export function readEmulatorSearchSeed(): {
   view?: View;
   url?: string;
