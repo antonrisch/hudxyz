@@ -8,16 +8,16 @@ const isolation = [
   { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
 ];
 
-// first-party MRBD apps can be embedded by the isolated emulator.
-const appIsolation = [
+// first-party MRBD apps load in the emulator iframe (same-origin, el.src — not scramjet).
+const appHeaders = [
   { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
 ];
 
-const securityHeaders = [
+const baseSecurity = [
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
@@ -28,9 +28,16 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   async headers() {
     return [
-      { source: "/:path*", headers: securityHeaders },
+      {
+        source: "/apps/:path*",
+        headers: [...baseSecurity, ...appHeaders],
+      },
+      {
+        // deny external framing everywhere except /apps/* (embedded by /emulator).
+        source: "/((?!apps).*)",
+        headers: [...baseSecurity, { key: "X-Frame-Options", value: "DENY" }],
+      },
       { source: "/emulator", headers: isolation },
-      { source: "/apps/:path*", headers: appIsolation },
       { source: "/sw.js", headers: [{ key: "Service-Worker-Allowed", value: "/" }] },
     ];
   },
