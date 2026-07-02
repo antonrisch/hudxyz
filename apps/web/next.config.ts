@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 // cross-origin isolation for the scramjet wasm rewriter (SharedArrayBuffer).
 // scoped to the emulator pages so marketing routes keep loading cross-origin assets.
@@ -31,4 +32,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "hudxyz",
+  project: "web",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+  silent: !process.env.CI,
+});
