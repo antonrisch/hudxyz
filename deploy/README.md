@@ -48,6 +48,33 @@ curl -s -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" \
 
 **5. App env** — Vercel: `NEXT_PUBLIC_WISP_URL=wss://kenobi.hudbox.dev/wisp/`, then redeploy (`NEXT_PUBLIC_` is build-time).
 
+## Healthcheck (healthchecks.io)
+
+Push from kenobi — checks local wisp (no nginx Origin header needed). If the ping stops, healthchecks emails you.
+
+**1. healthchecks.io** — check name `hudxyz`, period **1 min**, grace **5 min** (tune to taste).
+
+**2. On kenobi**
+
+```sh
+scp deploy/wisp-healthcheck.sh anton@kenobi.hudbox.dev:~/wisp/
+ssh anton@kenobi.hudbox.dev 'chmod +x ~/wisp/wisp-healthcheck.sh'
+```
+
+**3. Cron** (as `anton`, `crontab -e`)
+
+```cron
+* * * * * HC_PING_URL=https://hc-ping.com/<ping-key>/hudxyz /home/anton/wisp/wisp-healthcheck.sh
+```
+
+**4. Test**
+
+```sh
+HC_PING_URL=https://hc-ping.com/<ping-key>/hudxyz ~/wisp/wisp-healthcheck.sh
+```
+
+Confirm the check flips green on healthchecks.io. Stop wisp briefly (`sudo systemctl stop wisp`) and wait past grace to verify alert, then `start` again.
+
 ## Logs
 
 wisp logs to stdout → journald (timestamped), INFO by default — every stream open + refusal. Set `WISP_LOG_LEVEL=debug` in the unit for more.
