@@ -99,4 +99,4 @@ After any production change:
 - [ ] Load a public URL in the emulator (proxy path works)
 - [ ] `/privacy` and `/terms` render
 - [ ] Sentry test event (optional) via a thrown error on preview only
-- [ ] `curl -I https://hud.xyz/privacy` shows security headers + CSP
+- [ ] `curl -I https://hud.xyz/privacy` shows security headers (HSTS, nosniff, etc.)
