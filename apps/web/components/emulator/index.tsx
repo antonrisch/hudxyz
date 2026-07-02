@@ -38,6 +38,8 @@ interface EmulatorContextValue {
   displayRef: RefObject<HTMLDivElement | null>;
   load: (raw: string) => void;
   press: (intent: Intent) => void;
+  pressDown: (intent: Intent) => void;
+  pressUp: (intent: Intent) => void;
   pressedIntents: ReadonlySet<Intent>;
   captureDisplay: () => Promise<void>;
   setView: (view: View) => void;
@@ -101,6 +103,31 @@ export default function Emulator() {
   pressRef.current = press;
 
   const [pressedIntents, setPressedIntents] = useState<ReadonlySet<Intent>>(() => new Set());
+
+  const setIntentPressed = useCallback((intent: Intent, pressed: boolean) => {
+    setPressedIntents((prev) => {
+      if (prev.has(intent) === pressed) return prev;
+      const next = new Set(prev);
+      if (pressed) next.add(intent);
+      else next.delete(intent);
+      return next;
+    });
+  }, []);
+
+  const pressDown = useCallback(
+    (intent: Intent) => {
+      setIntentPressed(intent, true);
+      press(intent);
+    },
+    [press, setIntentPressed],
+  );
+
+  const pressUp = useCallback(
+    (intent: Intent) => {
+      setIntentPressed(intent, false);
+    },
+    [setIntentPressed],
+  );
 
   const captureDisplay = useCallback(async () => {
     const { screen, status } = store.getState();
@@ -171,16 +198,6 @@ export default function Emulator() {
 
   // host keys inject into the frame; frame keys only mirror the visual pressed state.
   useMountEffect(() => {
-    const setIntentPressed = (intent: Intent, pressed: boolean) => {
-      setPressedIntents((prev) => {
-        if (prev.has(intent) === pressed) return prev;
-        const next = new Set(prev);
-        if (pressed) next.add(intent);
-        else next.delete(intent);
-        return next;
-      });
-    };
-
     const clearPressed = () => setPressedIntents((prev) => (prev.size ? new Set() : prev));
     const getIntent = (e: KeyboardEvent) => (e.isTrusted ? INTENT_BY_KEY[e.key] : undefined);
 
@@ -280,12 +297,14 @@ export default function Emulator() {
       displayRef,
       load,
       press,
+      pressDown,
+      pressUp,
       pressedIntents,
       captureDisplay,
       setView,
       panZoom,
     }),
-    [store, load, press, pressedIntents, captureDisplay, setView, panZoom],
+    [store, load, press, pressDown, pressUp, pressedIntents, captureDisplay, setView, panZoom],
   );
 
   return (
