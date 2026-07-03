@@ -2,26 +2,26 @@
 
 import type { MouseEvent, PointerEvent, ReactNode } from "react";
 import {
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
+  ArrowBigUp,
+  ArrowBigDown,
+  ArrowBigLeft,
+  ArrowBigRight,
   type LucideIcon,
-  MousePointer2,
+  Pointer,
   Undo2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator } from "@/components/emulator";
 import type { Intent } from "@/lib/emulator/store";
-import { cn } from "@/lib/utils";
+import type { VariantProps } from "class-variance-authority";
 
 type DirectionIntent = Extract<Intent, "up" | "down" | "left" | "right">;
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
 
-const dpadArm =
-  "flex size-8 items-center justify-center bg-transparent outline-none hover:bg-accent/60 active:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset";
+const dpadCell =
+  "flex size-8 items-center justify-center bg-transparent text-primary-foreground outline-none hover:bg-primary-hover active:bg-primary-active aria-pressed:bg-primary-pressed focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset";
 
 const dpadCrossPath =
   "M40 0H56Q64 0 64 8V32H88Q96 32 96 40V56Q96 64 88 64H64V88Q64 96 56 96H40Q32 96 32 88V64H8Q0 64 0 56V40Q0 32 8 32H32V8Q32 0 40 0Z";
@@ -29,10 +29,10 @@ const dpadCrossPath =
 const dpadCrossClip = `path("${dpadCrossPath}")`;
 
 const DPAD_ARMS: { intent: DirectionIntent; Icon: LucideIcon; label: string }[] = [
-  { intent: "up", Icon: ArrowUp, label: "Swipe up" },
-  { intent: "left", Icon: ArrowLeft, label: "Swipe left" },
-  { intent: "right", Icon: ArrowRight, label: "Swipe right" },
-  { intent: "down", Icon: ArrowDown, label: "Swipe down" },
+  { intent: "up", Icon: ArrowBigUp, label: "Swipe up" },
+  { intent: "left", Icon: ArrowBigLeft, label: "Swipe left" },
+  { intent: "right", Icon: ArrowBigRight, label: "Swipe right" },
+  { intent: "down", Icon: ArrowBigDown, label: "Swipe down" },
 ];
 
 const DPAD_GRID = [
@@ -40,12 +40,12 @@ const DPAD_GRID = [
   "up",
   null,
   "left",
-  "center",
+  "select",
   "right",
   null,
   "down",
   null,
-] as const satisfies readonly (DirectionIntent | "center" | null)[];
+] as const satisfies readonly (DirectionIntent | "select" | null)[];
 
 const armByIntent = Object.fromEntries(DPAD_ARMS.map((arm) => [arm.intent, arm])) as Record<
   DirectionIntent,
@@ -92,7 +92,7 @@ function DpadArm({
             aria-pressed={pressed}
             onMouseDown={dropFocus}
             {...press}
-            className={cn(dpadArm, pressed && "bg-muted")}
+            className={dpadCell}
           >
             <Icon className="size-4 shrink-0" />
           </button>
@@ -103,11 +103,31 @@ function DpadArm({
   );
 }
 
-function DpadCross({
-  pressedIntents,
-}: {
-  pressedIntents: ReadonlySet<Intent>;
-}) {
+function DpadSelect({ pressed }: { pressed?: boolean }) {
+  const press = useIntentPress("select");
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            aria-label="Select (Index pinch)"
+            aria-pressed={pressed}
+            onMouseDown={dropFocus}
+            {...press}
+            className={dpadCell}
+          >
+            <Pointer className="size-4 shrink-0" />
+          </button>
+        }
+      />
+      <TooltipContent>Select (Index pinch)</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function DpadCross({ pressedIntents }: { pressedIntents: ReadonlySet<Intent> }) {
   return (
     <div className="relative inline-block size-24">
       <svg
@@ -118,7 +138,7 @@ function DpadCross({
       >
         <path
           d={dpadCrossPath}
-          className="fill-background stroke-border"
+          className="stroke-primary"
           strokeWidth={1}
           vectorEffect="non-scaling-stroke"
         />
@@ -129,7 +149,9 @@ function DpadCross({
       >
         {DPAD_GRID.map((cell, i) => {
           if (cell === null) return <div key={i} />;
-          if (cell === "center") return <div key={i} aria-hidden className="size-8" />;
+          if (cell === "select") {
+            return <DpadSelect key={cell} pressed={pressedIntents.has("select")} />;
+          }
           const { Icon, label, intent } = armByIntent[cell];
           return (
             <DpadArm
@@ -146,18 +168,18 @@ function DpadCross({
   );
 }
 
-function ControlButton({
+function IntentButton({
   label,
   intent,
   pressed,
-  disabled,
   children,
+  variant = "default",
 }: {
   label: string;
   intent: Intent;
   pressed?: boolean;
-  disabled?: boolean;
   children: ReactNode;
+  variant?: VariantProps<typeof buttonVariants>["variant"];
 }) {
   const press = useIntentPress(intent);
 
@@ -166,14 +188,12 @@ function ControlButton({
       <TooltipTrigger
         render={
           <Button
-            variant="outline"
-            size="icon-xl"
+            variant={variant}
+            size="icon"
             aria-label={label}
             aria-pressed={pressed}
-            disabled={disabled}
             onMouseDown={dropFocus}
             {...press}
-            className={cn("hover:bg-accent/60 active:bg-accent", pressed && "bg-accent")}
           >
             {children}
           </Button>
@@ -190,20 +210,16 @@ export function Dpad() {
 
   return (
     <TooltipProvider delay={1000}>
-      <div className="pointer-events-auto flex items-center gap-6 rounded-2xl bg-muted p-2 shadow-md">
-        <ControlButton label="Back (Middle pinch)" intent="back" pressed={pressedIntents.has("back")}>
-          <Undo2 />
-        </ControlButton>
-
+      <div className="pointer-events-auto flex items-center gap-4 rounded-xl bg-muted px-2 py-1 shadow-lg">
         <DpadCross pressedIntents={pressedIntents} />
 
-        <ControlButton
-          label="Select (Index pinch)"
-          intent="select"
-          pressed={pressedIntents.has("select")}
+        <IntentButton
+          label="Back (Middle pinch)"
+          intent="back"
+          pressed={pressedIntents.has("back")}
         >
-          <MousePointer2 className="-scale-x-100" fill="currentColor" />
-        </ControlButton>
+          <Undo2 />
+        </IntentButton>
       </div>
     </TooltipProvider>
   );
