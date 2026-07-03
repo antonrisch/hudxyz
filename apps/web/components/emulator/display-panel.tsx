@@ -26,11 +26,6 @@ export function DisplayPanel() {
 
   return (
     <div className="flex flex-col gap-5 p-4">
-      <div>
-        <h2 className="font-heading text-base font-medium">Display</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">Preview how the waveguide reads.</p>
-      </div>
-
       <div className="flex flex-col gap-2">
         <Label>View</Label>
         <ViewSwitcher />

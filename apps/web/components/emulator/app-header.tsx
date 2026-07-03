@@ -4,10 +4,10 @@ import { Logo } from "@/components/layout/logo";
 import { UrlBar } from "@/components/emulator/url-bar";
 import { ScreenshotButton } from "@/components/emulator/screenshot-button";
 import { ShareMenu } from "@/components/emulator/share-menu";
-import { DisplaySheetTrigger } from "@/components/emulator/display-sidebar";
+import { DisplayPanelTrigger } from "@/components/emulator/display-sidebar";
 
 // emulator toolbar: logo left, url bar center, display + share right.
-// view / zoom / additive live in the rhs display panel (sheet below lg).
+// view / zoom / additive live in the rhs display panel (sheet below sm).
 export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 bg-background">
@@ -17,7 +17,7 @@ export function AppHeader() {
           <UrlBar />
         </div>
         <div className="flex items-center gap-2 justify-self-end">
-          <DisplaySheetTrigger />
+          <DisplayPanelTrigger />
           <ScreenshotButton />
           <ShareMenu />
         </div>

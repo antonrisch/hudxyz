@@ -1,6 +1,26 @@
 import { createStore } from "zustand/vanilla";
 import { DEFAULT_ENVIRONMENT, type EnvironmentKey } from "@/lib/emulator/environment";
 
+const DISPLAY_PANEL_OPEN_KEY = "emulator.displayPanelOpen";
+
+function readDisplayPanelOpen(): boolean {
+  try {
+    const stored = localStorage.getItem(DISPLAY_PANEL_OPEN_KEY);
+    if (stored === null) return true;
+    return stored === "true";
+  } catch {
+    return true;
+  }
+}
+
+function writeDisplayPanelOpen(open: boolean) {
+  try {
+    localStorage.setItem(DISPLAY_PANEL_OPEN_KEY, String(open));
+  } catch {
+    // storage unavailable (private browsing, etc.)
+  }
+}
+
 // headless emulator core: a DOM-free state machine. all side effects (proxy, iframe,
 // history, pan/zoom) live in the shell hooks that subscribe to this store, so the core
 // stays unit-testable in node and liftable into a package later. (pan/zoom needs DOM
@@ -22,6 +42,7 @@ export interface EmulatorState {
   additive: number; // 0 = flat dev preview, 100 = full waveguide (black reads transparent)
   environment: EnvironmentKey; // world behind the waveguide (decoupled from canvas chrome)
   lensTint: boolean; // cosmetic teal tint on the svg lenses (frames.tsx lensClassName)
+  displayPanelOpen: boolean; // rhs display panel (persisted in localStorage on sm+)
 
   setScreen: (screen: Screen) => void;
   setView: (view: View) => void;
@@ -29,6 +50,8 @@ export interface EmulatorState {
   setAdditive: (additive: number) => void;
   setEnvironment: (environment: EnvironmentKey) => void;
   setLensTint: (lensTint: boolean) => void;
+  setDisplayPanelOpen: (open: boolean) => void;
+  toggleDisplayPanel: () => void;
   requestLoad: (url: string) => void; // navigate the app surface; the proxy hook reacts
   reload: () => void; // re-navigate the current url
   appReady: () => void;
@@ -55,6 +78,7 @@ export function createEmulatorStore(seed?: Seed) {
     additive: seed?.additive ?? 0,
     environment: seed?.environment ?? DEFAULT_ENVIRONMENT,
     lensTint: seed?.lensTint ?? true,
+    displayPanelOpen: readDisplayPanelOpen(),
 
     setScreen: (screen) => set({ screen }),
     setView: (view) => set({ view }),
@@ -62,6 +86,16 @@ export function createEmulatorStore(seed?: Seed) {
     setAdditive: (additive) => set({ additive }),
     setEnvironment: (environment) => set({ environment }),
     setLensTint: (lensTint) => set({ lensTint }),
+    setDisplayPanelOpen: (open) => {
+      writeDisplayPanelOpen(open);
+      set({ displayPanelOpen: open });
+    },
+    toggleDisplayPanel: () =>
+      set((s) => {
+        const open = !s.displayPanelOpen;
+        writeDisplayPanelOpen(open);
+        return { displayPanelOpen: open };
+      }),
     requestLoad: (url) => set((s) => ({ url, status: "loading", loadToken: s.loadToken + 1 })),
     reload: () => set((s) => ({ screen: "app", status: "loading", loadToken: s.loadToken + 1 })),
     appReady: () => set({ status: "ready" }),
