@@ -2,7 +2,7 @@
 
 import { Logo } from "@/components/layout/logo";
 import { UrlBar } from "@/components/emulator/url-bar";
-import { ScreenshotButton } from "@/components/emulator/screenshot-button";
+import { FeedbackButton } from "@/components/emulator/feedback-button";
 import { ShareMenu } from "@/components/emulator/share-menu";
 import { DisplayPanelTrigger } from "@/components/emulator/display-sidebar";
 
@@ -18,7 +18,7 @@ export function AppHeader() {
         </div>
         <div className="flex items-center gap-2 justify-self-end">
           <DisplayPanelTrigger />
-          <ScreenshotButton />
+          <FeedbackButton />
           <ShareMenu />
         </div>
       </div>

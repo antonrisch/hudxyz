@@ -11,6 +11,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { ScreenshotButton } from "@/components/emulator/screenshot-button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator } from "@/components/emulator";
 import type { Intent } from "@/lib/emulator/store";
@@ -112,7 +113,7 @@ function DpadSelect({ pressed }: { pressed?: boolean }) {
         render={
           <button
             type="button"
-            aria-label="Select (Index pinch)"
+            aria-label="Enter"
             aria-pressed={pressed}
             onMouseDown={dropFocus}
             {...press}
@@ -122,7 +123,7 @@ function DpadSelect({ pressed }: { pressed?: boolean }) {
           </button>
         }
       />
-      <TooltipContent>Select (Index pinch)</TooltipContent>
+      <TooltipContent>Enter</TooltipContent>
     </Tooltip>
   );
 }
@@ -211,10 +212,12 @@ export function Dpad() {
   return (
     <TooltipProvider delay={1000}>
       <div className="pointer-events-auto flex items-center gap-4 rounded-xl bg-muted px-2 py-1 shadow-lg">
+        <ScreenshotButton />
+
         <DpadCross pressedIntents={pressedIntents} />
 
         <IntentButton
-          label="Back (Middle pinch)"
+          label="Esc"
           intent="back"
           pressed={pressedIntents.has("back")}
         >

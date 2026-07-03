@@ -28,77 +28,85 @@ export function DisplayPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-3">
-      <div className="text-md leading-snug">
-        <p className="font-semibold">{DEVICE_MODEL}</p>
-        <p className="text-sm font-medium text-muted-foreground">Emulator</p>
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <Label>Mode</Label>
-        <ViewSwitcher />
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <Label>Zoom</Label>
-        <ZoomControls />
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <Label htmlFor="lens-tint">Lens tint</Label>
-        <div className="flex h-9 items-center">
-          <Switch
-            id="lens-tint"
-            checked={lensTint}
-            onCheckedChange={(checked) => {
-              store.getState().setLensTint(checked);
-              void setLensTintParam(checked);
-            }}
-            aria-label="Lens tint"
-          />
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-3 p-3">
+        <div className="text-md leading-snug">
+          <p className="font-semibold">{DEVICE_MODEL}</p>
+          <p className="text-sm font-medium text-muted-foreground">Emulator</p>
         </div>
       </div>
 
       <Separator />
 
-      <div className="flex items-center justify-between gap-2">
-        <Label>Environment</Label>
-        <EnvironmentPicker />
+      <div className="flex flex-col gap-3 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <Label>Mode</Label>
+          <ViewSwitcher />
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <Label>Zoom</Label>
+          <ZoomControls />
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="lens-tint">Lens tint</Label>
+          <div className="flex h-9 items-center">
+            <Switch
+              id="lens-tint"
+              checked={lensTint}
+              onCheckedChange={(checked) => {
+                store.getState().setLensTint(checked);
+                void setLensTintParam(checked);
+              }}
+              aria-label="Lens tint"
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-2">
-          <div className="flex items-center gap-1.5">
-            <Label htmlFor="additive-slider">Display Transparency</Label>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type="button"
-                    aria-label="About display transparency"
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <Info className="size-3.5" />
-                  </button>
-                }
-              />
-              <TooltipContent className="max-w-56 text-pretty">
-                Black reads transparent on the waveguide. Slide up to add the environment through
-                the display.
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <span className="text-sm tabular-nums text-muted-foreground">{additive}%</span>
+      <Separator />
+
+      <div className="flex flex-col gap-3 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <Label>Environment</Label>
+          <EnvironmentPicker />
         </div>
-        <Slider
-          id="additive-slider"
-          value={[additive]}
-          onValueChange={(vals) => {
-            const next = Array.isArray(vals) ? vals[0] : vals;
-            if (next != null) setAdditive(next);
-          }}
-          aria-label="Display transparency"
-        />
+
+        <div className="flex flex-col gap-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="additive-slider">Display Transparency</Label>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      aria-label="About display transparency"
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Info className="size-3.5" />
+                    </button>
+                  }
+                />
+                <TooltipContent className="max-w-56 text-pretty">
+                  Black reads transparent on the waveguide. Slide up to add the environment through
+                  the display.
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <span className="text-sm tabular-nums text-muted-foreground">{additive}%</span>
+          </div>
+          <Slider
+            id="additive-slider"
+            value={[additive]}
+            onValueChange={(vals) => {
+              const next = Array.isArray(vals) ? vals[0] : vals;
+              if (next != null) setAdditive(next);
+            }}
+            aria-label="Display transparency"
+          />
+        </div>
       </div>
     </div>
   );
