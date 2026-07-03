@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import NextError from "next/error";
+import { isSentryEnabled } from "@/lib/sentry-enabled";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
 export default function GlobalError({
@@ -10,7 +11,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
 }) {
   useMountEffect(() => {
-    Sentry.captureException(error);
+    if (isSentryEnabled) Sentry.captureException(error);
   });
 
   return (

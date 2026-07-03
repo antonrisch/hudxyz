@@ -51,11 +51,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  org: "hudxyz",
-  project: "web",
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  widenClientFileUpload: true,
-  tunnelRoute: "/monitoring",
-  silent: !process.env.CI,
-});
+export default process.env.NODE_ENV === "development"
+  ? nextConfig
+  : withSentryConfig(nextConfig, {
+      org: "hudxyz",
+      project: "web",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      widenClientFileUpload: true,
+      tunnelRoute: "/monitoring",
+      silent: !process.env.CI,
+    });
