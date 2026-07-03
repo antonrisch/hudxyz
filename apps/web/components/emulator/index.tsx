@@ -90,20 +90,46 @@ export default function Emulator({ seed }: { seed: Seed }) {
 
   // inject a d-pad gesture. app mode -> dispatch the mapped key into the proxied frame's
   // realm so its listeners accept it. os mode -> drive the baby os (stub seam).
-  const press = useCallback(
-    (intent: Intent) => {
+  const dispatchIntent = useCallback(
+    (intent: Intent, type: "keydown" | "keyup") => {
       if (store.getState().screen !== "app") return; // os input lands here later
+      const iframe = iframeRef.current;
       const win = iframeRef.current?.contentWindow;
       if (!win) return;
       try {
+        iframe?.focus();
+
+        const doc = win.document;
+        const HTMLElementCtor = (win as Window & { HTMLElement: typeof HTMLElement }).HTMLElement;
+        const active = doc.activeElement instanceof HTMLElementCtor ? doc.activeElement : null;
+        const target =
+          active && active !== doc.body && active !== doc.documentElement
+            ? active
+            : doc.querySelector<HTMLElement>(".screen.active .focusable") ??
+              doc.querySelector<HTMLElement>("#game-canvas") ??
+              doc.querySelector<HTMLElement>(".screen.active .screen-content") ??
+              doc.body ??
+              doc.documentElement;
+
+        target?.focus?.({ preventScroll: true });
+
         const Ev = (win as Window & { KeyboardEvent: typeof KeyboardEvent }).KeyboardEvent;
         const key = KEY_BY_INTENT[intent];
-        win.document.dispatchEvent(new Ev("keydown", { key, bubbles: true, cancelable: true }));
+        const handled = !target.dispatchEvent(new Ev(type, { key, bubbles: true, cancelable: true }));
+        const activatable = target.matches(
+          'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="menuitem"]',
+        );
+        if (type === "keydown" && intent === "select" && !handled && activatable) target.click?.();
       } catch {
         // frame not loaded / not same-origin yet
       }
     },
     [store],
+  );
+
+  const press = useCallback(
+    (intent: Intent) => dispatchIntent(intent, "keydown"),
+    [dispatchIntent],
   );
 
   const pressRef = useRef(press);
@@ -132,8 +158,9 @@ export default function Emulator({ seed }: { seed: Seed }) {
   const pressUp = useCallback(
     (intent: Intent) => {
       setIntentPressed(intent, false);
+      dispatchIntent(intent, "keyup");
     },
-    [setIntentPressed],
+    [dispatchIntent, setIntentPressed],
   );
 
   const captureDisplay = useCallback(async () => {
