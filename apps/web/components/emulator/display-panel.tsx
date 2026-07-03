@@ -29,12 +29,7 @@ export function DisplayPanel() {
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-3 p-3">
-        <div className="text-md leading-snug">
-          <p className="font-semibold">{DEVICE_MODEL}</p>
-          <p className="text-sm font-medium text-muted-foreground">Emulator</p>
-        </div>
-      </div>
+      <h2 className="p-3 text-md leading-snug font-semibold">{DEVICE_MODEL} Emulator</h2>
 
       <Separator />
 
@@ -90,8 +85,8 @@ export function DisplayPanel() {
                   }
                 />
                 <TooltipContent className="max-w-56 text-pretty">
-                  Black reads transparent on the waveguide. Slide up to add the environment through
-                  the display.
+                  The display is additive — dark areas effectively disappear. Slide up to blend the
+                  environment into the preview.
                 </TooltipContent>
               </Tooltip>
             </div>

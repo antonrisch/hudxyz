@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { DisplayPanel } from "@/components/emulator/display-panel";
+import { FEEDBACK_MAILTO } from "@/components/emulator/feedback-button";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { legal } from "@/lib/legal/config";
 import { cn } from "@/lib/utils";
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
@@ -26,12 +26,10 @@ function DisplaySidebarFooter() {
       <Separator />
       <nav aria-label="Site" className="p-3 text-xs text-muted-foreground">
         <a
-          href={legal.siteUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={FEEDBACK_MAILTO}
           className="font-medium text-foreground hover:underline underline-offset-4"
         >
-          hud.xyz
+          Contact
         </a>
         {" · "}
         <Link href="/privacy" className="hover:text-foreground hover:underline underline-offset-4">
