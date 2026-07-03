@@ -29,7 +29,7 @@ function DisplaySidebarFooter() {
           href={FEEDBACK_MAILTO}
           className="font-medium text-foreground hover:underline underline-offset-4"
         >
-          Contact
+          antonhudxyz@gmail.com
         </a>
         {" · "}
         <Link href="/privacy" className="hover:text-foreground hover:underline underline-offset-4">
@@ -71,10 +71,10 @@ export function DisplayPanelTrigger() {
             <Button
               type="button"
               variant="outline"
-              size="icon-lg"
+              size="lg"
               aria-label="Display settings"
               onMouseDown={dropFocus}
-              className="sm:hidden"
+              className="size-10 px-0 sm:hidden"
             >
               <PanelRight />
             </Button>
@@ -95,12 +95,12 @@ export function DisplayPanelTrigger() {
       <Button
         type="button"
         variant="outline"
-        size="icon-lg"
+        size="lg"
         aria-label={open ? "Hide display panel" : "Show display panel"}
         aria-pressed={open}
         onMouseDown={dropFocus}
         onClick={() => store.getState().toggleDisplayPanel()}
-        className={cn("hidden sm:inline-flex", open && "bg-muted")}
+        className={cn("hidden size-10 px-0 sm:inline-flex", open && "bg-muted")}
       >
         <PanelRight />
       </Button>
