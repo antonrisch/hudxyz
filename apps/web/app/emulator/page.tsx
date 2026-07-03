@@ -5,7 +5,8 @@ import { loadEmulatorSearchParams, seedFromParams } from "@/lib/emulator/search-
 
 export const metadata: Metadata = {
   title: "Emulator",
-  description: "hud.xyz glasses display emulator.",
+  description:
+    "Preview Meta Ray-Ban Display web apps in a 600x600 emulator with D-pad controls. No glasses required.",
 };
 
 export default async function EmulatorPage({
