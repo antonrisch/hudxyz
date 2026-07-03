@@ -2,11 +2,12 @@
 
 import { useRef, useState, type MouseEvent } from "react";
 import { useQueryState } from "nuqs";
-import { ArrowUpRight, RotateCw, X } from "lucide-react";
+import { RotateCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
+import { DIRECTORY_MAILTO } from "@/components/emulator/feedback-button";
 import { SUGGESTED_APPS } from "@/lib/emulator/config";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { emulatorParsers } from "@/lib/emulator/search-params";
@@ -60,7 +61,7 @@ export function UrlBar() {
               e.preventDefault();
               e.currentTarget.form?.requestSubmit();
             }}
-            placeholder="https://my-mrbd-app.com"
+            placeholder="Enter any URL (e.g. https://my-mrbd-app.com)"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
@@ -102,36 +103,37 @@ export function UrlBar() {
         </form>
       </div>
 
-      <div className="pointer-events-none absolute top-full right-0 left-0 z-50 hidden overflow-hidden rounded-b-xl border-border border-b border-l border-r p-1 bg-muted group-focus-within:pointer-events-auto group-focus-within:block">
-        {SUGGESTED_APPS.map((app) => (
-          <div key={app.url} className="flex items-center rounded-lg hover:bg-input">
-            <button
-              type="button"
-              className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left text-sm"
-              onMouseDown={dropFocus}
-              onClick={() => selectUrl(app.url)}
-            >
-              <img src={app.iconUrl} alt="" className="size-5 shrink-0 rounded-sm object-cover" />
-              <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                <span className="shrink-0">{app.name}</span>
-                <span title={app.url} className="max-w-40 truncate text-muted-foreground">
-                  {app.url}
-                </span>
-              </div>
-            </button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="mr-1 shrink-0"
-              aria-label={`Open ${app.name} in a new tab`}
-              onMouseDown={dropFocus}
-              onClick={() => window.open(app.url, "_blank", "noopener,noreferrer")}
-            >
-              <ArrowUpRight />
-            </Button>
-          </div>
-        ))}
+      <div className="pointer-events-none absolute top-full right-0 left-0 z-50 hidden overflow-hidden rounded-b-xl border-border border-b border-l border-r bg-muted group-focus-within:pointer-events-auto group-focus-within:block">
+        <div className="p-1">
+          {SUGGESTED_APPS.map((app) => (
+            <div key={app.url} className="flex items-center rounded-lg hover:bg-input">
+              <button
+                type="button"
+                className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left text-sm"
+                onMouseDown={dropFocus}
+                onClick={() => selectUrl(app.url)}
+              >
+                <img src={app.iconUrl} alt="" className="size-5 shrink-0 rounded-sm object-cover" />
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <span className="shrink-0">{app.name}</span>
+                  <span title={app.url} className="max-w-48 truncate text-muted-foreground">
+                    {app.url}
+                  </span>
+                </div>
+              </button>
+            </div>
+          ))}
+        </div>
+        <p className="border-t border-border px-3 py-2 text-xs leading-snug text-muted-foreground">
+          Know an app we should add?{" "}
+          <a
+            href={DIRECTORY_MAILTO}
+            className="font-medium text-foreground hover:underline underline-offset-4"
+            onMouseDown={dropFocus}
+          >
+            Request
+          </a>
+        </p>
       </div>
     </div>
   );

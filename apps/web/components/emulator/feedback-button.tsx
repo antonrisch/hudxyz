@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
 
-export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("MRBD Emulator Feedback")}`;
+export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz emulator feedback")}`;
+export const DIRECTORY_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz app directory request")}`;
 
 export function FeedbackButton({ className }: { className?: string }) {
   return (

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40" role="img" aria-label="tools">
+  <defs>
+    <linearGradient id="g_tools" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5ad7ff"/>
+      <stop offset="1" stop-color="#1a6db5"/>
+    </linearGradient>
+    <mask id="wrenchjaw_tools">
+      <rect x="0" y="0" width="40" height="40" fill="#fff"/>
+      <!-- U-shaped open mouth cut into the top of the head -->
+      <path d="M17.2 3.5 H22.8 V10.4 a2.8 2.8 0 0 1 -5.6 0 Z" fill="#000"/>
+    </mask>
+  </defs>
+  <rect x="0" y="0" width="40" height="40" rx="9" fill="url(#g_tools)"/>
+  <path d="M0 14 V9 a9 9 0 0 1 9 -9 H31 a9 9 0 0 1 9 9 V14 a30 30 0 0 0 -40 0 Z" fill="#ffffff" opacity="0.14"/>
+
+  <!-- screwdriver: bottom-left to top-right -->
+  <g transform="rotate(45 20 20)" fill="#ffffff" opacity="0.8">
+    <rect x="17.6" y="6.4" width="4.8" height="7.4" rx="1.5"/>
+    <rect x="18.4" y="13" width="3.2" height="12.8"/>
+    <path d="M18.4 25.8 H21.6 L21.1 31.2 H18.9 Z"/>
+  </g>
+
+  <!-- wrench: top-left to bottom-right -->
+  <g transform="rotate(-45 20 20)" fill="#ffffff">
+    <rect x="18" y="13.5" width="4" height="15.5" rx="2"/>
+    <circle cx="20" cy="10.6" r="5.4" mask="url(#wrenchjaw_tools)"/>
+  </g>
+
+  <rect x="0.6" y="0.6" width="38.8" height="38.8" rx="8.6" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1"/>
+</svg>

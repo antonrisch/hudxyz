@@ -71,12 +71,33 @@ export type SuggestedApp = {
   iconUrl: string;
 };
 
+// icons are same-origin (/public) — /emulator sets COEP require-corp, which blocks
+// cross-origin images without CORP.
 export const SUGGESTED_APPS = [
   {
     name: "Snake game",
     url: "https://hud.xyz/apps/snake",
-    // same-origin: /emulator sets COEP require-corp, which blocks cross-origin images without CORP.
     iconUrl: "/icon.svg",
+  },
+  {
+    name: "Block Stack",
+    url: "https://ikkou.jp/MRBD/apps/block-stack/",
+    iconUrl: "/suggested-apps/block-stack.png",
+  },
+  {
+    name: "Alpha Tab",
+    url: "https://argustab.awfullynice.app",
+    iconUrl: "/suggested-apps/alpha-tab.png",
+  },
+  {
+    name: "Utility Tools",
+    url: "https://herald.ascents.gg/a/tools/",
+    iconUrl: "/suggested-apps/tools.svg",
+  },
+  {
+    name: "Texas Holdem Poker",
+    url: "https://displayholdem.onrender.com",
+    iconUrl: "/suggested-apps/texas-holdem.png",
   },
 ] as const satisfies ReadonlyArray<SuggestedApp>;
 
