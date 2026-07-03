@@ -96,9 +96,9 @@
   --volt: #ceff00;
   --teal: #1cb6ac;
 
-  /* device canvas */
-  --canvas-from: #325269; /* backdrop gradient (top) */
-  --canvas-to: #bac4c7; /* backdrop gradient (bottom) */
+  /* device canvas (default daylight; emulator overrides per environment) */
+  --canvas-from: #d4e4ec;
+  --canvas-to: #d4e4ec;
   --canvas-frame-lens: #1cb6ac;
   --canvas-frame: oklch(0.145 0 0);
   --canvas-frame-temple: oklch(0.205 0 0);

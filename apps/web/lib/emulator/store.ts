@@ -1,4 +1,5 @@
 import { createStore } from "zustand/vanilla";
+import { DEFAULT_ENVIRONMENT, type EnvironmentKey } from "@/lib/emulator/environment";
 
 // headless emulator core: a DOM-free state machine. all side effects (proxy, iframe,
 // history, pan/zoom) live in the shell hooks that subscribe to this store, so the core
@@ -18,10 +19,16 @@ export interface EmulatorState {
   url: string; // address-bar text / current app url
   status: Status;
   loadToken: number; // bump to (re)trigger a navigation; lets reload re-fire on the same url
+  additive: number; // 0 = flat dev preview, 100 = full waveguide (black reads transparent)
+  environment: EnvironmentKey; // world behind the waveguide (decoupled from canvas chrome)
+  lensTint: boolean; // cosmetic teal tint on the svg lenses (frames.tsx lensClassName)
 
   setScreen: (screen: Screen) => void;
   setView: (view: View) => void;
   setUrl: (url: string) => void;
+  setAdditive: (additive: number) => void;
+  setEnvironment: (environment: EnvironmentKey) => void;
+  setLensTint: (lensTint: boolean) => void;
   requestLoad: (url: string) => void; // navigate the app surface; the proxy hook reacts
   reload: () => void; // re-navigate the current url
   appReady: () => void;
@@ -31,7 +38,12 @@ export interface EmulatorState {
 
 export type EmulatorStore = ReturnType<typeof createEmulatorStore>;
 
-type Seed = Partial<Pick<EmulatorState, "screen" | "view" | "url" | "status" | "loadToken">>;
+type Seed = Partial<
+  Pick<
+    EmulatorState,
+    "screen" | "view" | "url" | "status" | "loadToken" | "additive" | "environment" | "lensTint"
+  >
+>;
 
 export function createEmulatorStore(seed?: Seed) {
   return createStore<EmulatorState>()((set) => ({
@@ -40,10 +52,16 @@ export function createEmulatorStore(seed?: Seed) {
     url: seed?.url ?? "",
     status: seed?.status ?? "idle",
     loadToken: seed?.loadToken ?? 0,
+    additive: seed?.additive ?? 0,
+    environment: seed?.environment ?? DEFAULT_ENVIRONMENT,
+    lensTint: seed?.lensTint ?? true,
 
     setScreen: (screen) => set({ screen }),
     setView: (view) => set({ view }),
     setUrl: (url) => set({ url }),
+    setAdditive: (additive) => set({ additive }),
+    setEnvironment: (environment) => set({ environment }),
+    setLensTint: (lensTint) => set({ lensTint }),
     requestLoad: (url) => set((s) => ({ url, status: "loading", loadToken: s.loadToken + 1 })),
     reload: () => set((s) => ({ screen: "app", status: "loading", loadToken: s.loadToken + 1 })),
     appReady: () => set({ status: "ready" }),

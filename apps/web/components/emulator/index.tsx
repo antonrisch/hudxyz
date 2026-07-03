@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type RefObject,
 } from "react";
 import { useStore } from "zustand";
@@ -18,7 +19,8 @@ import {
   type View,
 } from "@/lib/emulator/store";
 import { INTENT_BY_KEY, KEY_BY_INTENT } from "@/lib/emulator/config";
-import { readEmulatorSearchSeed, syncViewToUrl } from "@/lib/emulator/search-params";
+import { environmentByKey } from "@/lib/emulator/environment";
+import { readEmulatorSearchSeed, syncSearchParam } from "@/lib/emulator/search-params";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
@@ -26,6 +28,7 @@ import type { Frame } from "@mercuryworkshop/scramjet-controller";
 import { AppHeader } from "@/components/emulator/app-header";
 import { Dpad } from "@/components/emulator/dpad";
 import { Device } from "@/components/emulator/device";
+import { DisplaySidebar } from "@/components/emulator/display-sidebar";
 import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
 import { downloadDisplay } from "@/lib/emulator/capture";
 
@@ -67,6 +70,7 @@ export default function Emulator() {
   const displayRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
   const view = useStore(store, (s) => s.view);
+  const environment = environmentByKey(useStore(store, (s) => s.environment));
   const panZoom = usePanZoom(view);
   const panZoomRef = useRef(panZoom);
   panZoomRef.current = panZoom;
@@ -146,7 +150,7 @@ export default function Emulator() {
     (next: View) => {
       const same = store.getState().view === next;
       store.getState().setView(next);
-      syncViewToUrl(next);
+      syncSearchParam("view", next, "glasses");
       if (same) panZoomRef.current.reset(next);
     },
     [store],
@@ -312,12 +316,26 @@ export default function Emulator() {
       <div className="flex min-h-0 flex-1 flex-col">
         <AppHeader />
 
-        {/* device canvas fills the rest; the d-pad is a floating panel over the bottom edge. */}
-        <div className="relative mx-2 mb-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-linear-to-b from-canvas-from to-canvas-to">
-          <Device />
-          <div className="pointer-events-none absolute inset-x-0 bottom-2.5 flex justify-center px-4">
-            <Dpad />
+        <div className="mx-2 mb-2 flex min-h-0 flex-1 gap-2 overflow-hidden">
+          {/* device canvas; the d-pad is a floating panel over the bottom edge. the active
+              environment preset drives the stage gradient AND the lens color (one palette,
+              applied as css vars consumed here and in device.tsx). */}
+          <div
+            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-linear-to-b from-canvas-from to-canvas-to"
+            style={
+              {
+                "--canvas-from": environment.color,
+                "--canvas-to": environment.color,
+                "--env-color": environment.color,
+              } as CSSProperties
+            }
+          >
+            <Device />
+            <div className="pointer-events-none absolute inset-x-0 bottom-2.5 z-20 flex justify-center px-4">
+              <Dpad />
+            </div>
           </div>
+          <DisplaySidebar />
         </div>
       </div>
     </EmulatorContext.Provider>

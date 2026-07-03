@@ -1,4 +1,5 @@
 import { VIEWS } from "@/lib/emulator/config";
+import { isEnvironmentKey, type EnvironmentKey } from "@/lib/emulator/environment";
 import type { View } from "@/lib/emulator/store";
 
 export const EMULATOR_SHARE_PATH = "https://hud.xyz/emulator";
@@ -13,6 +14,9 @@ export function readEmulatorSearchSeed(): {
   url?: string;
   loadToken?: number;
   status?: "loading";
+  additive?: number;
+  environment?: EnvironmentKey;
+  lensTint?: boolean;
 } {
   if (typeof window === "undefined") return {};
   const p = new URLSearchParams(window.location.search);
@@ -25,13 +29,22 @@ export function readEmulatorSearchSeed(): {
     seed.loadToken = 1;
     seed.status = "loading";
   }
+  const a = p.get("additive");
+  if (a != null) {
+    const n = Number.parseInt(a, 10);
+    if (Number.isFinite(n)) seed.additive = Math.min(100, Math.max(0, n));
+  }
+  const e = p.get("environment");
+  if (e && isEnvironmentKey(e)) seed.environment = e;
+  if (p.get("lensTint") === "0") seed.lensTint = false;
   return seed;
 }
 
-export function syncViewToUrl(view: View) {
+// mirror a display setting into the query string; the default value keeps the url clean.
+export function syncSearchParam(key: string, value: string, defaultValue: string) {
   const p = new URLSearchParams(window.location.search);
-  if (view === "glasses") p.delete("view");
-  else p.set("view", view);
+  if (value === defaultValue) p.delete(key);
+  else p.set(key, value);
   const qs = p.toString();
   window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
 }
