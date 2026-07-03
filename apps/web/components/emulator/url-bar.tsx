@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type MouseEvent } from "react";
+import { useQueryState } from "nuqs";
 import { ArrowUpRight, RotateCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { SUGGESTED_APPS } from "@/lib/emulator/config";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
+import { emulatorParsers } from "@/lib/emulator/search-params";
 
 // keep controls from taking focus so physical d-pad keys stay live
 const dropFocus = (e: MouseEvent) => e.preventDefault();
@@ -16,6 +18,7 @@ const dropFocus = (e: MouseEvent) => e.preventDefault();
 export function UrlBar() {
   const { store, load } = useEmulator();
   const url = useEmulatorState((s) => s.url);
+  const [, setUrlParam] = useQueryState("url", emulatorParsers.url);
   const inputRef = useRef<HTMLInputElement>(null);
   const [reloadSpin, setReloadSpin] = useState(0);
 
@@ -29,6 +32,7 @@ export function UrlBar() {
 
     store.getState().setUrl(nextUrl);
     load(nextUrl);
+    void setUrlParam(nextUrl);
     (document.activeElement as HTMLElement | null)?.blur();
     return true;
   };
@@ -73,6 +77,7 @@ export function UrlBar() {
               onMouseDown={dropFocus}
               onClick={() => {
                 store.getState().setUrl("");
+                void setUrlParam(null);
                 inputRef.current?.focus();
               }}
             >

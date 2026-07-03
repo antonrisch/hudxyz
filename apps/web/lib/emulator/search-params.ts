@@ -1,6 +1,13 @@
+import {
+  createLoader,
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+} from "nuqs/server";
 import { VIEWS } from "@/lib/emulator/config";
-import { isEnvironmentKey, type EnvironmentKey } from "@/lib/emulator/environment";
-import type { View } from "@/lib/emulator/store";
+import { DEFAULT_ENVIRONMENT, ENVIRONMENTS } from "@/lib/emulator/environment";
+import type { Seed, View } from "@/lib/emulator/store";
 
 export const EMULATOR_SHARE_PATH = "https://hud.xyz/emulator";
 
@@ -9,42 +16,41 @@ export function buildEmulatorShareUrl(appUrl?: string): string {
   return `${EMULATOR_SHARE_PATH}?${new URLSearchParams({ url: appUrl }).toString()}`;
 }
 
-export function readEmulatorSearchSeed(): {
-  view?: View;
-  url?: string;
-  loadToken?: number;
-  status?: "loading";
-  additive?: number;
-  environment?: EnvironmentKey;
-  lensTint?: boolean;
-} {
-  if (typeof window === "undefined") return {};
-  const p = new URLSearchParams(window.location.search);
-  const seed: ReturnType<typeof readEmulatorSearchSeed> = {};
-  const v = p.get("view");
-  if (v && VIEWS.some((x) => x.key === v)) seed.view = v as View;
-  const u = p.get("url");
-  if (u) {
-    seed.url = u;
+const VIEW_KEYS = VIEWS.map((v) => v.key);
+const ENVIRONMENT_KEYS = ENVIRONMENTS.map((e) => e.key);
+
+// url <-> emulator state contract. these parsers are the single source of truth for both
+// the initial (server-parsed) seed and the client-side writes, so ssr and hydration agree.
+// nuqs clears a param when it equals its default, keeping shared urls clean.
+export const emulatorParsers = {
+  view: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
+  url: parseAsString.withDefault(""),
+  additive: parseAsInteger.withDefault(0),
+  environment: parseAsStringLiteral(ENVIRONMENT_KEYS).withDefault(DEFAULT_ENVIRONMENT),
+  lensTint: parseAsBoolean.withDefault(true),
+};
+
+// server-side reader: parse Next's searchParams (a promise in app router) into typed values.
+export const loadEmulatorSearchParams = createLoader(emulatorParsers);
+
+// turn parsed url params into the store's initial state. a deep-linked ?url= arms a load.
+export function seedFromParams(params: {
+  view: View;
+  url: string;
+  additive: number;
+  environment: (typeof ENVIRONMENT_KEYS)[number];
+  lensTint: boolean;
+}): Seed {
+  const seed: Seed = {
+    view: params.view,
+    additive: Math.min(100, Math.max(0, params.additive)),
+    environment: params.environment,
+    lensTint: params.lensTint,
+  };
+  if (params.url) {
+    seed.url = params.url;
     seed.loadToken = 1;
     seed.status = "loading";
   }
-  const a = p.get("additive");
-  if (a != null) {
-    const n = Number.parseInt(a, 10);
-    if (Number.isFinite(n)) seed.additive = Math.min(100, Math.max(0, n));
-  }
-  const e = p.get("environment");
-  if (e && isEnvironmentKey(e)) seed.environment = e;
-  if (p.get("lensTint") === "0") seed.lensTint = false;
   return seed;
-}
-
-// mirror a display setting into the query string; the default value keeps the url clean.
-export function syncSearchParam(key: string, value: string, defaultValue: string) {
-  const p = new URLSearchParams(window.location.search);
-  if (value === defaultValue) p.delete(key);
-  else p.set(key, value);
-  const qs = p.toString();
-  window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
 }

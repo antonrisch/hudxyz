@@ -7,18 +7,21 @@ import { Switch } from "@/components/ui/switch";
 import { EnvironmentPicker } from "@/components/emulator/environment-picker";
 import { ViewSwitcher } from "@/components/emulator/view-switcher";
 import { ZoomControls } from "@/components/emulator/zoom-controls";
+import { useQueryState } from "nuqs";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { syncSearchParam } from "@/lib/emulator/search-params";
+import { emulatorParsers } from "@/lib/emulator/search-params";
 
 // display preview controls: view, zoom, and additive blend (shared by the rhs panel + mobile sheet).
 export function DisplayPanel() {
   const { store } = useEmulator();
   const additive = useEmulatorState((s) => s.additive);
   const lensTint = useEmulatorState((s) => s.lensTint);
+  const [, setAdditiveParam] = useQueryState("additive", emulatorParsers.additive);
+  const [, setLensTintParam] = useQueryState("lensTint", emulatorParsers.lensTint);
 
   const setAdditive = (next: number) => {
     store.getState().setAdditive(next);
-    syncSearchParam("additive", String(next), "0");
+    void setAdditiveParam(next);
   };
 
   return (
@@ -40,7 +43,7 @@ export function DisplayPanel() {
           checked={lensTint}
           onCheckedChange={(checked) => {
             store.getState().setLensTint(checked);
-            syncSearchParam("lensTint", checked ? "1" : "0", "1");
+            void setLensTintParam(checked);
           }}
           aria-label="Lens tint"
         />

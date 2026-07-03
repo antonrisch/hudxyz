@@ -10,17 +10,19 @@ import {
   type CSSProperties,
   type RefObject,
 } from "react";
+import { useQueryState } from "nuqs";
 import { useStore } from "zustand";
 import {
   createEmulatorStore,
   type EmulatorState,
   type EmulatorStore,
   type Intent,
+  type Seed,
   type View,
 } from "@/lib/emulator/store";
 import { INTENT_BY_KEY, KEY_BY_INTENT } from "@/lib/emulator/config";
 import { environmentByKey } from "@/lib/emulator/environment";
-import { readEmulatorSearchSeed, syncSearchParam } from "@/lib/emulator/search-params";
+import { emulatorParsers } from "@/lib/emulator/search-params";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
@@ -63,9 +65,10 @@ export function useEmulatorState<T>(selector: (s: EmulatorState) => T): T {
 }
 
 // -- root ---------------------------------------------------
-export default function Emulator() {
+export default function Emulator({ seed }: { seed: Seed }) {
   const storeRef = useRef<EmulatorStore>(undefined);
-  const store = (storeRef.current ??= createEmulatorStore(readEmulatorSearchSeed()));
+  const store = (storeRef.current ??= createEmulatorStore(seed));
+  const [, setViewParam] = useQueryState("view", emulatorParsers.view);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
@@ -150,10 +153,10 @@ export default function Emulator() {
     (next: View) => {
       const same = store.getState().view === next;
       store.getState().setView(next);
-      syncSearchParam("view", next, "glasses");
+      void setViewParam(next);
       if (same) panZoomRef.current.reset(next);
     },
-    [store],
+    [store, setViewParam],
   );
 
   // proxy navigation: react to loadToken (bumped by requestLoad/launchApp/reload).

@@ -38,7 +38,7 @@ export interface EmulatorState {
 
 export type EmulatorStore = ReturnType<typeof createEmulatorStore>;
 
-type Seed = Partial<
+export type Seed = Partial<
   Pick<
     EmulatorState,
     "screen" | "view" | "url" | "status" | "loadToken" | "additive" | "environment" | "lensTint"

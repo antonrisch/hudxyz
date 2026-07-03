@@ -1,6 +1,7 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Archivo, JetBrains_Mono } from "next/font/google";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,7 @@ export default function RootLayout({
       className={cn("antialiased", archivo.variable, jetbrainsMono.variable, "font-sans")}
     >
       <body className="flex min-h-svh flex-col">
-        {children}
+        <NuqsAdapter>{children}</NuqsAdapter>
         <Toaster />
         {process.env.NODE_ENV === "production" && <Analytics />}
         {process.env.NODE_ENV === "development" && (

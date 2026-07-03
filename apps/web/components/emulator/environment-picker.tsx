@@ -1,20 +1,22 @@
 "use client";
 
 import type { MouseEvent } from "react";
+import { useQueryState } from "nuqs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { DEFAULT_ENVIRONMENT, ENVIRONMENTS, type EnvironmentKey } from "@/lib/emulator/environment";
-import { syncSearchParam } from "@/lib/emulator/search-params";
+import { ENVIRONMENTS, type EnvironmentKey } from "@/lib/emulator/environment";
+import { emulatorParsers } from "@/lib/emulator/search-params";
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
 
 export function EnvironmentPicker() {
   const { store } = useEmulator();
   const environment = useEmulatorState((s) => s.environment);
+  const [, setEnvironmentParam] = useQueryState("environment", emulatorParsers.environment);
 
   const setEnvironment = (next: EnvironmentKey) => {
     store.getState().setEnvironment(next);
-    syncSearchParam("environment", next, DEFAULT_ENVIRONMENT);
+    void setEnvironmentParam(next);
   };
 
   return (
