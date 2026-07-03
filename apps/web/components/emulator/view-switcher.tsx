@@ -16,13 +16,13 @@ export function ViewSwitcher() {
   return (
     <ToggleGroup
       variant="outline"
-      aria-label="Display view"
+      aria-label="Display mode"
       value={[view]}
       onValueChange={(vals) => {
         const next = vals[0];
         if (next) setView(next as View); // ignore deselect so a view is always active
       }}
-      className="p-0.5 gap-1 border rounded-xl bg-muted"
+      className="gap-0.5 rounded-xl border bg-muted p-0.5"
     >
       {VIEWS.map((v) => (
         <ToggleGroupItem

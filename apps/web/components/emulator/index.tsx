@@ -68,7 +68,7 @@ export function useEmulatorState<T>(selector: (s: EmulatorState) => T): T {
 export default function Emulator({ seed }: { seed: Seed }) {
   const storeRef = useRef<EmulatorStore>(undefined);
   const store = (storeRef.current ??= createEmulatorStore(seed));
-  const [, setViewParam] = useQueryState("view", emulatorParsers.view);
+  const [, setModeParam] = useQueryState("mode", emulatorParsers.mode);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
@@ -153,10 +153,10 @@ export default function Emulator({ seed }: { seed: Seed }) {
     (next: View) => {
       const same = store.getState().view === next;
       store.getState().setView(next);
-      void setViewParam(next);
+      void setModeParam(next);
       if (same) panZoomRef.current.reset(next);
     },
-    [store, setViewParam],
+    [store, setModeParam],
   );
 
   // proxy navigation: react to loadToken (bumped by requestLoad/launchApp/reload).

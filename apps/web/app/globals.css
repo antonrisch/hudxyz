@@ -33,6 +33,9 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-pressed: var(--primary-pressed);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -67,6 +70,9 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
+  --primary-hover: color-mix(in oklch, var(--primary) 88%, var(--primary-foreground) 12%);
+  --primary-active: color-mix(in oklch, var(--primary) 80%, var(--primary-foreground) 20%);
+  --primary-pressed: color-mix(in oklch, var(--primary) 72%, var(--primary-foreground) 28%);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -114,6 +120,9 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
+  --primary-hover: color-mix(in oklch, var(--primary) 88%, var(--primary-foreground) 12%);
+  --primary-active: color-mix(in oklch, var(--primary) 80%, var(--primary-foreground) 20%);
+  --primary-pressed: color-mix(in oklch, var(--primary) 72%, var(--primary-foreground) 28%);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);

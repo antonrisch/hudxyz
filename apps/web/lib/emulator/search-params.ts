@@ -23,7 +23,7 @@ const ENVIRONMENT_KEYS = ENVIRONMENTS.map((e) => e.key);
 // the initial (server-parsed) seed and the client-side writes, so ssr and hydration agree.
 // nuqs clears a param when it equals its default, keeping shared urls clean.
 export const emulatorParsers = {
-  view: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
+  mode: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
   url: parseAsString.withDefault(""),
   additive: parseAsInteger.withDefault(0),
   environment: parseAsStringLiteral(ENVIRONMENT_KEYS).withDefault(DEFAULT_ENVIRONMENT),
@@ -35,14 +35,14 @@ export const loadEmulatorSearchParams = createLoader(emulatorParsers);
 
 // turn parsed url params into the store's initial state. a deep-linked ?url= arms a load.
 export function seedFromParams(params: {
-  view: View;
+  mode: View;
   url: string;
   additive: number;
   environment: (typeof ENVIRONMENT_KEYS)[number];
   lensTint: boolean;
 }): Seed {
   const seed: Seed = {
-    view: params.view,
+    view: params.mode,
     additive: Math.min(100, Math.max(0, params.additive)),
     environment: params.environment,
     lensTint: params.lensTint,

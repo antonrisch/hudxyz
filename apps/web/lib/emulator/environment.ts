@@ -12,7 +12,7 @@ export type EnvironmentPreset = {
 export const DEFAULT_ENVIRONMENT: EnvironmentKey = "daylight";
 
 export const ENVIRONMENTS = [
-  { key: "daylight", label: "Daylight", color: "#B6D1E3" },
+  { key: "daylight", label: "Day", color: "#B6D1E3" },
   { key: "night", label: "Night", color: "#1e293b" },
 ] as const satisfies ReadonlyArray<EnvironmentPreset>;
 
