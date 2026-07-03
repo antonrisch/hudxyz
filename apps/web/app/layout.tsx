@@ -36,7 +36,7 @@ export default function RootLayout({
       <body className="flex min-h-svh flex-col">
         {children}
         <Toaster />
-        <Analytics />
+        {process.env.NODE_ENV === "production" && <Analytics />}
         {process.env.NODE_ENV === "development" && (
           <Script src="https://unpkg.com/react-grab/dist/index.global.js" crossOrigin="anonymous" />
         )}
