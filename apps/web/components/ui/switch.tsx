@@ -1,18 +1,17 @@
-"use client"
+"use client";
 
-import { Switch as SwitchPrimitive } from "@base-ui/react/switch"
+import { Switch as SwitchPrimitive } from "@base-ui/react/switch";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-const thumb =
-  "pointer-events-none block rounded-full bg-white ring-0 transition-transform"
+const thumb = "pointer-events-none block rounded-full bg-white ring-0 transition-transform";
 
 function Switch({
   className,
   size = "default",
   ...props
 }: SwitchPrimitive.Root.Props & {
-  size?: "sm" | "default"
+  size?: "sm" | "default";
 }) {
   return (
     <SwitchPrimitive.Root
@@ -30,12 +29,13 @@ function Switch({
         data-slot="switch-thumb"
         className={cn(
           thumb,
-          size === "default" && "h-4 w-6 data-checked:translate-x-3.5 data-unchecked:-translate-x-0.5",
+          size === "default" &&
+            "h-4 w-6 data-checked:translate-x-3.5 data-unchecked:-translate-x-0.5",
           size === "sm" && "h-2.5 w-4 data-checked:translate-x-3.5 data-unchecked:translate-x-0",
         )}
       />
     </SwitchPrimitive.Root>
-  )
+  );
 }
 
-export { Switch }
+export { Switch };

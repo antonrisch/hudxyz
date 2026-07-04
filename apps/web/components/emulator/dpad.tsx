@@ -216,11 +216,7 @@ export function Dpad() {
 
         <DpadCross pressedIntents={pressedIntents} />
 
-        <IntentButton
-          label="Esc"
-          intent="back"
-          pressed={pressedIntents.has("back")}
-        >
+        <IntentButton label="Esc" intent="back" pressed={pressedIntents.has("back")}>
           <Undo2 />
         </IntentButton>
       </div>

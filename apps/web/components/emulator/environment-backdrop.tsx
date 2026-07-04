@@ -1,7 +1,4 @@
-import {
-  environmentBackdropFilter,
-  type EnvironmentPreset,
-} from "@/lib/emulator/environment";
+import { environmentBackdropFilter, type EnvironmentPreset } from "@/lib/emulator/environment";
 
 // photo or flat color fill for the canvas stage.
 export function EnvironmentBackdrop({ preset }: { preset: EnvironmentPreset }) {

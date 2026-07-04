@@ -11,11 +11,11 @@ Browser ──HTTPS──> hud.xyz (Vercel / Next.js)
 
 ## Severity guide
 
-| Level | Examples | Response |
-|-------|----------|----------|
+| Level  | Examples                                               | Response                                   |
+| ------ | ------------------------------------------------------ | ------------------------------------------ |
 | **P0** | hud.xyz down, proxy used for abuse at scale, data leak | Drop everything; fix or rollback within 1h |
-| **P1** | Emulator broken but site loads, elevated Sentry errors | Fix same day |
-| **P2** | Cosmetic bug, single-user report | Next deploy window |
+| **P1** | Emulator broken but site loads, elevated Sentry errors | Fix same day                               |
+| **P2** | Cosmetic bug, single-user report                       | Next deploy window                         |
 
 ## Escalation
 
