@@ -36,13 +36,17 @@ export function environmentByKey(key: EnvironmentKey): EnvironmentPreset {
   return ENVIRONMENTS.find((env) => env.key === key) ?? ENVIRONMENTS[0];
 }
 
+export type CustomEnvironmentImage = { id: string; url: string };
+
 export function resolveEnvironment(
   key: EnvironmentKey,
-  customImage?: string | null,
+  customImages: readonly CustomEnvironmentImage[],
+  activeCustomId: string | null,
 ): EnvironmentPreset {
   const preset = environmentByKey(key);
-  if (key === "custom" && customImage) return { ...preset, image: customImage };
-  return preset;
+  if (key !== "custom" || customImages.length === 0) return preset;
+  const active = customImages.find((img) => img.id === activeCustomId) ?? customImages[0];
+  return { ...preset, image: active.url };
 }
 
 export function environmentBackdropFilter(preset: EnvironmentPreset): string | undefined {

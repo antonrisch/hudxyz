@@ -1,12 +1,12 @@
 "use client";
 
 import { useRef, type ChangeEvent, type MouseEvent } from "react";
-import Image from "next/image";
 import { ImagePlus, Moon, Sun, type LucideIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { ENVIRONMENTS, type EnvironmentKey } from "@/lib/emulator/environment";
+import { prepareCustomEnvironmentImage } from "@/lib/emulator/environment-image";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
@@ -16,34 +16,44 @@ const ENVIRONMENT_ICONS = {
   night: Moon,
 } satisfies Partial<Record<EnvironmentKey, LucideIcon>>;
 
+const customToggleValue = (id: string) => `custom:${id}`;
+
 export function EnvironmentPicker() {
   const { store } = useEmulator();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const environment = useEmulatorState((s) => s.environment);
-  const customEnvironmentImage = useEmulatorState((s) => s.customEnvironmentImage);
+  const customEnvironmentImages = useEmulatorState((s) => s.customEnvironmentImages);
+  const activeCustomEnvironmentId = useEmulatorState((s) => s.activeCustomEnvironmentId);
   const [, setEnvironmentParam] = useQueryState("environment", emulatorParsers.environment);
 
-  const setEnvironment = (next: EnvironmentKey) => {
+  const selected =
+    environment === "custom" && activeCustomEnvironmentId
+      ? customToggleValue(activeCustomEnvironmentId)
+      : environment;
+
+  const setPresetEnvironment = (next: EnvironmentKey) => {
     store.getState().setEnvironment(next);
     void setEnvironmentParam(next);
   };
 
-  const applyCustomImage = (dataUrl: string) => {
-    store.getState().setCustomEnvironmentImage(dataUrl);
-    setEnvironment("custom");
+  const selectCustom = (id: string) => {
+    store.getState().selectCustomEnvironment(id);
+    void setEnvironmentParam("custom");
   };
 
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file?.type.startsWith("image/")) return;
+    if (!file) return;
 
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      const result = reader.result;
-      if (typeof result === "string") applyCustomImage(result);
-    });
-    reader.readAsDataURL(file);
+    void prepareCustomEnvironmentImage(file)
+      .then((url) => {
+        store.getState().addCustomEnvironment(url);
+        void setEnvironmentParam("custom");
+      })
+      .catch(() => {
+        // decode/resize failed — ignore and keep the current environment.
+      });
   };
 
   return (
@@ -51,54 +61,47 @@ export function EnvironmentPicker() {
       <ToggleGroup
         variant="outline"
         aria-label="Environment"
-        value={[environment]}
+        value={[selected]}
         onValueChange={(vals) => {
           const next = vals[0];
           if (!next) return;
-          if (next === "custom" && !customEnvironmentImage) {
-            fileInputRef.current?.click();
+          if (next.startsWith("custom:")) {
+            selectCustom(next.slice("custom:".length));
             return;
           }
-          setEnvironment(next as EnvironmentKey);
+          setPresetEnvironment(next as EnvironmentKey);
         }}
         className="flex-wrap justify-end gap-0.5 border-0 bg-transparent p-0"
       >
-        {ENVIRONMENTS.map((env) => {
-          if (env.key === "custom" && !customEnvironmentImage) return null;
-
+        {ENVIRONMENTS.filter((env) => env.key !== "custom").map((env) => {
           const Icon = ENVIRONMENT_ICONS[env.key as keyof typeof ENVIRONMENT_ICONS];
-          const customThumb = env.key === "custom" ? customEnvironmentImage : null;
-
           return (
             <ToggleGroupItem
               key={env.key}
               value={env.key}
               aria-label={env.label}
               onMouseDown={dropFocus}
-              onClick={() => setEnvironment(env.key)}
+              onClick={() => setPresetEnvironment(env.key)}
               className="hover:bg-background/60 size-8 border-muted p-0 aria-pressed:border-border! aria-pressed:bg-background!"
             >
-              {customThumb ? (
-                // eslint-disable-next-line @next/next/no-img-element -- data urls from user uploads
-                <img
-                  src={customThumb}
-                  alt=""
-                  className="size-full rounded-[inherit] object-cover"
-                />
-              ) : env.kind === "photo" && "image" in env && env.image ? (
-                <Image
-                  src={env.image}
-                  alt=""
-                  width={32}
-                  height={32}
-                  className="size-full rounded-[inherit] object-cover"
-                />
-              ) : Icon ? (
-                <Icon className="size-4" />
-              ) : null}
+              {Icon ? <Icon className="size-4" /> : null}
             </ToggleGroupItem>
           );
         })}
+
+        {customEnvironmentImages.map((img) => (
+          <ToggleGroupItem
+            key={img.id}
+            value={customToggleValue(img.id)}
+            aria-label="Custom environment"
+            onMouseDown={dropFocus}
+            onClick={() => selectCustom(img.id)}
+            className="hover:bg-background/60 size-8 border-muted p-0 aria-pressed:border-border! aria-pressed:bg-background!"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- session blob urls */}
+            <img src={img.url} alt="" className="size-full rounded-[inherit] object-cover" />
+          </ToggleGroupItem>
+        ))}
       </ToggleGroup>
 
       <label
