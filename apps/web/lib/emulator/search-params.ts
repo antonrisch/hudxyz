@@ -1,10 +1,4 @@
-import {
-  createLoader,
-  parseAsBoolean,
-  parseAsInteger,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs/server";
+import { createLoader, parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs/server";
 import { VIEWS } from "@/lib/emulator/config";
 import { DEFAULT_ENVIRONMENT, ENVIRONMENTS } from "@/lib/emulator/environment";
 import type { Seed, View } from "@/lib/emulator/store";
@@ -25,7 +19,7 @@ const ENVIRONMENT_KEYS = ENVIRONMENTS.map((e) => e.key);
 export const emulatorParsers = {
   mode: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
   url: parseAsString.withDefault(""),
-  additive: parseAsInteger.withDefault(0),
+  additive: parseAsBoolean.withDefault(false),
   environment: parseAsStringLiteral(ENVIRONMENT_KEYS).withDefault(DEFAULT_ENVIRONMENT),
   lensTint: parseAsBoolean.withDefault(true),
 };
@@ -37,14 +31,15 @@ export const loadEmulatorSearchParams = createLoader(emulatorParsers);
 export function seedFromParams(params: {
   mode: View;
   url: string;
-  additive: number;
+  additive: boolean;
   environment: (typeof ENVIRONMENT_KEYS)[number];
   lensTint: boolean;
 }): Seed {
   const seed: Seed = {
     view: params.mode,
-    additive: Math.min(100, Math.max(0, params.additive)),
-    environment: params.environment,
+    additive: params.additive,
+    // custom uploads are session-only; a refreshed ?environment=custom has no image to show.
+    environment: params.environment === "custom" ? DEFAULT_ENVIRONMENT : params.environment,
     lensTint: params.lensTint,
   };
   if (params.url) {

@@ -3,7 +3,6 @@
 import { Info } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EnvironmentPicker } from "@/components/emulator/environment-picker";
@@ -22,7 +21,7 @@ export function DisplayPanel() {
   const [, setAdditiveParam] = useQueryState("additive", emulatorParsers.additive);
   const [, setLensTintParam] = useQueryState("lensTint", emulatorParsers.lensTint);
 
-  const setAdditive = (next: number) => {
+  const setAdditive = (next: boolean) => {
     store.getState().setAdditive(next);
     void setAdditiveParam(next);
   };
@@ -68,39 +67,35 @@ export function DisplayPanel() {
           <EnvironmentPicker />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <Label htmlFor="additive-slider">Display Transparency</Label>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <button
-                      type="button"
-                      aria-label="About display transparency"
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Info className="size-3.5" />
-                    </button>
-                  }
-                />
-                <TooltipContent className="max-w-56 text-pretty">
-                  The display is additive — dark areas effectively disappear. Slide up to blend the
-                  environment into the preview.
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <span className="text-sm tabular-nums text-muted-foreground">{additive}%</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="additive">Display Transparency</Label>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    aria-label="About display transparency"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Info className="size-3.5" />
+                  </button>
+                }
+              />
+              <TooltipContent className="max-w-56 text-pretty">
+                The display is additive — dark areas effectively disappear. Turn on to blend the
+                environment into the preview.
+              </TooltipContent>
+            </Tooltip>
           </div>
-          <Slider
-            id="additive-slider"
-            value={[additive]}
-            onValueChange={(vals) => {
-              const next = Array.isArray(vals) ? vals[0] : vals;
-              if (next != null) setAdditive(next);
-            }}
-            aria-label="Display transparency"
-          />
+          <div className="flex h-9 items-center">
+            <Switch
+              id="additive"
+              checked={additive}
+              onCheckedChange={setAdditive}
+              aria-label="Display transparency"
+            />
+          </div>
         </div>
       </div>
     </div>

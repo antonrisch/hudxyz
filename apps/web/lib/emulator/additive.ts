@@ -1,7 +1,5 @@
-import {
-  environmentBackdropFilter,
-  type EnvironmentPreset,
-} from "@/lib/emulator/environment";
+import { environmentBackdropFilter, type EnvironmentPreset } from "@/lib/emulator/environment";
+import { resolveIframeEnvironmentImage } from "@/lib/emulator/environment-image";
 
 const STYLE_ID = "hud-additive-style";
 const ACTIVE_CLASS = "hud-additive";
@@ -35,7 +33,6 @@ html.${ACTIVE_CLASS}::before {
   background-size: cover;
   background-position: center;
   filter: var(--hud-env-filter, none);
-  opacity: var(--hud-env-opacity, 1);
 }
 
 html.${ACTIVE_CLASS} body {
@@ -57,7 +54,9 @@ function blobToDataUrl(blob: Blob) {
 
 export async function resolveEnvironmentImage(environment: EnvironmentPreset) {
   if (!environment.image) return undefined;
-  if (environment.image.startsWith("data:")) return environment.image;
+  if (environment.image.startsWith("data:") || environment.image.startsWith("blob:")) {
+    return resolveIframeEnvironmentImage(environment.image);
+  }
 
   const url = new URL(environment.image, window.location.origin).href;
   if (imageCache.has(url)) return imageCache.get(url);
@@ -102,85 +101,37 @@ export function measureAdditiveBackdrop(
 
 export function syncAdditive(
   iframe: HTMLIFrameElement | null,
-  display: HTMLElement | null,
-  additive: number,
+  additive: boolean,
   environment: EnvironmentPreset,
   image?: string,
   geometry?: AdditiveBackdropGeometry,
 ) {
   const doc = iframe?.contentDocument;
+  if (!doc?.documentElement) return;
 
-  if (doc?.documentElement) {
-    try {
-      const root = doc.documentElement;
+  try {
+    const root = doc.documentElement;
 
-      if (additive <= 0) {
-        root.classList.remove(ACTIVE_CLASS);
-        doc.getElementById(STYLE_ID)?.remove();
-      } else {
-        const style = doc.getElementById(STYLE_ID) ?? doc.createElement("style");
-        style.id = STYLE_ID;
-        style.textContent = SHEET;
-        doc.head.append(style);
-
-        const opacity = String(Math.min(100, Math.max(0, additive)) / 100);
-        root.classList.add(ACTIVE_CLASS);
-        writeAdditiveVars(root, opacity, environment, image, geometry);
-      }
-    } catch {
-      // The frame can briefly expose a cross-origin WindowProxy while Scramjet navigates.
+    if (!additive) {
+      root.classList.remove(ACTIVE_CLASS);
+      doc.getElementById(STYLE_ID)?.remove();
+      return;
     }
-  }
 
-  syncAdditiveUnderlay(display, additive, environment, image, geometry);
-}
+    const style = doc.getElementById(STYLE_ID) ?? doc.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = SHEET;
+    doc.head.append(style);
 
-function syncAdditiveUnderlay(
-  display: HTMLElement | null,
-  additive: number,
-  environment: EnvironmentPreset,
-  image?: string,
-  geometry?: AdditiveBackdropGeometry,
-) {
-  if (!display) return;
-
-  if (additive <= 0) {
-    clearAdditiveVars(display);
-    return;
-  }
-
-  const opacity = String(Math.min(100, Math.max(0, additive)) / 100);
-  writeAdditiveVars(display, opacity, environment, image, geometry);
-}
-
-function writeAdditiveVars(
-  element: HTMLElement,
-  opacity: string,
-  environment: EnvironmentPreset,
-  image?: string,
-  geometry?: AdditiveBackdropGeometry,
-) {
-  element.style.setProperty("--hud-env-color", environment.color);
-  element.style.setProperty("--hud-env-image", image ? `url("${image}")` : "none");
-  element.style.setProperty("--hud-env-filter", environmentBackdropFilter(environment) ?? "none");
-  element.style.setProperty("--hud-env-opacity", opacity);
-  element.style.setProperty("--hud-env-left", `${geometry?.left ?? 0}px`);
-  element.style.setProperty("--hud-env-top", `${geometry?.top ?? 0}px`);
-  element.style.setProperty("--hud-env-width", `${geometry?.width ?? 600}px`);
-  element.style.setProperty("--hud-env-height", `${geometry?.height ?? 600}px`);
-}
-
-function clearAdditiveVars(element: HTMLElement) {
-  for (const name of [
-    "--hud-env-color",
-    "--hud-env-image",
-    "--hud-env-filter",
-    "--hud-env-opacity",
-    "--hud-env-left",
-    "--hud-env-top",
-    "--hud-env-width",
-    "--hud-env-height",
-  ]) {
-    element.style.removeProperty(name);
+    root.classList.add(ACTIVE_CLASS);
+    root.style.setProperty("--hud-env-color", environment.color);
+    root.style.setProperty("--hud-env-image", image ? `url("${image}")` : "none");
+    root.style.setProperty("--hud-env-filter", environmentBackdropFilter(environment) ?? "none");
+    root.style.setProperty("--hud-env-left", `${geometry?.left ?? 0}px`);
+    root.style.setProperty("--hud-env-top", `${geometry?.top ?? 0}px`);
+    root.style.setProperty("--hud-env-width", `${geometry?.width ?? 600}px`);
+    root.style.setProperty("--hud-env-height", `${geometry?.height ?? 600}px`);
+  } catch {
+    // The frame can briefly expose a cross-origin WindowProxy while Scramjet navigates.
   }
 }

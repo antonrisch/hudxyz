@@ -28,6 +28,7 @@ import {
   resolveEnvironmentImage,
   syncAdditive,
 } from "@/lib/emulator/additive";
+import { getCachedIframeEnvironmentImage } from "@/lib/emulator/environment-image";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { useMountEffect } from "@/lib/use-mount-effect";
@@ -81,8 +82,13 @@ export default function Emulator({ seed }: { seed: Seed }) {
   const frameRef = useRef<Frame | null>(null);
   const view = useStore(store, (s) => s.view);
   const environmentKey = useStore(store, (s) => s.environment);
-  const customEnvironmentImage = useStore(store, (s) => s.customEnvironmentImage);
-  const environment = resolveEnvironment(environmentKey, customEnvironmentImage);
+  const customEnvironmentImages = useStore(store, (s) => s.customEnvironmentImages);
+  const activeCustomEnvironmentId = useStore(store, (s) => s.activeCustomEnvironmentId);
+  const environment = resolveEnvironment(
+    environmentKey,
+    customEnvironmentImages,
+    activeCustomEnvironmentId,
+  );
   const panZoom = usePanZoom(view);
   const panZoomRef = useRef(panZoom);
   panZoomRef.current = panZoom;
@@ -114,17 +120,19 @@ export default function Emulator({ seed }: { seed: Seed }) {
         const target =
           active && active !== doc.body && active !== doc.documentElement
             ? active
-            : doc.querySelector<HTMLElement>(".screen.active .focusable") ??
+            : (doc.querySelector<HTMLElement>(".screen.active .focusable") ??
               doc.querySelector<HTMLElement>("#game-canvas") ??
               doc.querySelector<HTMLElement>(".screen.active .screen-content") ??
               doc.body ??
-              doc.documentElement;
+              doc.documentElement);
 
         target?.focus?.({ preventScroll: true });
 
         const Ev = (win as Window & { KeyboardEvent: typeof KeyboardEvent }).KeyboardEvent;
         const key = KEY_BY_INTENT[intent];
-        const handled = !target.dispatchEvent(new Ev(type, { key, bubbles: true, cancelable: true }));
+        const handled = !target.dispatchEvent(
+          new Ev(type, { key, bubbles: true, cancelable: true }),
+        );
         const activatable = target.matches(
           'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="menuitem"]',
         );
@@ -243,44 +251,81 @@ export default function Emulator({ seed }: { seed: Seed }) {
   // environment before the iframe crosses transformed emulator chrome.
   useMountEffect(() => {
     let applyToken = 0;
-    let image: string | undefined;
+    let resolvedImage: string | undefined;
+    let resolvedImageSource: string | undefined;
     let animationFrame = 0;
 
     const syncCurrentAdditive = () => {
-      const { additive, environment, customEnvironmentImage } = store.getState();
-      const preset = resolveEnvironment(environment, customEnvironmentImage);
+      const { additive, environment, customEnvironmentImages, activeCustomEnvironmentId } =
+        store.getState();
+      const preset = resolveEnvironment(
+        environment,
+        customEnvironmentImages,
+        activeCustomEnvironmentId,
+      );
       const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
-      syncAdditive(iframeRef.current, displayRef.current, additive, preset, image, geometry);
+      syncAdditive(iframeRef.current, additive, preset, resolvedImage, geometry);
     };
 
     const applyAdditive = () => {
-      const { additive, environment, customEnvironmentImage } = store.getState();
+      const { additive, environment, customEnvironmentImages, activeCustomEnvironmentId } =
+        store.getState();
       const token = ++applyToken;
-      const preset = resolveEnvironment(environment, customEnvironmentImage);
+      const preset = resolveEnvironment(
+        environment,
+        customEnvironmentImages,
+        activeCustomEnvironmentId,
+      );
+      const source = preset.image;
 
-      if (additive <= 0 || !preset.image) {
-        image = undefined;
+      if (!additive) {
+        resolvedImage = undefined;
+        resolvedImageSource = undefined;
         syncCurrentAdditive();
         return;
       }
 
-      image = undefined;
+      if (!source) {
+        resolvedImage = undefined;
+        resolvedImageSource = undefined;
+        syncCurrentAdditive();
+        return;
+      }
+
+      const cached = getCachedIframeEnvironmentImage(source);
+      if (cached) {
+        resolvedImage = cached;
+        resolvedImageSource = source;
+        syncCurrentAdditive();
+        return;
+      }
+
+      if (source === resolvedImageSource && resolvedImage) {
+        syncCurrentAdditive();
+        return;
+      }
+
+      resolvedImage = source.startsWith("data:") ? source : undefined;
+      resolvedImageSource = source;
       syncCurrentAdditive();
+
       void resolveEnvironmentImage(preset)
         .then((nextImage) => {
           if (token !== applyToken) return;
-          image = nextImage;
+          resolvedImage = nextImage;
+          resolvedImageSource = source;
           syncCurrentAdditive();
         })
         .catch(() => {
           if (token !== applyToken) return;
-          image = undefined;
+          resolvedImage = undefined;
+          resolvedImageSource = undefined;
           syncCurrentAdditive();
         });
     };
 
     const tickGeometry = () => {
-      if (store.getState().additive > 0) syncCurrentAdditive();
+      if (store.getState().additive) syncCurrentAdditive();
       animationFrame = requestAnimationFrame(tickGeometry);
     };
 
@@ -290,7 +335,8 @@ export default function Emulator({ seed }: { seed: Seed }) {
       if (
         state.additive !== prev.additive ||
         state.environment !== prev.environment ||
-        state.customEnvironmentImage !== prev.customEnvironmentImage
+        state.customEnvironmentImages !== prev.customEnvironmentImages ||
+        state.activeCustomEnvironmentId !== prev.activeCustomEnvironmentId
       ) {
         applyAdditive();
       }
