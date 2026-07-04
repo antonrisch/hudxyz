@@ -1,13 +1,8 @@
-import type { CSSProperties } from "react";
 import type { Intent, View } from "@/lib/emulator/store";
 
 // device identity shown in the emulator chrome (model + os build). placeholders — set real values.
 export const DEVICE_MODEL = "Meta Ray-Ban Display";
 export const OS_VERSION = "125.1";
-
-// glasses stage scale; frame + lens slot share the same container so this scales both.
-export const FRAMES_SCALE = 1.8;
-export const FRAMES_STAGE_UNITS = 240 * FRAMES_SCALE; // tailwind spacing multiplier (was w-240)
 
 // display placement over the right lens, as % of the frames container.
 export const RIGHT_LENS = { left: 58.5, top: 44.5, size: 10.5 };
@@ -18,6 +13,19 @@ export const VIEWPORT = 600;
 // frames svg aspect (viewBox 6476 × 2959); converts the square lens slot's height
 // (a % of stage width) into a % of stage height.
 export const FRAMES_ASPECT = 6476 / 2959;
+
+// glasses chrome is decorative: size it around the fixed 600×600 display.
+export const GLASSES_STAGE = {
+  width: VIEWPORT / (RIGHT_LENS.size / 100),
+  height: VIEWPORT / (RIGHT_LENS.size / 100) / FRAMES_ASPECT,
+};
+
+export const GLASSES_DISPLAY = {
+  left: (RIGHT_LENS.left / 100) * GLASSES_STAGE.width,
+  top: (RIGHT_LENS.top / 100) * GLASSES_STAGE.height,
+  width: VIEWPORT,
+  height: VIEWPORT,
+};
 
 // glasses zoom focal point: the right-lens iframe midpoint, as % of the device stage.
 // the view is translated to center this point, and zoom scales about it.
@@ -46,14 +54,6 @@ export const DEVICE_BG = "bg-muted/10";
 // shows whenever an app isn't covering it). only the positioning differs, so device.tsx
 // composes this base with per-view layout classes.
 export const DEVICE_SURFACE = `overflow-hidden rounded-lg ${DEVICE_BG}`;
-
-// glasses: place the surface over the right lens, as % of the framed plane.
-export const LENS_SLOT: CSSProperties = {
-  left: `${RIGHT_LENS.left}%`,
-  top: `${RIGHT_LENS.top}%`,
-  width: `${RIGHT_LENS.size}%`,
-  aspectRatio: "1 / 1",
-};
 
 // physical keys the glasses emit, mapped to device intents (window keydown -> intent).
 export const INTENT_BY_KEY: Record<string, Intent> = {

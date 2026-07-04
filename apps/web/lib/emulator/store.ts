@@ -2,6 +2,24 @@ import { createStore } from "zustand/vanilla";
 import { DEFAULT_ENVIRONMENT, type EnvironmentKey } from "@/lib/emulator/environment";
 
 const DISPLAY_PANEL_OPEN_KEY = "emulator.displayPanelOpen";
+const CUSTOM_ENVIRONMENT_IMAGE_KEY = "emulator.customEnvironmentImage";
+
+function readCustomEnvironmentImage(): string | null {
+  try {
+    return localStorage.getItem(CUSTOM_ENVIRONMENT_IMAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeCustomEnvironmentImage(image: string | null) {
+  try {
+    if (image) localStorage.setItem(CUSTOM_ENVIRONMENT_IMAGE_KEY, image);
+    else localStorage.removeItem(CUSTOM_ENVIRONMENT_IMAGE_KEY);
+  } catch {
+    // storage unavailable or quota exceeded
+  }
+}
 
 function readDisplayPanelOpen(): boolean {
   try {
@@ -41,6 +59,7 @@ export interface EmulatorState {
   loadToken: number; // bump to (re)trigger a navigation; lets reload re-fire on the same url
   additive: number; // 0 = flat dev preview, 100 = full waveguide (black reads transparent)
   environment: EnvironmentKey; // world behind the waveguide (decoupled from canvas chrome)
+  customEnvironmentImage: string | null; // user-uploaded backdrop (data url, persisted locally)
   lensTint: boolean; // cosmetic teal tint on the svg lenses (frames.tsx lensClassName)
   displayPanelOpen: boolean; // rhs display panel (persisted in localStorage on sm+)
 
@@ -49,6 +68,7 @@ export interface EmulatorState {
   setUrl: (url: string) => void;
   setAdditive: (additive: number) => void;
   setEnvironment: (environment: EnvironmentKey) => void;
+  setCustomEnvironmentImage: (image: string | null) => void;
   setLensTint: (lensTint: boolean) => void;
   setDisplayPanelOpen: (open: boolean) => void;
   toggleDisplayPanel: () => void;
@@ -64,7 +84,15 @@ export type EmulatorStore = ReturnType<typeof createEmulatorStore>;
 export type Seed = Partial<
   Pick<
     EmulatorState,
-    "screen" | "view" | "url" | "status" | "loadToken" | "additive" | "environment" | "lensTint"
+    | "screen"
+    | "view"
+    | "url"
+    | "status"
+    | "loadToken"
+    | "additive"
+    | "environment"
+    | "customEnvironmentImage"
+    | "lensTint"
   >
 >;
 
@@ -77,6 +105,7 @@ export function createEmulatorStore(seed?: Seed) {
     loadToken: seed?.loadToken ?? 0,
     additive: seed?.additive ?? 0,
     environment: seed?.environment ?? DEFAULT_ENVIRONMENT,
+    customEnvironmentImage: seed?.customEnvironmentImage ?? readCustomEnvironmentImage(),
     lensTint: seed?.lensTint ?? true,
     displayPanelOpen: readDisplayPanelOpen(),
 
@@ -85,6 +114,10 @@ export function createEmulatorStore(seed?: Seed) {
     setUrl: (url) => set({ url }),
     setAdditive: (additive) => set({ additive }),
     setEnvironment: (environment) => set({ environment }),
+    setCustomEnvironmentImage: (image) => {
+      writeCustomEnvironmentImage(image);
+      set({ customEnvironmentImage: image });
+    },
     setLensTint: (lensTint) => set({ lensTint }),
     setDisplayPanelOpen: (open) => {
       writeDisplayPanelOpen(open);

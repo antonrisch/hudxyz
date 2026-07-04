@@ -21,7 +21,13 @@ import {
   type View,
 } from "@/lib/emulator/store";
 import { INTENT_BY_KEY, KEY_BY_INTENT } from "@/lib/emulator/config";
-import { environmentByKey } from "@/lib/emulator/environment";
+import { EnvironmentBackdrop } from "@/components/emulator/environment-backdrop";
+import { resolveEnvironment } from "@/lib/emulator/environment";
+import {
+  measureAdditiveBackdrop,
+  resolveEnvironmentImage,
+  syncAdditive,
+} from "@/lib/emulator/additive";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { useMountEffect } from "@/lib/use-mount-effect";
@@ -71,9 +77,12 @@ export default function Emulator({ seed }: { seed: Seed }) {
   const [, setModeParam] = useQueryState("mode", emulatorParsers.mode);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
   const view = useStore(store, (s) => s.view);
-  const environment = environmentByKey(useStore(store, (s) => s.environment));
+  const environmentKey = useStore(store, (s) => s.environment);
+  const customEnvironmentImage = useStore(store, (s) => s.customEnvironmentImage);
+  const environment = resolveEnvironment(environmentKey, customEnvironmentImage);
   const panZoom = usePanZoom(view);
   const panZoomRef = useRef(panZoom);
   panZoomRef.current = panZoom;
@@ -230,6 +239,72 @@ export default function Emulator({ seed }: { seed: Seed }) {
     };
   });
 
+  // additive preview lives inside the proxied document so black pixels blend with the
+  // environment before the iframe crosses transformed emulator chrome.
+  useMountEffect(() => {
+    let applyToken = 0;
+    let image: string | undefined;
+    let animationFrame = 0;
+
+    const syncCurrentAdditive = () => {
+      const { additive, environment, customEnvironmentImage } = store.getState();
+      const preset = resolveEnvironment(environment, customEnvironmentImage);
+      const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
+      syncAdditive(iframeRef.current, displayRef.current, additive, preset, image, geometry);
+    };
+
+    const applyAdditive = () => {
+      const { additive, environment, customEnvironmentImage } = store.getState();
+      const token = ++applyToken;
+      const preset = resolveEnvironment(environment, customEnvironmentImage);
+
+      if (additive <= 0 || !preset.image) {
+        image = undefined;
+        syncCurrentAdditive();
+        return;
+      }
+
+      image = undefined;
+      syncCurrentAdditive();
+      void resolveEnvironmentImage(preset)
+        .then((nextImage) => {
+          if (token !== applyToken) return;
+          image = nextImage;
+          syncCurrentAdditive();
+        })
+        .catch(() => {
+          if (token !== applyToken) return;
+          image = undefined;
+          syncCurrentAdditive();
+        });
+    };
+
+    const tickGeometry = () => {
+      if (store.getState().additive > 0) syncCurrentAdditive();
+      animationFrame = requestAnimationFrame(tickGeometry);
+    };
+
+    const iframe = iframeRef.current;
+    iframe?.addEventListener("load", applyAdditive);
+    const unsub = store.subscribe((state, prev) => {
+      if (
+        state.additive !== prev.additive ||
+        state.environment !== prev.environment ||
+        state.customEnvironmentImage !== prev.customEnvironmentImage
+      ) {
+        applyAdditive();
+      }
+    });
+
+    applyAdditive();
+    animationFrame = requestAnimationFrame(tickGeometry);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      iframe?.removeEventListener("load", applyAdditive);
+      unsub();
+    };
+  });
+
   // host keys inject into the frame; frame keys only mirror the visual pressed state.
   useMountEffect(() => {
     const clearPressed = () => setPressedIntents((prev) => (prev.size ? new Set() : prev));
@@ -347,19 +422,13 @@ export default function Emulator({ seed }: { seed: Seed }) {
         <AppHeader />
 
         <div className="mx-2 mb-2 flex min-h-0 flex-1 gap-2 overflow-hidden">
-          {/* device canvas; the d-pad is a floating panel over the bottom edge. the active
-              environment preset drives the stage gradient AND the lens color (one palette,
-              applied as css vars consumed here and in device.tsx). */}
+          {/* device canvas; the d-pad is a floating panel over the bottom edge. */}
           <div
-            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-linear-to-b from-canvas-from to-canvas-to"
-            style={
-              {
-                "--canvas-from": environment.color,
-                "--canvas-to": environment.color,
-                "--env-color": environment.color,
-              } as CSSProperties
-            }
+            ref={stageRef}
+            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-canvas-from"
+            style={{ "--canvas-from": environment.color } as CSSProperties}
           >
+            <EnvironmentBackdrop preset={environment} />
             <Device />
             <div className="pointer-events-none absolute inset-x-0 bottom-2.5 z-20 flex justify-center px-4">
               <Dpad />

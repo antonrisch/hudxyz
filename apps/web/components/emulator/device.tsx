@@ -1,13 +1,12 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
 import { Frames } from "@/components/frames";
 import {
   DEVICE_BG,
   DEVICE_SURFACE,
-  FRAMES_STAGE_UNITS,
-  LENS_SLOT,
+  GLASSES_DISPLAY,
+  GLASSES_STAGE,
   VIEWPORT,
 } from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
@@ -29,31 +28,8 @@ export function Device() {
   const status = useEmulatorState((s) => s.status);
   const additive = useEmulatorState((s) => s.additive);
   const lensTint = useEmulatorState((s) => s.lensTint);
-  const slotRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
   const isGlasses = view === "glasses";
-  const additiveT = additive / 100;
-
-  // glasses: scale the fixed 600×600 surface to fill the lens slot. measure the slot's
-  // FRACTIONAL content-box (ResizeObserver inlineSize) rather than clientWidth — clientWidth
-  // is integer-rounded, so the scaled box fell a sub-pixel short and the pan/zoom
-  // magnification turned that gap into a ~1px black edge on the right/bottom. 1:1 view uses
-  // true pixels (scale 1) and pans the surface directly.
-  useLayoutEffect(() => {
-    if (!isGlasses) {
-      setScale(1);
-      return;
-    }
-    const el = slotRef.current;
-    if (!el) return;
-
-    const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentBoxSize?.[0]?.inlineSize ?? el.clientWidth;
-      if (w) setScale(w / VIEWPORT);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [isGlasses]);
+  const additiveOn = additive > 0;
 
   return (
     <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden">
@@ -68,61 +44,47 @@ export function Device() {
         )}
         style={{
           ...panZoom.style,
-          ...(isGlasses ? { width: `calc(var(--spacing) * ${FRAMES_STAGE_UNITS})` } : undefined),
+          ...(isGlasses ? GLASSES_STAGE : undefined),
         }}
       >
         {isGlasses && (
           <Frames
-            className="block h-auto w-full"
+            className="absolute inset-0 block size-full"
             lensClassName={lensTint ? "fill-canvas-frame-lens/25" : "fill-transparent"}
           />
         )}
-        {/* device surface: the 600×600 plane scaled to fit; the iframe stays mounted so the
-            controller frame can attach. black + rounded shows whenever an app isn't covering it.
-            os + status overlays sit on top of the same surface. */}
         <div
-          ref={slotRef}
+          ref={displayRef}
+          id="hud-display"
           className={cn(
-            "overflow-hidden rounded-lg",
-            additiveT > 0 ? "bg-black" : DEVICE_SURFACE,
-            isGlasses ? "absolute" : "relative size-full",
+            "z-10 overflow-hidden rounded-lg",
+            additiveOn ? "bg-transparent" : DEVICE_SURFACE,
+            isGlasses ? "absolute" : "relative",
           )}
-          style={isGlasses ? LENS_SLOT : undefined}
+          style={isGlasses ? GLASSES_DISPLAY : { width: VIEWPORT, height: VIEWPORT }}
         >
-          {/* the 600×600 surface, scaled to fill the slot. keeping the iframe a literal
-              600×600 element gives the proxied app a faithful device viewport (the pan/zoom
-              model in use-pan-zoom also assumes this fixed size). */}
-          <div
-            className="absolute left-0 top-0 origin-top-left"
-            style={{ transform: `scale(${scale})` }}
-          >
+          {additiveOn && (
             <div
-              ref={displayRef}
-              id="hud-display"
-              className={cn("relative isolate", additiveT > 0 ? "bg-black" : DEVICE_BG)}
-              style={{ width: VIEWPORT, height: VIEWPORT }}
-            >
-              {/* the world behind the waveguide: --env-color comes from the active
-                  environment preset (set on the canvas wrapper in index.tsx) */}
-              {additiveT > 0 && (
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 bg-(--env-color)"
-                  style={{ opacity: additiveT }}
-                />
-              )}
-              <iframe
-                ref={iframeRef}
-                title="Glasses display"
-                allow="clipboard-read; clipboard-write"
-                className={cn(
-                  "relative size-full border-0",
-                  additiveT > 0 &&
-                    "mix-blend-screen supports-[mix-blend-mode:plus-lighter]:mix-blend-plus-lighter",
-                )}
-              />
-            </div>
-          </div>
+              aria-hidden
+              className="pointer-events-none absolute bg-cover bg-center"
+              style={{
+                left: "var(--hud-env-left, 0px)",
+                top: "var(--hud-env-top, 0px)",
+                width: "var(--hud-env-width, 600px)",
+                height: "var(--hud-env-height, 600px)",
+                backgroundColor: "var(--hud-env-color, transparent)",
+                backgroundImage: "var(--hud-env-image, none)",
+                filter: "var(--hud-env-filter, none)",
+                opacity: "var(--hud-env-opacity, 1)",
+              }}
+            />
+          )}
+          <iframe
+            ref={iframeRef}
+            title="Glasses display"
+            allow="clipboard-read; clipboard-write"
+            className="relative z-10 size-full border-0"
+          />
 
           {/* settings: a blurred control overlay over the running app */}
           {screen === "settings" && (
