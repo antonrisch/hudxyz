@@ -15,23 +15,19 @@ export const VIEWPORT = 600;
 export const FRAMES_ASPECT = 6476 / 2959;
 
 // glasses chrome is decorative: size it around the fixed 600×600 display.
-export const GLASSES_STAGE = {
+const GLASSES_STAGE = {
   width: VIEWPORT / (RIGHT_LENS.size / 100),
   height: VIEWPORT / (RIGHT_LENS.size / 100) / FRAMES_ASPECT,
 };
 
-export const GLASSES_DISPLAY = {
-  left: (RIGHT_LENS.left / 100) * GLASSES_STAGE.width,
-  top: (RIGHT_LENS.top / 100) * GLASSES_STAGE.height,
-  width: VIEWPORT,
-  height: VIEWPORT,
-};
-
-// glasses zoom focal point: the right-lens iframe midpoint, as % of the device stage.
-// the view is translated to center this point, and zoom scales about it.
-export const LENS_CENTER = {
-  x: RIGHT_LENS.left + RIGHT_LENS.size / 2,
-  y: RIGHT_LENS.top + (RIGHT_LENS.size / 2) * FRAMES_ASPECT,
+// the frames svg positioned relative to the 600×600 display (the content plane), so its
+// right-lens slot lands exactly on the display. the display renders identically to 1:1
+// mode — the chrome hangs off it, not the other way around.
+export const GLASSES_CHROME = {
+  left: -(RIGHT_LENS.left / 100) * GLASSES_STAGE.width,
+  top: -(RIGHT_LENS.top / 100) * GLASSES_STAGE.height,
+  width: GLASSES_STAGE.width,
+  height: GLASSES_STAGE.height,
 };
 
 // default 600×600 magnification per chrome view (1 = true pixels).

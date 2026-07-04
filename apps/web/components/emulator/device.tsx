@@ -2,13 +2,7 @@
 
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
 import { Frames } from "@/components/frames";
-import {
-  DEVICE_BG,
-  DEVICE_SURFACE,
-  GLASSES_DISPLAY,
-  GLASSES_STAGE,
-  VIEWPORT,
-} from "@/lib/emulator/config";
+import { DEVICE_BG, DEVICE_SURFACE, GLASSES_CHROME } from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { cn } from "@/lib/utils";
@@ -18,9 +12,10 @@ const STATUS_MSG: Partial<Record<Status, string>> = {
   error: "Couldn't load. Reload to retry.",
 };
 
-// the device as a pan/zoom canvas. the viewport clips; #hud-device is the content plane
-// (the glasses frame, or the bare 600 surface) pinned at the viewport top-left and
-// transformed by usePanZoom. the iframe stays the same element across views/modes/zoom.
+// the device as a pan/zoom canvas. the viewport clips; #hud-device is the content plane —
+// always the bare 600×600 surface, laid out identically in every view (glasses just hangs
+// the frames svg off it decoratively, so glasses ≡ 1:1 at a smaller default zoom). the
+// iframe stays the same element across views/modes/zoom.
 export function Device() {
   const { iframeRef, displayRef, panZoom, store } = useEmulator();
   const view = useEmulatorState((s) => s.view);
@@ -29,7 +24,6 @@ export function Device() {
   const additive = useEmulatorState((s) => s.additive);
   const lensTint = useEmulatorState((s) => s.lensTint);
   const isGlasses = view === "glasses";
-  const additiveOn = additive > 0;
 
   return (
     <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden">
@@ -37,19 +31,16 @@ export function Device() {
         ref={panZoom.contentRef}
         id="hud-device"
         className={cn(
-          "absolute left-0 top-0",
-          !isGlasses && "size-150",
+          "absolute left-0 top-0 size-150",
           panZoom.revealed ? "opacity-100" : "opacity-0",
           panZoom.revealed && "transition-opacity duration-200 ease-out",
         )}
-        style={{
-          ...panZoom.style,
-          ...(isGlasses ? GLASSES_STAGE : undefined),
-        }}
+        style={panZoom.style}
       >
         {isGlasses && (
           <Frames
-            className="absolute inset-0 block size-full"
+            className="pointer-events-none absolute block"
+            style={GLASSES_CHROME}
             lensClassName={lensTint ? "fill-canvas-frame-lens/25" : "fill-transparent"}
           />
         )}
@@ -57,33 +48,15 @@ export function Device() {
           ref={displayRef}
           id="hud-display"
           className={cn(
-            "z-10 overflow-hidden rounded-lg",
-            additiveOn ? "bg-transparent" : DEVICE_SURFACE,
-            isGlasses ? "absolute" : "relative",
+            "relative z-10 size-full overflow-hidden rounded-lg",
+            additive ? "bg-transparent" : DEVICE_SURFACE,
           )}
-          style={isGlasses ? GLASSES_DISPLAY : { width: VIEWPORT, height: VIEWPORT }}
         >
-          {additiveOn && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute bg-cover bg-center"
-              style={{
-                left: "var(--hud-env-left, 0px)",
-                top: "var(--hud-env-top, 0px)",
-                width: "var(--hud-env-width, 600px)",
-                height: "var(--hud-env-height, 600px)",
-                backgroundColor: "var(--hud-env-color, transparent)",
-                backgroundImage: "var(--hud-env-image, none)",
-                filter: "var(--hud-env-filter, none)",
-                opacity: "var(--hud-env-opacity, 1)",
-              }}
-            />
-          )}
           <iframe
             ref={iframeRef}
             title="Glasses display"
             allow="clipboard-read; clipboard-write"
-            className="relative z-10 size-full border-0"
+            className="relative size-full border-0"
           />
 
           {/* settings: a blurred control overlay over the running app */}

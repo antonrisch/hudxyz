@@ -12,6 +12,7 @@ const FRAME_PATH =
 // lenses (set to e.g. "fill-transparent" to disable). usage: <Frames className="w-full" />
 export function Frames({
   lensClassName = "fill-canvas-frame-lens/25",
+  style,
   ...props
 }: ComponentProps<"svg"> & { lensClassName?: string }) {
   return (
@@ -19,7 +20,7 @@ export function Frames({
       viewBox="0 0 6476 2959"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
-      style={{ fillRule: "evenodd", clipRule: "evenodd" }}
+      style={{ fillRule: "evenodd", clipRule: "evenodd", ...style }}
       {...props}
     >
       <g transform="matrix(1,0,0,1,-2370.751458,-837.12232)">
