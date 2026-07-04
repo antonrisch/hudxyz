@@ -1,7 +1,7 @@
 // environments drive the canvas stage and the additive preview behind the waveguide.
 // photo presets use the same scenes as Meta's MRBD simulator extension (per-scene
 // brightness matches their auto-dimming defaults).
-export type EnvironmentKey = "daylight" | "night" | "bridge" | "cafe" | "station" | "custom";
+export type EnvironmentKey = "daylight" | "night" | "custom";
 
 export type EnvironmentKind = "color" | "photo";
 
