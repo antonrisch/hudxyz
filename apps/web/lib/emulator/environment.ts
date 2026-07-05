@@ -7,7 +7,6 @@ export type EnvironmentPreset = {
   key: EnvironmentKey;
   label: string;
   image?: string;
-  brightness?: number;
 };
 
 const ENV_GRADIENT = {
@@ -22,14 +21,12 @@ export const ENVIRONMENTS = [
     key: "alps",
     label: "Alps",
     image: "/environments/alps.jpg",
-    brightness: 0.8,
   },
   { key: "daylight", label: "Day" },
   { key: "night", label: "Night" },
   {
     key: "custom",
     label: "Custom",
-    brightness: 0.8,
   },
 ] as const satisfies ReadonlyArray<EnvironmentPreset>;
 
@@ -54,21 +51,46 @@ export function resolveEnvironment(
   return { ...preset, image: active.url };
 }
 
-export function environmentBackdropStyle(preset: EnvironmentPreset): CSSProperties {
+const MAX_BACKGROUND_BLUR_PX = 24;
+
+export function environmentBackdropFilter(
+  _preset: EnvironmentPreset,
+  backgroundBrightness: number,
+  backgroundBlur: number,
+): string | undefined {
+  const parts: string[] = [];
+
+  if (backgroundBrightness < 100) {
+    parts.push(`brightness(${backgroundBrightness / 100})`);
+  }
+
+  const blurPx = (backgroundBlur / 100) * MAX_BACKGROUND_BLUR_PX;
+  if (blurPx > 0) parts.push(`blur(${blurPx}px)`);
+
+  return parts.length > 0 ? parts.join(" ") : undefined;
+}
+
+export function environmentBackdropStyle(
+  preset: EnvironmentPreset,
+  backgroundBrightness = 80,
+  backgroundBlur = 0,
+): CSSProperties {
+  const filter = environmentBackdropFilter(preset, backgroundBrightness, backgroundBlur);
+
   if (preset.image) {
     return {
       backgroundColor: "var(--env-fill)",
       backgroundImage: `url(${preset.image})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
-      ...(preset.brightness != null && { filter: `brightness(${preset.brightness})` }),
+      ...(filter && { filter }),
     };
   }
 
   const gradient = ENV_GRADIENT[preset.key as keyof typeof ENV_GRADIENT];
-  if (gradient) return { backgroundImage: gradient };
+  if (gradient) return { backgroundImage: gradient, ...(filter && { filter }) };
 
-  return { backgroundColor: "var(--env-fill)" };
+  return { backgroundColor: "var(--env-fill)", ...(filter && { filter }) };
 }
 
 export function additiveEnvBg(preset: EnvironmentPreset, image?: string): string {
@@ -81,9 +103,14 @@ export function additiveEnvBg(preset: EnvironmentPreset, image?: string): string
   return gradient ? resolveHostBackgroundImage(gradient) : "none";
 }
 
-export function additiveEnvFilter(preset: EnvironmentPreset): string {
-  if (preset.image && preset.brightness != null) return `brightness(${preset.brightness})`;
-  return "none";
+export function additiveEnvFilter(
+  preset: EnvironmentPreset,
+  backgroundBrightness = 80,
+  backgroundBlur = 0,
+): string {
+  return (
+    environmentBackdropFilter(preset, backgroundBrightness, backgroundBlur) ?? "none"
+  );
 }
 
 function resolveHostBackgroundImage(source: string): string {
