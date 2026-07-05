@@ -41,7 +41,7 @@ export function Device() {
           <Frames
             className="pointer-events-none absolute block"
             style={GLASSES_CHROME}
-            lensClassName={lensTint ? "fill-canvas-frame-lens/25" : "fill-transparent"}
+            lensClassName={lensTint ? "fill-lens-tint" : "fill-transparent"}
           />
         )}
         <div

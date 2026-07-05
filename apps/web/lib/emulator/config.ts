@@ -4,7 +4,6 @@ import type { Intent, View } from "@/lib/emulator/store";
 export const DEVICE_MODEL = "Meta Ray-Ban Display";
 export const OS_VERSION = "125.1";
 
-// display placement over the right lens, as % of the frames container.
 export const RIGHT_LENS = { left: 58.5, top: 44.5, size: 10.5 };
 
 // device render size (matches the glasses surface)
@@ -31,7 +30,7 @@ export const GLASSES_CHROME = {
 };
 
 // default 600×600 magnification per chrome view (1 = true pixels).
-export const DEFAULT_DEVICE_SCALE = { glasses: 0.67, actual: 1 } as const satisfies Record<
+export const DEFAULT_DEVICE_SCALE = { glasses: 0.6, actual: 1 } as const satisfies Record<
   View,
   number
 >;

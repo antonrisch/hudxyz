@@ -47,7 +47,7 @@ export interface EmulatorState {
   environment: EnvironmentKey; // world behind the waveguide (decoupled from canvas chrome)
   customEnvironmentImages: CustomEnvironmentImage[]; // session uploads (cleared on refresh)
   activeCustomEnvironmentId: string | null;
-  lensTint: boolean; // cosmetic teal tint on the svg lenses (frames.tsx lensClassName)
+  lensTint: boolean; // cosmetic G-15 tint on svg lenses + additive env layer
   displayPanelOpen: boolean; // rhs display panel (persisted in localStorage on sm+)
 
   setScreen: (screen: Screen) => void;
@@ -92,11 +92,11 @@ export function createEmulatorStore(seed?: Seed) {
     url: seed?.url ?? "",
     status: seed?.status ?? "idle",
     loadToken: seed?.loadToken ?? 0,
-    additive: seed?.additive ?? false,
+    additive: seed?.additive ?? true,
     environment: seed?.environment ?? DEFAULT_ENVIRONMENT,
     customEnvironmentImages: seed?.customEnvironmentImages ?? [],
     activeCustomEnvironmentId: seed?.activeCustomEnvironmentId ?? null,
-    lensTint: seed?.lensTint ?? true,
+    lensTint: seed?.lensTint ?? false,
     displayPanelOpen: readDisplayPanelOpen(),
 
     setScreen: (screen) => set({ screen }),

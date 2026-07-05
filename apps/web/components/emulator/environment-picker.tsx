@@ -57,7 +57,7 @@ export function EnvironmentPicker() {
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-0.5 rounded-xl border bg-muted p-0.5">
+    <div className="flex flex-wrap items-center justify-start gap-1 rounded-xl border bg-muted p-1">
       <ToggleGroup
         variant="outline"
         aria-label="Environment"
@@ -71,7 +71,7 @@ export function EnvironmentPicker() {
           }
           setPresetEnvironment(next as EnvironmentKey);
         }}
-        className="flex-wrap justify-end gap-0.5 border-0 bg-transparent p-0"
+        className="flex-wrap justify-start gap-1 border-0 bg-transparent p-0"
       >
         {ENVIRONMENTS.filter((env) => env.key !== "custom").map((env) => {
           const Icon = ENVIRONMENT_ICONS[env.key as keyof typeof ENVIRONMENT_ICONS];
@@ -82,9 +82,14 @@ export function EnvironmentPicker() {
               aria-label={env.label}
               onMouseDown={dropFocus}
               onClick={() => setPresetEnvironment(env.key)}
-              className="hover:bg-background/60 size-8 border-muted p-0 aria-pressed:border-border! aria-pressed:bg-background!"
+              className="hover:bg-background/60 size-12 border-muted p-0 aria-pressed:border-border! aria-pressed:bg-background!"
             >
-              {Icon ? <Icon className="size-4" /> : null}
+              {"image" in env && env.image ? (
+                // eslint-disable-next-line @next/next/no-img-element -- same-origin preset thumbnail
+                <img src={env.image} alt="" className="size-full rounded-[inherit] object-cover" />
+              ) : Icon ? (
+                <Icon className="size-6" />
+              ) : null}
             </ToggleGroupItem>
           );
         })}
@@ -96,7 +101,7 @@ export function EnvironmentPicker() {
             aria-label="Custom environment"
             onMouseDown={dropFocus}
             onClick={() => selectCustom(img.id)}
-            className="hover:bg-background/60 size-8 border-muted p-0 aria-pressed:border-border! aria-pressed:bg-background!"
+            className="hover:bg-background/60 size-12 border-muted p-0 aria-pressed:border-border! aria-pressed:bg-background!"
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- session blob urls */}
             <img src={img.url} alt="" className="size-full rounded-[inherit] object-cover" />
@@ -105,7 +110,7 @@ export function EnvironmentPicker() {
       </ToggleGroup>
 
       <label
-        className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-background/60 hover:text-foreground"
+        className="inline-flex size-12 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-background/60 hover:text-foreground"
         aria-label="Upload environment photo"
       >
         <input
@@ -115,7 +120,7 @@ export function EnvironmentPicker() {
           className="sr-only"
           onChange={onFileChange}
         />
-        <ImagePlus className="size-4" />
+        <ImagePlus className="size-6" />
       </label>
     </div>
   );

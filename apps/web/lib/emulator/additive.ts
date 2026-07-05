@@ -1,9 +1,12 @@
-import { environmentBackdropFilter, type EnvironmentPreset } from "@/lib/emulator/environment";
-import { resolveIframeEnvironmentImage } from "@/lib/emulator/environment-image";
+import {
+  additiveEnvBg,
+  additiveEnvFilter,
+  type EnvironmentPreset,
+} from "@/lib/emulator/environment";
 
 const STYLE_ID = "hud-additive-style";
 const ACTIVE_CLASS = "hud-additive";
-const imageCache = new Map<string, Promise<string>>();
+const LENS_TINT_CLASS = "hud-lens-tint";
 const BACKDROP_SCALE = 1.1;
 
 type AdditiveBackdropGeometry = {
@@ -16,7 +19,7 @@ type AdditiveBackdropGeometry = {
 const SHEET = `
 html.${ACTIVE_CLASS} {
   min-height: 100%;
-  background: var(--hud-env-color, #000);
+  background: var(--env-fill, #1e293b);
 }
 
 html.${ACTIVE_CLASS}::before {
@@ -28,11 +31,23 @@ html.${ACTIVE_CLASS}::before {
   height: var(--hud-env-height, 100vh);
   z-index: 0;
   pointer-events: none;
-  background-color: var(--hud-env-color, #000);
-  background-image: var(--hud-env-image, none);
-  background-size: cover;
+  background-color: var(--env-fill, #1e293b);
+  background-image: var(--env-bg, none);
+  background-size: var(--env-bg-size, cover);
   background-position: center;
-  filter: var(--hud-env-filter, none);
+  filter: var(--env-filter, none);
+}
+
+html.${ACTIVE_CLASS}.${LENS_TINT_CLASS}::after {
+  content: "";
+  position: fixed;
+  left: var(--hud-env-left, 0px);
+  top: var(--hud-env-top, 0px);
+  width: var(--hud-env-width, 100vw);
+  height: var(--hud-env-height, 100vh);
+  z-index: 0;
+  pointer-events: none;
+  background: var(--lens-tint);
 }
 
 html.${ACTIVE_CLASS} body {
@@ -42,35 +57,6 @@ html.${ACTIVE_CLASS} body {
   mix-blend-mode: screen !important;
 }
 `;
-
-function blobToDataUrl(blob: Blob) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", () => resolve(String(reader.result)));
-    reader.addEventListener("error", () => reject(reader.error));
-    reader.readAsDataURL(blob);
-  });
-}
-
-export async function resolveEnvironmentImage(environment: EnvironmentPreset) {
-  if (!environment.image) return undefined;
-  if (environment.image.startsWith("data:") || environment.image.startsWith("blob:")) {
-    return resolveIframeEnvironmentImage(environment.image);
-  }
-
-  const url = new URL(environment.image, window.location.origin).href;
-  if (imageCache.has(url)) return imageCache.get(url);
-
-  const promise = fetch(url)
-    .then((res) => {
-      if (!res.ok) throw new Error(`Could not load environment image: ${res.status}`);
-      return res.blob();
-    })
-    .then(blobToDataUrl);
-
-  imageCache.set(url, promise);
-  return promise;
-}
 
 export function measureAdditiveBackdrop(
   stage: HTMLElement | null,
@@ -105,6 +91,7 @@ export function syncAdditive(
   environment: EnvironmentPreset,
   image?: string,
   geometry?: AdditiveBackdropGeometry,
+  lensTint = false,
 ) {
   const doc = iframe?.contentDocument;
   if (!doc?.documentElement) return;
@@ -114,6 +101,7 @@ export function syncAdditive(
 
     if (!additive) {
       root.classList.remove(ACTIVE_CLASS);
+      root.classList.remove(LENS_TINT_CLASS);
       doc.getElementById(STYLE_ID)?.remove();
       return;
     }
@@ -123,10 +111,15 @@ export function syncAdditive(
     style.textContent = SHEET;
     doc.head.append(style);
 
+    const host = getComputedStyle(document.documentElement);
+
     root.classList.add(ACTIVE_CLASS);
-    root.style.setProperty("--hud-env-color", environment.color);
-    root.style.setProperty("--hud-env-image", image ? `url("${image}")` : "none");
-    root.style.setProperty("--hud-env-filter", environmentBackdropFilter(environment) ?? "none");
+    root.classList.toggle(LENS_TINT_CLASS, lensTint);
+    root.style.setProperty("--env-fill", host.getPropertyValue("--env-fill").trim() || "#1e293b");
+    root.style.setProperty("--lens-tint", host.getPropertyValue("--lens-tint").trim());
+    root.style.setProperty("--env-bg", additiveEnvBg(environment, image));
+    root.style.setProperty("--env-bg-size", environment.image ? "cover" : "auto");
+    root.style.setProperty("--env-filter", additiveEnvFilter(environment));
     root.style.setProperty("--hud-env-left", `${geometry?.left ?? 0}px`);
     root.style.setProperty("--hud-env-top", `${geometry?.top ?? 0}px`);
     root.style.setProperty("--hud-env-width", `${geometry?.width ?? 600}px`);

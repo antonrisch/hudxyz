@@ -15,7 +15,7 @@ import { useMountEffect } from "@/lib/use-mount-effect";
 
 const SCALE_MIN = 0.3;
 const SCALE_MAX = 10;
-const BUTTON_STEP = 1.25;
+const ZOOM_STEP = 0.1; // absolute percentage points (+/− 10% per click or keyboard shortcut)
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
@@ -194,16 +194,25 @@ export function usePanZoom(view: View): PanZoom {
     [setDeviceScaleAt],
   );
 
+  const stepZoom = useCallback(
+    (delta: number) => {
+      zoomTo(clamp(deviceScaleRef.current + delta, SCALE_MIN, SCALE_MAX));
+    },
+    [zoomTo],
+  );
+
   const zoomCenterRef = useRef(zoomCenter);
   zoomCenterRef.current = zoomCenter;
   const resetRef = useRef(reset);
   resetRef.current = reset;
   const setDeviceScaleAtRef = useRef(setDeviceScaleAt);
   setDeviceScaleAtRef.current = setDeviceScaleAt;
+  const stepZoomRef = useRef(stepZoom);
+  stepZoomRef.current = stepZoom;
 
   const panShortcutRef = useRef({
-    zoomIn: () => zoomCenterRef.current(BUTTON_STEP),
-    zoomOut: () => zoomCenterRef.current(1 / BUTTON_STEP),
+    zoomIn: () => stepZoomRef.current(ZOOM_STEP),
+    zoomOut: () => stepZoomRef.current(-ZOOM_STEP),
     reset: () => resetRef.current(),
   });
 
@@ -279,8 +288,8 @@ export function usePanZoom(view: View): PanZoom {
       transformOrigin: "0 0",
     },
     scale: deviceScale,
-    zoomIn: () => zoomCenter(BUTTON_STEP),
-    zoomOut: () => zoomCenter(1 / BUTTON_STEP),
+    zoomIn: () => stepZoom(ZOOM_STEP),
+    zoomOut: () => stepZoom(-ZOOM_STEP),
     zoomTo,
     reset,
     bind,

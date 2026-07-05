@@ -7,7 +7,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type RefObject,
 } from "react";
 import { useQueryState } from "nuqs";
@@ -24,11 +23,13 @@ import { INTENT_BY_KEY, KEY_BY_INTENT } from "@/lib/emulator/config";
 import { EnvironmentBackdrop } from "@/components/emulator/environment-backdrop";
 import { resolveEnvironment } from "@/lib/emulator/environment";
 import {
+  getCachedIframeEnvironmentImage,
+  resolveIframeEnvironmentImage,
+} from "@/lib/emulator/environment-image";
+import {
   measureAdditiveBackdrop,
-  resolveEnvironmentImage,
   syncAdditive,
 } from "@/lib/emulator/additive";
-import { getCachedIframeEnvironmentImage } from "@/lib/emulator/environment-image";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { useMountEffect } from "@/lib/use-mount-effect";
@@ -256,7 +257,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
     let animationFrame = 0;
 
     const syncCurrentAdditive = () => {
-      const { additive, environment, customEnvironmentImages, activeCustomEnvironmentId } =
+      const { additive, lensTint, environment, customEnvironmentImages, activeCustomEnvironmentId } =
         store.getState();
       const preset = resolveEnvironment(
         environment,
@@ -264,7 +265,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
         activeCustomEnvironmentId,
       );
       const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
-      syncAdditive(iframeRef.current, additive, preset, resolvedImage, geometry);
+      syncAdditive(iframeRef.current, additive, preset, resolvedImage, geometry, lensTint);
     };
 
     const applyAdditive = () => {
@@ -309,7 +310,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
       resolvedImageSource = source;
       syncCurrentAdditive();
 
-      void resolveEnvironmentImage(preset)
+      void resolveIframeEnvironmentImage(source)
         .then((nextImage) => {
           if (token !== applyToken) return;
           resolvedImage = nextImage;
@@ -334,6 +335,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
     const unsub = store.subscribe((state, prev) => {
       if (
         state.additive !== prev.additive ||
+        state.lensTint !== prev.lensTint ||
         state.environment !== prev.environment ||
         state.customEnvironmentImages !== prev.customEnvironmentImages ||
         state.activeCustomEnvironmentId !== prev.activeCustomEnvironmentId
@@ -471,8 +473,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
           {/* device canvas; the d-pad is a floating panel over the bottom edge. */}
           <div
             ref={stageRef}
-            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-canvas-from"
-            style={{ "--canvas-from": environment.color } as CSSProperties}
+            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-env-fill"
           >
             <EnvironmentBackdrop preset={environment} />
             <Device />

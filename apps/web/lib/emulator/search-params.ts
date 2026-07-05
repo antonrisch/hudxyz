@@ -19,9 +19,9 @@ const ENVIRONMENT_KEYS = ENVIRONMENTS.map((e) => e.key);
 export const emulatorParsers = {
   mode: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
   url: parseAsString.withDefault(""),
-  additive: parseAsBoolean.withDefault(false),
+  additive: parseAsBoolean.withDefault(true),
   environment: parseAsStringLiteral(ENVIRONMENT_KEYS).withDefault(DEFAULT_ENVIRONMENT),
-  lensTint: parseAsBoolean.withDefault(true),
+  lensTint: parseAsBoolean.withDefault(false),
 };
 
 // server-side reader: parse Next's searchParams (a promise in app router) into typed values.

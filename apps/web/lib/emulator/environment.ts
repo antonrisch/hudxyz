@@ -1,30 +1,35 @@
-// environments drive the canvas stage and the additive preview behind the waveguide.
-// photo presets use the same scenes as Meta's MRBD simulator extension (per-scene
-// brightness matches their auto-dimming defaults).
-export type EnvironmentKey = "daylight" | "night" | "custom";
+import type { CSSProperties } from "react";
 
-export type EnvironmentKind = "color" | "photo";
+// environments drive the canvas stage and the additive preview behind the waveguide.
+export type EnvironmentKey = "alps" | "daylight" | "night" | "custom";
 
 export type EnvironmentPreset = {
   key: EnvironmentKey;
   label: string;
-  kind: EnvironmentKind;
-  color: string;
   image?: string;
-  bgBrightness?: number;
+  brightness?: number;
 };
 
-export const DEFAULT_ENVIRONMENT: EnvironmentKey = "daylight";
+const ENV_GRADIENT = {
+  daylight: "linear-gradient(to bottom, var(--env-day-from), var(--env-day-to))",
+  night: "linear-gradient(to bottom, var(--env-night-from), var(--env-night-to))",
+} as const satisfies Partial<Record<EnvironmentKey, string>>;
+
+export const DEFAULT_ENVIRONMENT: EnvironmentKey = "alps";
 
 export const ENVIRONMENTS = [
-  { key: "daylight", label: "Day", kind: "color", color: "#B6D1E3" },
-  { key: "night", label: "Night", kind: "color", color: "#1e293b" },
+  {
+    key: "alps",
+    label: "Alps",
+    image: "/environments/alps.jpg",
+    brightness: 0.8,
+  },
+  { key: "daylight", label: "Day" },
+  { key: "night", label: "Night" },
   {
     key: "custom",
     label: "Custom",
-    kind: "photo",
-    color: "#5a6570",
-    bgBrightness: 70,
+    brightness: 0.8,
   },
 ] as const satisfies ReadonlyArray<EnvironmentPreset>;
 
@@ -49,7 +54,43 @@ export function resolveEnvironment(
   return { ...preset, image: active.url };
 }
 
-export function environmentBackdropFilter(preset: EnvironmentPreset): string | undefined {
-  if (preset.kind !== "photo") return undefined;
-  return `brightness(${(preset.bgBrightness ?? 70) / 100})`;
+export function environmentBackdropStyle(preset: EnvironmentPreset): CSSProperties {
+  if (preset.image) {
+    return {
+      backgroundColor: "var(--env-fill)",
+      backgroundImage: `url(${preset.image})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      ...(preset.brightness != null && { filter: `brightness(${preset.brightness})` }),
+    };
+  }
+
+  const gradient = ENV_GRADIENT[preset.key as keyof typeof ENV_GRADIENT];
+  if (gradient) return { backgroundImage: gradient };
+
+  return { backgroundColor: "var(--env-fill)" };
+}
+
+export function additiveEnvBg(preset: EnvironmentPreset, image?: string): string {
+  if (preset.image) {
+    const src = image ?? (preset.image.startsWith("blob:") ? undefined : preset.image);
+    return src ? `url("${src}")` : "none";
+  }
+
+  const gradient = ENV_GRADIENT[preset.key as keyof typeof ENV_GRADIENT];
+  return gradient ? resolveHostBackgroundImage(gradient) : "none";
+}
+
+export function additiveEnvFilter(preset: EnvironmentPreset): string {
+  if (preset.image && preset.brightness != null) return `brightness(${preset.brightness})`;
+  return "none";
+}
+
+function resolveHostBackgroundImage(source: string): string {
+  const probe = document.createElement("div");
+  probe.style.backgroundImage = source;
+  document.documentElement.append(probe);
+  const resolved = getComputedStyle(probe).backgroundImage;
+  probe.remove();
+  return resolved !== "none" ? resolved : source;
 }
