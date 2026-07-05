@@ -1,10 +1,16 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  PanelField,
+  PanelRow,
+  PanelRowGroup,
+  PanelSection,
+  PanelSlider,
+} from "@/components/emulator/display-panel-fields";
 import { EnvironmentPicker } from "@/components/emulator/environment-picker";
 import { ViewSwitcher } from "@/components/emulator/view-switcher";
 import { ZoomControls } from "@/components/emulator/zoom-controls";
@@ -18,8 +24,17 @@ export function DisplayPanel() {
   const { store } = useEmulator();
   const additive = useEmulatorState((s) => s.additive);
   const lensTint = useEmulatorState((s) => s.lensTint);
+  const backgroundBrightness = useEmulatorState((s) => s.backgroundBrightness);
+  const backgroundBlur = useEmulatorState((s) => s.backgroundBlur);
+  const displayBrightness = useEmulatorState((s) => s.displayBrightness);
   const [, setAdditiveParam] = useQueryState("additive", emulatorParsers.additive);
   const [, setLensTintParam] = useQueryState("lensTint", emulatorParsers.lensTint);
+  const [, setBgBrightnessParam] = useQueryState("bgBrightness", emulatorParsers.bgBrightness);
+  const [, setBgBlurParam] = useQueryState("bgBlur", emulatorParsers.bgBlur);
+  const [, setDisplayBrightnessParam] = useQueryState(
+    "displayBrightness",
+    emulatorParsers.displayBrightness,
+  );
 
   const setAdditive = (next: boolean) => {
     store.getState().setAdditive(next);
@@ -28,24 +43,72 @@ export function DisplayPanel() {
 
   return (
     <div className="flex flex-col">
-      <h2 className="p-3 text-md leading-snug font-semibold">{DEVICE_MODEL} Emulator</h2>
+      <h2 className="px-3 py-2.5 text-md leading-snug font-semibold">{DEVICE_MODEL} Emulator</h2>
 
       <Separator />
 
-      <div className="flex flex-col gap-3 p-3">
-        <div className="flex items-center justify-between gap-2">
-          <Label>Mode</Label>
-          <ViewSwitcher />
-        </div>
+      <PanelSection title="Environment">
+        <PanelField label="Background">
+          <EnvironmentPicker />
+        </PanelField>
 
-        <div className="flex items-center justify-between gap-2">
-          <Label>Zoom</Label>
-          <ZoomControls />
-        </div>
+        <PanelSlider
+          id="bg-brightness"
+          label="Background brightness"
+          value={backgroundBrightness}
+          onChange={(next) => {
+            store.getState().setBackgroundBrightness(next);
+            void setBgBrightnessParam(next);
+          }}
+        />
 
-        <div className="flex items-center justify-between gap-2">
-          <Label htmlFor="lens-tint">Lens tint</Label>
-          <div className="flex h-9 items-center">
+        <PanelSlider
+          id="bg-blur"
+          label="Background blur"
+          value={backgroundBlur}
+          onChange={(next) => {
+            store.getState().setBackgroundBlur(next);
+            void setBgBlurParam(next);
+          }}
+        />
+      </PanelSection>
+
+      <Separator />
+
+      <PanelSection title="Appearance">
+        <PanelRowGroup compact>
+          <PanelRow
+            label="Display Transparency"
+            htmlFor="additive"
+            hint={
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      aria-label="About display transparency"
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Info className="size-3.5" />
+                    </button>
+                  }
+                />
+                <TooltipContent className="max-w-56 text-pretty">
+                  The display is additive — dark areas effectively disappear. Turn on to blend the
+                  environment into the preview.
+                </TooltipContent>
+              </Tooltip>
+            }
+          >
+            <Switch
+              id="additive"
+              checked={additive}
+              onCheckedChange={setAdditive}
+              aria-label="Display transparency"
+            />
+          </PanelRow>
+
+          <PanelRow label="Lens tint" htmlFor="lens-tint">
             <Switch
               id="lens-tint"
               checked={lensTint}
@@ -55,49 +118,33 @@ export function DisplayPanel() {
               }}
               aria-label="Lens tint"
             />
-          </div>
-        </div>
-      </div>
+          </PanelRow>
+        </PanelRowGroup>
+
+        <PanelSlider
+          id="display-brightness"
+          label="Display brightness"
+          value={displayBrightness}
+          onChange={(next) => {
+            store.getState().setDisplayBrightness(next);
+            void setDisplayBrightnessParam(next);
+          }}
+        />
+      </PanelSection>
 
       <Separator />
 
-      <div className="flex flex-col gap-3 p-3">
-        <div className="flex flex-col gap-2">
-          <Label>Environment</Label>
-          <EnvironmentPicker />
-        </div>
+      <PanelSection title="Device">
+        <PanelRowGroup>
+          <PanelRow label="Mode">
+            <ViewSwitcher />
+          </PanelRow>
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
-            <Label htmlFor="additive">Display Transparency</Label>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type="button"
-                    aria-label="About display transparency"
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <Info className="size-3.5" />
-                  </button>
-                }
-              />
-              <TooltipContent className="max-w-56 text-pretty">
-                The display is additive — dark areas effectively disappear. Turn on to blend the
-                environment into the preview.
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="flex h-9 items-center">
-            <Switch
-              id="additive"
-              checked={additive}
-              onCheckedChange={setAdditive}
-              aria-label="Display transparency"
-            />
-          </div>
-        </div>
-      </div>
+          <PanelRow label="Zoom">
+            <ZoomControls />
+          </PanelRow>
+        </PanelRowGroup>
+      </PanelSection>
     </div>
   );
 }
