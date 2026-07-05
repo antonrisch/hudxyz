@@ -101,10 +101,10 @@
 
   /* emulator environments */
   --env-fill: #1e293b;
-  --env-day-from: #2a4f6a;
-  --env-day-to: #d1b989;
-  --env-night-from: color-mix(in oklch, var(--env-day-from) 12%, #0b0f16);
-  --env-night-to: color-mix(in oklch, var(--env-day-from) 38%, #1e293b);
+  --env-day-from: #225B96;
+  --env-day-to: #e1ca9b;
+  --env-night-from: color-mix(in oklch, var(--env-day-from) 12%, #121823);
+  --env-night-to: color-mix(in oklch, var(--env-day-from) 38%, #25344b);
 
   /* glasses frame */
   --lens-tint: oklch(0.18 0.02 155 / 0.5);

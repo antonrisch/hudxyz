@@ -34,7 +34,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn("antialiased", archivo.variable, jetbrainsMono.variable, "font-sans")}
     >
-      <body className="flex min-h-svh flex-col">
+      <body className="flex min-h-svh flex-col bg-background">
         <NuqsAdapter>{children}</NuqsAdapter>
         <Toaster />
         {process.env.NODE_ENV === "production" && <Analytics />}

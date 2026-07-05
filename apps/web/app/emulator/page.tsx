@@ -16,7 +16,7 @@ export default async function EmulatorPage({
 }) {
   const params = await loadEmulatorSearchParams(searchParams);
   return (
-    <main className="flex flex-1 flex-col bg-white">
+    <main className="flex flex-1 flex-col">
       <Emulator seed={seedFromParams(params)} />
     </main>
   );

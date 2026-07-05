@@ -50,7 +50,7 @@ export function DisplaySidebar() {
   if (!open) return null;
 
   return (
-    <aside className="hidden w-72 shrink-0 flex-col overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar sm:flex">
+    <aside className="hidden w-72 shrink-0 flex-col sm:flex rounded-2xl border bg-sidebar">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <DisplayPanel />
       </div>
