@@ -26,10 +26,7 @@ import {
   getCachedIframeEnvironmentImage,
   resolveIframeEnvironmentImage,
 } from "@/lib/emulator/environment-image";
-import {
-  measureAdditiveBackdrop,
-  syncAdditive,
-} from "@/lib/emulator/additive";
+import { measureAdditiveBackdrop, syncAdditive } from "@/lib/emulator/additive";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { useMountEffect } from "@/lib/use-mount-effect";
@@ -257,8 +254,13 @@ export default function Emulator({ seed }: { seed: Seed }) {
     let animationFrame = 0;
 
     const syncCurrentAdditive = () => {
-      const { additive, lensTint, environment, customEnvironmentImages, activeCustomEnvironmentId } =
-        store.getState();
+      const {
+        additive,
+        lensTint,
+        environment,
+        customEnvironmentImages,
+        activeCustomEnvironmentId,
+      } = store.getState();
       const preset = resolveEnvironment(
         environment,
         customEnvironmentImages,
