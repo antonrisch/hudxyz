@@ -92,6 +92,8 @@ export function syncAdditive(
   image?: string,
   geometry?: AdditiveBackdropGeometry,
   lensTint = false,
+  backgroundBrightness = 80,
+  backgroundBlur = 0,
 ) {
   const doc = iframe?.contentDocument;
   if (!doc?.documentElement) return;
@@ -119,11 +121,30 @@ export function syncAdditive(
     root.style.setProperty("--lens-tint", host.getPropertyValue("--lens-tint").trim());
     root.style.setProperty("--env-bg", additiveEnvBg(environment, image));
     root.style.setProperty("--env-bg-size", environment.image ? "cover" : "auto");
-    root.style.setProperty("--env-filter", additiveEnvFilter(environment));
+    root.style.setProperty(
+      "--env-filter",
+      additiveEnvFilter(environment, backgroundBrightness, backgroundBlur),
+    );
     root.style.setProperty("--hud-env-left", `${geometry?.left ?? 0}px`);
     root.style.setProperty("--hud-env-top", `${geometry?.top ?? 0}px`);
     root.style.setProperty("--hud-env-width", `${geometry?.width ?? 600}px`);
     root.style.setProperty("--hud-env-height", `${geometry?.height ?? 600}px`);
+  } catch {
+    // The frame can briefly expose a cross-origin WindowProxy while Scramjet navigates.
+  }
+}
+
+// matches the Meta chrome extension: filter on the app body, not a host overlay.
+export function syncDisplayBrightness(
+  iframe: HTMLIFrameElement | null,
+  displayBrightness: number,
+) {
+  const doc = iframe?.contentDocument;
+  if (!doc?.body) return;
+
+  try {
+    if (displayBrightness >= 100) doc.body.style.removeProperty("filter");
+    else doc.body.style.filter = `brightness(${displayBrightness / 100})`;
   } catch {
     // The frame can briefly expose a cross-origin WindowProxy while Scramjet navigates.
   }

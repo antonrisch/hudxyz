@@ -1,7 +1,15 @@
 import { environmentBackdropStyle, type EnvironmentPreset } from "@/lib/emulator/environment";
 import { cn } from "@/lib/utils";
 
-export function EnvironmentBackdrop({ preset }: { preset: EnvironmentPreset }) {
+export function EnvironmentBackdrop({
+  preset,
+  backgroundBrightness,
+  backgroundBlur,
+}: {
+  preset: EnvironmentPreset;
+  backgroundBrightness: number;
+  backgroundBlur: number;
+}) {
   return (
     <div
       aria-hidden
@@ -9,7 +17,7 @@ export function EnvironmentBackdrop({ preset }: { preset: EnvironmentPreset }) {
         "pointer-events-none absolute inset-0",
         preset.image && "origin-center scale-110",
       )}
-      style={environmentBackdropStyle(preset)}
+      style={environmentBackdropStyle(preset, backgroundBrightness, backgroundBlur)}
     />
   );
 }

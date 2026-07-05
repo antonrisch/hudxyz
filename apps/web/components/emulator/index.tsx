@@ -26,7 +26,7 @@ import {
   getCachedIframeEnvironmentImage,
   resolveIframeEnvironmentImage,
 } from "@/lib/emulator/environment-image";
-import { measureAdditiveBackdrop, syncAdditive } from "@/lib/emulator/additive";
+import { measureAdditiveBackdrop, syncAdditive, syncDisplayBrightness } from "@/lib/emulator/additive";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { useMountEffect } from "@/lib/use-mount-effect";
@@ -87,6 +87,8 @@ export default function Emulator({ seed }: { seed: Seed }) {
     customEnvironmentImages,
     activeCustomEnvironmentId,
   );
+  const backgroundBrightness = useStore(store, (s) => s.backgroundBrightness);
+  const backgroundBlur = useStore(store, (s) => s.backgroundBlur);
   const panZoom = usePanZoom(view);
   const panZoomRef = useRef(panZoom);
   panZoomRef.current = panZoom;
@@ -260,6 +262,9 @@ export default function Emulator({ seed }: { seed: Seed }) {
         environment,
         customEnvironmentImages,
         activeCustomEnvironmentId,
+        backgroundBrightness,
+        backgroundBlur,
+        displayBrightness,
       } = store.getState();
       const preset = resolveEnvironment(
         environment,
@@ -267,7 +272,17 @@ export default function Emulator({ seed }: { seed: Seed }) {
         activeCustomEnvironmentId,
       );
       const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
-      syncAdditive(iframeRef.current, additive, preset, resolvedImage, geometry, lensTint);
+      syncAdditive(
+        iframeRef.current,
+        additive,
+        preset,
+        resolvedImage,
+        geometry,
+        lensTint,
+        backgroundBrightness,
+        backgroundBlur,
+      );
+      syncDisplayBrightness(iframeRef.current, displayBrightness);
     };
 
     const applyAdditive = () => {
@@ -340,7 +355,10 @@ export default function Emulator({ seed }: { seed: Seed }) {
         state.lensTint !== prev.lensTint ||
         state.environment !== prev.environment ||
         state.customEnvironmentImages !== prev.customEnvironmentImages ||
-        state.activeCustomEnvironmentId !== prev.activeCustomEnvironmentId
+        state.activeCustomEnvironmentId !== prev.activeCustomEnvironmentId ||
+        state.backgroundBrightness !== prev.backgroundBrightness ||
+        state.backgroundBlur !== prev.backgroundBlur ||
+        state.displayBrightness !== prev.displayBrightness
       ) {
         applyAdditive();
       }
@@ -471,13 +489,17 @@ export default function Emulator({ seed }: { seed: Seed }) {
       <div className="flex min-h-0 flex-1 flex-col">
         <AppHeader />
 
-        <div className="mx-2 mb-2 flex min-h-0 flex-1 gap-2 overflow-hidden">
+        <div className="flex min-h-0 flex-1 rounded-2xl overflow-hidden px-2 pb-2 gap-2">
           {/* device canvas; the d-pad is a floating panel over the bottom edge. */}
           <div
             ref={stageRef}
             className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-env-fill"
           >
-            <EnvironmentBackdrop preset={environment} />
+            <EnvironmentBackdrop
+              preset={environment}
+              backgroundBrightness={backgroundBrightness}
+              backgroundBlur={backgroundBlur}
+            />
             <Device />
             <div className="pointer-events-none absolute inset-x-0 bottom-2.5 z-20 flex justify-center px-4">
               <Dpad />

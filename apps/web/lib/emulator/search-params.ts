@@ -1,4 +1,10 @@
-import { createLoader, parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs/server";
+import {
+  createLoader,
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+} from "nuqs/server";
 import { VIEWS } from "@/lib/emulator/config";
 import { DEFAULT_ENVIRONMENT, ENVIRONMENTS } from "@/lib/emulator/environment";
 import type { Seed, View } from "@/lib/emulator/store";
@@ -22,6 +28,9 @@ export const emulatorParsers = {
   additive: parseAsBoolean.withDefault(true),
   environment: parseAsStringLiteral(ENVIRONMENT_KEYS).withDefault(DEFAULT_ENVIRONMENT),
   lensTint: parseAsBoolean.withDefault(false),
+  bgBrightness: parseAsInteger.withDefault(80),
+  bgBlur: parseAsInteger.withDefault(0),
+  displayBrightness: parseAsInteger.withDefault(100),
 };
 
 // server-side reader: parse Next's searchParams (a promise in app router) into typed values.
@@ -34,6 +43,9 @@ export function seedFromParams(params: {
   additive: boolean;
   environment: (typeof ENVIRONMENT_KEYS)[number];
   lensTint: boolean;
+  bgBrightness: number;
+  bgBlur: number;
+  displayBrightness: number;
 }): Seed {
   const seed: Seed = {
     view: params.mode,
@@ -41,6 +53,9 @@ export function seedFromParams(params: {
     // custom uploads are session-only; a refreshed ?environment=custom has no image to show.
     environment: params.environment === "custom" ? DEFAULT_ENVIRONMENT : params.environment,
     lensTint: params.lensTint,
+    backgroundBrightness: params.bgBrightness,
+    backgroundBlur: params.bgBlur,
+    displayBrightness: params.displayBrightness,
   };
   if (params.url) {
     seed.url = params.url;

@@ -48,6 +48,9 @@ export interface EmulatorState {
   customEnvironmentImages: CustomEnvironmentImage[]; // session uploads (cleared on refresh)
   activeCustomEnvironmentId: string | null;
   lensTint: boolean; // cosmetic G-15 tint on svg lenses + additive env layer
+  backgroundBrightness: number; // 0–100, 100 = full (absolute brightness filter)
+  backgroundBlur: number; // 0–100 gaussian blur on the stage backdrop
+  displayBrightness: number; // 0–100, 100 = full visibility (extension semantics)
   displayPanelOpen: boolean; // rhs display panel (persisted in localStorage on sm+)
 
   setScreen: (screen: Screen) => void;
@@ -58,6 +61,9 @@ export interface EmulatorState {
   addCustomEnvironment: (url: string) => void;
   selectCustomEnvironment: (id: string) => void;
   setLensTint: (lensTint: boolean) => void;
+  setBackgroundBrightness: (value: number) => void;
+  setBackgroundBlur: (value: number) => void;
+  setDisplayBrightness: (value: number) => void;
   setDisplayPanelOpen: (open: boolean) => void;
   toggleDisplayPanel: () => void;
   requestLoad: (url: string) => void; // navigate the app surface; the proxy hook reacts
@@ -82,6 +88,9 @@ export type Seed = Partial<
     | "customEnvironmentImages"
     | "activeCustomEnvironmentId"
     | "lensTint"
+    | "backgroundBrightness"
+    | "backgroundBlur"
+    | "displayBrightness"
   >
 >;
 
@@ -97,6 +106,9 @@ export function createEmulatorStore(seed?: Seed) {
     customEnvironmentImages: seed?.customEnvironmentImages ?? [],
     activeCustomEnvironmentId: seed?.activeCustomEnvironmentId ?? null,
     lensTint: seed?.lensTint ?? false,
+    backgroundBrightness: seed?.backgroundBrightness ?? 80,
+    backgroundBlur: seed?.backgroundBlur ?? 0,
+    displayBrightness: seed?.displayBrightness ?? 100,
     displayPanelOpen: readDisplayPanelOpen(),
 
     setScreen: (screen) => set({ screen }),
@@ -120,6 +132,9 @@ export function createEmulatorStore(seed?: Seed) {
           : {},
       ),
     setLensTint: (lensTint) => set({ lensTint }),
+    setBackgroundBrightness: (backgroundBrightness) => set({ backgroundBrightness }),
+    setBackgroundBlur: (backgroundBlur) => set({ backgroundBlur }),
+    setDisplayBrightness: (displayBrightness) => set({ displayBrightness }),
     setDisplayPanelOpen: (open) => {
       writeDisplayPanelOpen(open);
       set({ displayPanelOpen: open });
