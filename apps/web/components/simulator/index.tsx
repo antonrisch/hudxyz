@@ -20,7 +20,7 @@ import {
   type Seed,
   type View,
 } from "@/lib/simulator/store";
-import { INTENT_BY_KEY } from "@/lib/simulator/config";
+import { INTENT_BY_KEY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
 import { releaseChromeFocus } from "@/lib/simulator/input";
 import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
@@ -564,13 +564,14 @@ export default function Simulator({ seed }: { seed: Seed }) {
   return (
     <SimulatorContext.Provider value={ctx}>
       <div className="flex min-h-0 flex-1 flex-col">
+        <h1 className="sr-only sm:hidden">{SIMULATOR_TITLE}</h1>
         <AppHeader />
 
-        <div className="grid min-h-0 flex-1 gap-2 px-2 pb-2 grid-rows-[auto_1fr_auto] sm:grid-cols-[1fr_18rem] sm:grid-rows-1">
+        <div className="grid min-h-0 flex-1 gap-2 px-2 pb-2 sm:grid-cols-[1fr_18rem] sm:grid-rows-1">
           <DisplaySidebarColumn />
           <div
             ref={stageRef}
-            className="relative row-start-2 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill sm:col-start-1 sm:row-start-1"
+            className="relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill sm:col-start-1 sm:row-start-1"
           >
             <BackgroundBackdrop
               preset={background}

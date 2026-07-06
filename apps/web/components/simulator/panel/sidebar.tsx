@@ -20,6 +20,27 @@ import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
 import { cn } from "@/lib/utils";
 
+function LegalLinks() {
+  return (
+    <>
+      <a
+        href={FEEDBACK_MAILTO}
+        className="hover:text-foreground hover:underline underline-offset-4"
+      >
+        Contact
+      </a>
+      {" · "}
+      <Link href="/privacy" className="hover:text-foreground hover:underline underline-offset-4">
+        Privacy
+      </Link>
+      {" · "}
+      <Link href="/terms" className="hover:text-foreground hover:underline underline-offset-4">
+        Terms
+      </Link>
+    </>
+  );
+}
+
 function DisplaySidebarIntro() {
   return (
     <h1 className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</h1>
@@ -34,23 +55,7 @@ function DisplaySidebarFooter() {
         <p className="text-xs text-pretty text-muted-foreground">
           {SIMULATOR_SUMMARY}
           <br />
-          <a
-            href={FEEDBACK_MAILTO}
-            className="hover:text-foreground hover:underline underline-offset-4"
-          >
-            Contact
-          </a>
-          {" · "}
-          <Link
-            href="/privacy"
-            className="hover:text-foreground hover:underline underline-offset-4"
-          >
-            Privacy
-          </Link>
-          {" · "}
-          <Link href="/terms" className="hover:text-foreground hover:underline underline-offset-4">
-            Terms
-          </Link>
+          <LegalLinks />
         </p>
       </div>
     </footer>
@@ -74,29 +79,23 @@ function DisplayPanelControlsShell() {
   );
 }
 
-// intro + controls + footer; `contents` on mobile (grid rows), flex column on sm+.
+// intro + controls + footer; desktop sidebar only — mobile uses the settings sheet.
 export function DisplaySidebarColumn() {
   const open = useSimulatorState((s) => s.displayPanelOpen);
 
   return (
-    <div
-      className={cn(
-        "contents sm:flex sm:col-start-2 sm:row-start-1 sm:min-h-0 sm:flex-col sm:overflow-hidden sm:rounded-2xl sm:border sm:bg-background",
-      )}
-    >
-      <header className="row-start-1 shrink-0 rounded-2xl border bg-background sm:rounded-none sm:border-0 sm:bg-transparent">
+    <div className="hidden min-h-0 flex-col overflow-hidden rounded-2xl border bg-background sm:col-start-2 sm:row-start-1 sm:flex">
+      <header className="shrink-0">
         <DisplaySidebarIntro />
       </header>
 
       {open ? (
-        <aside className="hidden min-h-0 flex-1 flex-col overflow-hidden sm:flex">
+        <aside className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <DisplayPanelControlsShell />
         </aside>
       ) : null}
 
-      <div className="row-start-3 shrink-0 rounded-2xl bg-background sm:mt-auto sm:rounded-none sm:bg-transparent">
-        <DisplaySidebarFooter />
-      </div>
+      <DisplaySidebarFooter />
     </div>
   );
 }
@@ -130,7 +129,14 @@ export function DisplayPanelTrigger() {
             <SheetTitle>{SIMULATOR_TITLE}</SheetTitle>
             <SheetDescription>{SIMULATOR_SUMMARY}</SheetDescription>
           </SheetHeader>
-          <DisplayPanelControlsShell />
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <DisplayPanelControlsShell />
+          </div>
+          <footer className="shrink-0 border-t p-3">
+            <p className="text-xs text-muted-foreground">
+              <LegalLinks />
+            </p>
+          </footer>
         </SheetContent>
       </Sheet>
 
