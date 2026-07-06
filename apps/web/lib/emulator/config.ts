@@ -5,7 +5,7 @@ export const DEVICE_MODEL = "Meta Ray-Ban Display";
 export const EMULATOR_TITLE = "Meta Ray-Ban Display Web App Emulator";
 // 1:1 with the official Chrome extension one-liner.
 export const EMULATOR_SUMMARY =
-  "Simulate Meta Ray-Ban Display glasses for web apps — background environments, D-pad input, display settings, record and QA checks.";
+  "Emulate Meta Ray-Ban Display glasses for web apps — background environments, D-pad input, display settings, record and QA checks.";
 // condensed extension long-form for meta / JSON-LD.
 export const EMULATOR_TAGLINE = `${EMULATOR_SUMMARY} Emulates the 600x600 display with additive blending in your browser so developers can preview and QA without the hardware.`;
 export const OS_VERSION = "125.1";
