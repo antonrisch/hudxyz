@@ -40,7 +40,7 @@ Key files:
 - `scripts/wisp-server.mjs` — the dev Wisp egress server on `:4000`.
 - `next.config.ts` — sets COOP/COEP on `/` (for Scramjet's wasm) and `Service-Worker-Allowed: /` on `/sw.js`.
 
-**Stack pins:** Scramjet engine `2.0.67-alpha.2` (exact-pinned) + scramjet-controller `0.0.14` (the Controller/Frame API, which takes a ProxyTransport directly) + libcurl-transport `2.0.5` + wisp-js. The controller asserts the engine version at construction, so any version drift fails loudly. The v1 stack (Scramjet 1.1.0 + bare-mux + libcurl 1.5.2) lives on branch `feat/emulator-scramjet` as a stable-engine reference.
+**Stack pins:** Scramjet engine `2.0.67-alpha.2` (exact-pinned) + scramjet-controller `0.0.14` (the Controller/Frame API, which takes a ProxyTransport directly) + libcurl-transport `2.0.5` + wisp-js. The controller asserts the engine version at construction, so any version drift fails loudly. The v1 stack (Scramjet 1.1.0 + bare-mux + libcurl 1.5.2) lives on tag `scramjet-v1-reference` as a stable-engine reference.
 
 **Prod note:** Wisp wants a persistent WebSocket host, so production runs it on a dedicated always-on box with `NEXT_PUBLIC_WISP_URL` pointing at it. Egress originates from that host, so it carries SSRF protection (hostname blacklist + port restriction) for the public deployment.
 
