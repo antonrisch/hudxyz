@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { DIRECTORY_MAILTO } from "@/components/emulator/feedback-button";
+import { DIRECTORY_MAILTO } from "@/lib/emulator/config";
 import { SUGGESTED_APPS } from "@/lib/emulator/config";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { emulatorParsers } from "@/lib/emulator/search-params";

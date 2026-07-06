@@ -1,10 +1,10 @@
 "use client";
 
 import { Logo } from "@/components/layout/logo";
-import { UrlBar } from "@/components/emulator/url-bar";
-import { FeedbackButton } from "@/components/emulator/feedback-button";
-import { ShareMenu } from "@/components/emulator/share-menu";
-import { DisplayPanelTrigger } from "@/components/emulator/display-sidebar";
+import { UrlBar } from "@/components/emulator/header/url-bar";
+import { FeedbackButton } from "@/components/emulator/header/feedback-button";
+import { ShareMenu } from "@/components/emulator/header/share-menu";
+import { DisplayPanelTrigger } from "@/components/emulator/panel/sidebar";
 
 // emulator toolbar: logo left, url bar center, display + share right.
 // view / zoom / additive live in the rhs display panel (sheet below sm).

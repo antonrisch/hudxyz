@@ -5,15 +5,14 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  PanelField,
   PanelRow,
   PanelRowGroup,
   PanelSection,
   PanelSlider,
-} from "@/components/emulator/display-panel-fields";
-import { EnvironmentPicker } from "@/components/emulator/environment-picker";
-import { ViewSwitcher } from "@/components/emulator/view-switcher";
-import { ZoomControls } from "@/components/emulator/zoom-controls";
+} from "@/components/emulator/panel/fields";
+import { BackgroundPicker } from "@/components/emulator/background/picker";
+import { ViewSwitcher } from "@/components/emulator/panel/view-switcher";
+import { ZoomControls } from "@/components/emulator/panel/zoom-controls";
 import { useQueryState } from "nuqs";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { emulatorParsers } from "@/lib/emulator/search-params";
@@ -68,10 +67,8 @@ export function DisplayPanel() {
 
   return (
     <>
-      <PanelSection title="Environment">
-        <PanelField label="Background">
-          <EnvironmentPicker />
-        </PanelField>
+      <PanelSection title="Background">
+        <BackgroundPicker />
 
         <PanelSlider
           id="bg-brightness"
@@ -110,7 +107,7 @@ export function DisplayPanel() {
                 />
                 <TooltipContent className="max-w-56 text-pretty">
                   The display is additive — dark areas effectively disappear. Turn on to blend the
-                  environment into the preview.
+                  background into the preview.
                 </TooltipContent>
               </Tooltip>
             }

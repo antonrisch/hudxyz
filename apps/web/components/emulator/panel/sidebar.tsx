@@ -12,8 +12,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { DisplayPanel } from "@/components/emulator/display-panel";
-import { FEEDBACK_MAILTO } from "@/components/emulator/feedback-button";
+import { DisplayPanel } from "@/components/emulator/panel/display-panel";
+import { FEEDBACK_MAILTO } from "@/lib/emulator/config";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { DEVICE_MODEL } from "@/lib/emulator/config";
 import { dropFocus } from "@/lib/emulator/drop-focus";

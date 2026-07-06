@@ -11,7 +11,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { ScreenshotButton } from "@/components/emulator/screenshot-button";
+import { ScreenshotButton } from "@/components/emulator/input/screenshot-button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator } from "@/components/emulator";
 import type { Intent } from "@/lib/emulator/store";

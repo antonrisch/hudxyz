@@ -1,7 +1,7 @@
 "use client";
 
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
-import { Frames } from "@/components/frames";
+import { Frames } from "@/components/emulator/frames";
 import { DEVICE_BG, DEVICE_SURFACE, GLASSES_CHROME } from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
 import { useEmulator, useEmulatorState } from "@/components/emulator";

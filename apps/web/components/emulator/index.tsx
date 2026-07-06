@@ -23,12 +23,12 @@ import {
 import { INTENT_BY_KEY } from "@/lib/emulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/emulator/input";
 import { releaseChromeFocus } from "@/lib/emulator/drop-focus";
-import { EnvironmentBackdrop } from "@/components/emulator/environment-backdrop";
-import { resolveEnvironment } from "@/lib/emulator/environment";
+import { BackgroundBackdrop } from "@/components/emulator/background/backdrop";
+import { resolveBackground } from "@/lib/emulator/background";
 import {
-  getCachedIframeEnvironmentImage,
-  resolveIframeEnvironmentImage,
-} from "@/lib/emulator/environment-image";
+  getCachedIframeBackgroundImage,
+  resolveIframeBackgroundImage,
+} from "@/lib/emulator/background-image";
 import {
   measureAdditiveBackdrop,
   syncAdditive,
@@ -40,9 +40,9 @@ import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
 import { AppHeader } from "@/components/emulator/app-header";
-import { Dpad } from "@/components/emulator/dpad";
+import { Dpad } from "@/components/emulator/input/dpad";
 import { Device } from "@/components/emulator/device";
-import { DisplaySidebar } from "@/components/emulator/display-sidebar";
+import { DisplaySidebar } from "@/components/emulator/panel/sidebar";
 import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
 import { downloadDisplay } from "@/lib/emulator/capture";
 
@@ -86,13 +86,13 @@ export default function Emulator({ seed }: { seed: Seed }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
   const view = useStore(store, (s) => s.view);
-  const environmentKey = useStore(store, (s) => s.environment);
-  const customEnvironmentImages = useStore(store, (s) => s.customEnvironmentImages);
-  const activeCustomEnvironmentId = useStore(store, (s) => s.activeCustomEnvironmentId);
-  const environment = resolveEnvironment(
-    environmentKey,
-    customEnvironmentImages,
-    activeCustomEnvironmentId,
+  const backgroundKey = useStore(store, (s) => s.background);
+  const customBackgroundImages = useStore(store, (s) => s.customBackgroundImages);
+  const activeCustomBackgroundId = useStore(store, (s) => s.activeCustomBackgroundId);
+  const background = resolveBackground(
+    backgroundKey,
+    customBackgroundImages,
+    activeCustomBackgroundId,
   );
   const backgroundBrightness = useStore(store, (s) => s.backgroundBrightness);
   const backgroundBlur = useStore(store, (s) => s.backgroundBlur);
@@ -233,7 +233,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
   });
 
   // additive preview lives inside the proxied document so black pixels blend with the
-  // environment before the iframe crosses transformed emulator chrome.
+  // background before the iframe crosses transformed emulator chrome.
   useMountEffect(() => {
     let applyToken = 0;
     let resolvedImage: string | undefined;
@@ -244,17 +244,17 @@ export default function Emulator({ seed }: { seed: Seed }) {
       const {
         additive,
         lensTint,
-        environment,
-        customEnvironmentImages,
-        activeCustomEnvironmentId,
+        background: backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
         backgroundBrightness,
         backgroundBlur,
         displayBrightness,
       } = store.getState();
-      const preset = resolveEnvironment(
-        environment,
-        customEnvironmentImages,
-        activeCustomEnvironmentId,
+      const preset = resolveBackground(
+        backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
       );
       const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
       syncAdditive(
@@ -271,13 +271,13 @@ export default function Emulator({ seed }: { seed: Seed }) {
     };
 
     const applyAdditive = () => {
-      const { additive, environment, customEnvironmentImages, activeCustomEnvironmentId } =
+      const { additive, background: backgroundKey, customBackgroundImages, activeCustomBackgroundId } =
         store.getState();
       const token = ++applyToken;
-      const preset = resolveEnvironment(
-        environment,
-        customEnvironmentImages,
-        activeCustomEnvironmentId,
+      const preset = resolveBackground(
+        backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
       );
       const source = preset.image;
 
@@ -295,7 +295,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
         return;
       }
 
-      const cached = getCachedIframeEnvironmentImage(source);
+      const cached = getCachedIframeBackgroundImage(source);
       if (cached) {
         resolvedImage = cached;
         resolvedImageSource = source;
@@ -312,7 +312,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
       resolvedImageSource = source;
       syncCurrentAdditive();
 
-      void resolveIframeEnvironmentImage(source)
+      void resolveIframeBackgroundImage(source)
         .then((nextImage) => {
           if (token !== applyToken) return;
           resolvedImage = nextImage;
@@ -338,9 +338,9 @@ export default function Emulator({ seed }: { seed: Seed }) {
       if (
         state.additive !== prev.additive ||
         state.lensTint !== prev.lensTint ||
-        state.environment !== prev.environment ||
-        state.customEnvironmentImages !== prev.customEnvironmentImages ||
-        state.activeCustomEnvironmentId !== prev.activeCustomEnvironmentId ||
+        state.background !== prev.background ||
+        state.customBackgroundImages !== prev.customBackgroundImages ||
+        state.activeCustomBackgroundId !== prev.activeCustomBackgroundId ||
         state.backgroundBrightness !== prev.backgroundBrightness ||
         state.backgroundBlur !== prev.backgroundBlur ||
         state.displayBrightness !== prev.displayBrightness
@@ -488,10 +488,10 @@ export default function Emulator({ seed }: { seed: Seed }) {
           {/* device canvas; the d-pad is a floating panel over the bottom edge. */}
           <div
             ref={stageRef}
-            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-env-fill"
+            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-bg-fill"
           >
-            <EnvironmentBackdrop
-              preset={environment}
+            <BackgroundBackdrop
+              preset={background}
               backgroundBrightness={backgroundBrightness}
               backgroundBlur={backgroundBlur}
             />

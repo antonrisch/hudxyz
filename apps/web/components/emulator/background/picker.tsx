@@ -6,42 +6,42 @@ import { useQueryState } from "nuqs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { cn } from "@/lib/utils";
-import { ENV_GRADIENT, ENV_GRADIENT_FILL, ENVIRONMENTS, type EnvironmentKey } from "@/lib/emulator/environment";
-import { prepareCustomEnvironmentImage } from "@/lib/emulator/environment-image";
+import { BG_GRADIENT, BG_GRADIENT_FILL, BACKGROUNDS, type BackgroundKey } from "@/lib/emulator/background";
+import { prepareCustomBackgroundImage } from "@/lib/emulator/background-image";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { dropFocus } from "@/lib/emulator/drop-focus";
 
-const ENVIRONMENT_ICONS = {
-  daylight: Sun,
+const BACKGROUND_ICONS = {
+  day: Sun,
   night: Moon,
-} satisfies Partial<Record<EnvironmentKey, LucideIcon>>;
+} satisfies Partial<Record<BackgroundKey, LucideIcon>>;
 
 const customToggleValue = (id: string) => `custom:${id}`;
 
 const selectedItemClass =
   "aria-pressed:border-white! aria-pressed:bg-transparent! aria-pressed:ring-[3px] aria-pressed:ring-white/50";
 
-export function EnvironmentPicker() {
+export function BackgroundPicker() {
   const { store } = useEmulator();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const environment = useEmulatorState((s) => s.environment);
-  const customEnvironmentImages = useEmulatorState((s) => s.customEnvironmentImages);
-  const activeCustomEnvironmentId = useEmulatorState((s) => s.activeCustomEnvironmentId);
-  const [, setEnvironmentParam] = useQueryState("environment", emulatorParsers.environment);
+  const background = useEmulatorState((s) => s.background);
+  const customBackgroundImages = useEmulatorState((s) => s.customBackgroundImages);
+  const activeCustomBackgroundId = useEmulatorState((s) => s.activeCustomBackgroundId);
+  const [, setBackgroundParam] = useQueryState("bg", emulatorParsers.bg);
 
   const selected =
-    environment === "custom" && activeCustomEnvironmentId
-      ? customToggleValue(activeCustomEnvironmentId)
-      : environment;
+    background === "custom" && activeCustomBackgroundId
+      ? customToggleValue(activeCustomBackgroundId)
+      : background;
 
-  const setPresetEnvironment = (next: EnvironmentKey) => {
-    store.getState().setEnvironment(next);
-    void setEnvironmentParam(next);
+  const setPresetBackground = (next: BackgroundKey) => {
+    store.getState().setBackground(next);
+    void setBackgroundParam(next);
   };
 
   const selectCustom = (id: string) => {
-    store.getState().selectCustomEnvironment(id);
-    void setEnvironmentParam("custom");
+    store.getState().selectCustomBackground(id);
+    void setBackgroundParam("custom");
   };
 
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -49,13 +49,13 @@ export function EnvironmentPicker() {
     e.target.value = "";
     if (!file) return;
 
-    void prepareCustomEnvironmentImage(file)
+    void prepareCustomBackgroundImage(file)
       .then((url) => {
-        store.getState().addCustomEnvironment(url);
-        void setEnvironmentParam("custom");
+        store.getState().addCustomBackground(url);
+        void setBackgroundParam("custom");
       })
       .catch(() => {
-        // decode/resize failed — ignore and keep the current environment.
+        // decode/resize failed — ignore and keep the current background.
       });
   };
 
@@ -63,7 +63,7 @@ export function EnvironmentPicker() {
     <div className="flex flex-wrap items-center justify-start gap-1 rounded-xl border bg-muted p-1">
       <ToggleGroup
         variant="outline"
-        aria-label="Environment"
+        aria-label="Background"
         value={[selected]}
         onValueChange={(vals) => {
           const next = vals[0];
@@ -72,25 +72,24 @@ export function EnvironmentPicker() {
             selectCustom(next.slice("custom:".length));
             return;
           }
-          setPresetEnvironment(next as EnvironmentKey);
+          setPresetBackground(next as BackgroundKey);
         }}
         className="flex-wrap justify-start gap-1 border-0 bg-transparent p-0"
       >
-        {ENVIRONMENTS.filter((env) => env.key !== "custom").map((env) => {
-          const Icon = ENVIRONMENT_ICONS[env.key as keyof typeof ENVIRONMENT_ICONS];
-          const gradient = ENV_GRADIENT[env.key as keyof typeof ENV_GRADIENT];
+        {BACKGROUNDS.filter((bg) => bg.key !== "custom").map((bg) => {
+          const Icon = BACKGROUND_ICONS[bg.key as keyof typeof BACKGROUND_ICONS];
+          const gradient = BG_GRADIENT[bg.key as keyof typeof BG_GRADIENT];
           return (
             <ToggleGroupItem
-              key={env.key}
-              value={env.key}
-              aria-label={env.label}
+              key={bg.key}
+              value={bg.key}
+              aria-label={bg.label}
               onMouseDown={dropFocus}
-              onClick={() => setPresetEnvironment(env.key)}
+              onClick={() => setPresetBackground(bg.key)}
               style={
                 gradient
                   ? {
-                      backgroundColor:
-                        ENV_GRADIENT_FILL[env.key as keyof typeof ENV_GRADIENT_FILL],
+                      backgroundColor: BG_GRADIENT_FILL[bg.key as keyof typeof BG_GRADIENT_FILL],
                     }
                   : undefined
               }
@@ -107,14 +106,14 @@ export function EnvironmentPicker() {
                   aria-hidden
                   className="pointer-events-none absolute -inset-1"
                   style={{
-                    backgroundColor: ENV_GRADIENT_FILL[env.key as keyof typeof ENV_GRADIENT_FILL],
+                    backgroundColor: BG_GRADIENT_FILL[bg.key as keyof typeof BG_GRADIENT_FILL],
                     backgroundImage: gradient,
                   }}
                 />
               ) : null}
-              {"image" in env && env.image ? (
+              {"image" in bg && bg.image ? (
                 // eslint-disable-next-line @next/next/no-img-element -- same-origin preset thumbnail
-                <img src={env.image} alt="" className="size-full rounded-[inherit] object-cover" />
+                <img src={bg.image} alt="" className="size-full rounded-[inherit] object-cover" />
               ) : Icon ? (
                 <Icon className="relative size-6" />
               ) : null}
@@ -122,11 +121,11 @@ export function EnvironmentPicker() {
           );
         })}
 
-        {customEnvironmentImages.map((img) => (
+        {customBackgroundImages.map((img) => (
           <ToggleGroupItem
             key={img.id}
             value={customToggleValue(img.id)}
-            aria-label="Custom environment"
+            aria-label="Custom background"
             onMouseDown={dropFocus}
             onClick={() => selectCustom(img.id)}
             className={cn("hover:bg-background/60 size-12 border-muted p-0", selectedItemClass)}
@@ -139,7 +138,7 @@ export function EnvironmentPicker() {
 
       <label
         className="inline-flex size-12 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-background/60 hover:text-foreground"
-        aria-label="Upload environment photo"
+        aria-label="Upload background photo"
       >
         <input
           ref={fileInputRef}
