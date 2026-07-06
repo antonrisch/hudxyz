@@ -11,9 +11,24 @@ import type { Seed, View } from "@/lib/simulator/store";
 
 export const SIMULATOR_SHARE_PATH = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
 
-export function buildSimulatorShareUrl(appUrl?: string): string {
-  if (!appUrl) return SIMULATOR_SHARE_PATH;
-  return `${SIMULATOR_SHARE_PATH}?${new URLSearchParams({ url: appUrl }).toString()}`;
+export function buildSimulatorShareUrl(appUrl?: string, appName?: string): string {
+  const params = new URLSearchParams();
+  if (appUrl) params.set("url", appUrl);
+  const trimmedName = appName?.trim();
+  if (trimmedName) params.set("name", trimmedName);
+  const query = params.toString();
+  if (!query) return SIMULATOR_SHARE_PATH;
+  return `${SIMULATOR_SHARE_PATH}?${query}`;
+}
+
+// meta ai app deep link for adding a web app to display glasses (scan qr or paste link).
+// https://github.com/facebookincubator/meta-wearables-webapp/blob/main/AGENTS.md#2-generate-qr-code-for-easy-device-setup
+export function buildDeviceSetupDeepLink(appName: string, appUrl: string): string | null {
+  const trimmedName = appName.trim();
+  const href = normalizeWebUrl(appUrl);
+  if (!trimmedName || !href) return null;
+  const params = new URLSearchParams({ appName: trimmedName, appUrl: href });
+  return `fb-viewapp://web_app_deep_link?${params.toString()}`;
 }
 
 const VIEW_KEYS = VIEWS.map((v) => v.key);
