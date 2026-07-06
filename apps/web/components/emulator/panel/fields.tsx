@@ -85,20 +85,16 @@ export function PanelRow({
 // stacked field — label above a full-width control (pickers, sliders).
 export function PanelField({
   label,
-  htmlFor,
   controlClassName,
   children,
 }: {
   label: string;
-  htmlFor?: string;
   controlClassName?: string;
   children: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={htmlFor} className="font-normal text-foreground">
-        {label}
-      </Label>
+      <span className="w-fit text-sm leading-none font-medium text-foreground">{label}</span>
       <div className={cn(controlSlotClass, controlClassName ?? "w-full")}>{children}</div>
     </div>
   );
@@ -139,7 +135,7 @@ export function PanelSlider({
   };
 
   return (
-    <PanelField label={label} htmlFor={inputId} controlClassName="min-h-7 w-full">
+    <PanelField label={label} controlClassName="min-h-7 w-full">
       <div className="flex w-full min-w-0 items-center gap-2">
         <Slider
           id={id}
@@ -154,23 +150,21 @@ export function PanelSlider({
           }}
           aria-label={label}
         />
-        <div className="flex h-7 shrink-0 items-center rounded-xl border border-border/50 bg-muted px-0.5">
-          <input
-            id={inputId}
-            aria-label={`${label} value`}
-            inputMode="numeric"
-            value={editing ? draft : `${value}%`}
-            onFocus={(e) => {
-              setEditing(true);
-              setDraft(String(value));
-              e.currentTarget.select();
-            }}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={(e) => commitValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="h-full w-10 bg-transparent text-center text-sm font-medium tabular-nums text-muted-foreground outline-none hover:text-foreground focus-visible:text-foreground"
-          />
-        </div>
+        <input
+          id={inputId}
+          aria-label={`${label} value`}
+          inputMode="numeric"
+          value={editing ? draft : `${value}%`}
+          onFocus={(e) => {
+            setEditing(true);
+            setDraft(String(value));
+            e.currentTarget.select();
+          }}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={(e) => commitValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="h-7 w-10 shrink-0 rounded-xl border border-border/50 bg-muted text-center text-sm font-medium tabular-nums text-muted-foreground outline-none hover:text-foreground focus-visible:border-ring focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+        />
       </div>
     </PanelField>
   );
