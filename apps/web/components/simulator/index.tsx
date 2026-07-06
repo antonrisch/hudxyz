@@ -52,6 +52,7 @@ import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadDisplay } from "@/lib/simulator/capture";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 // -- context ------------------------------------------------
 // stable handles for the leaf components: the store (read via useSimulatorState),
@@ -111,6 +112,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
   );
   const backgroundBrightness = useStore(store, (s) => s.backgroundBrightness);
   const backgroundBlur = useStore(store, (s) => s.backgroundBlur);
+  const displayPanelOpen = useStore(store, (s) => s.displayPanelOpen);
   const panZoom = usePanZoom(view);
   const panZoomRef = useRef(panZoom);
   panZoomRef.current = panZoom;
@@ -580,7 +582,12 @@ export default function Simulator({ seed }: { seed: Seed }) {
           <h1 className="sr-only sm:hidden">{SIMULATOR_TITLE}</h1>
           <AppHeader />
 
-          <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] gap-2 px-2 pb-2 sm:grid-cols-[1fr_auto]">
+          <div
+            className={cn(
+              "grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] px-2 pb-2",
+              displayPanelOpen ? "gap-2 sm:grid-cols-[1fr_auto]" : "sm:grid-cols-1",
+            )}
+          >
             <DisplaySidebarColumn />
             <div className="relative grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:col-start-1 sm:row-start-1 sm:grid-rows-1 sm:gap-0">
               <div
