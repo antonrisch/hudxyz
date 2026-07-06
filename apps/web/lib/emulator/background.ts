@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 // backgrounds drive the canvas stage and the additive preview behind the waveguide.
-export type BackgroundKey = "alps" | "alps2" | "day" | "night" | "custom";
+export type BackgroundKey = "alps" | "alps2" | "beach" | "day" | "night" | "custom";
 
 export type BackgroundPreset = {
   key: BackgroundKey;
@@ -12,11 +12,6 @@ export type BackgroundPreset = {
 export const BACKGROUND_GRADIENT = {
   day: "linear-gradient(to bottom, var(--bg-day-from), var(--bg-day-to))",
   night: "linear-gradient(to bottom, var(--bg-night-from), var(--bg-night-to))",
-} as const satisfies Partial<Record<BackgroundKey, string>>;
-
-export const BACKGROUND_GRADIENT_FILL = {
-  day: "var(--bg-day-to)",
-  night: "var(--bg-night-to)",
 } as const satisfies Partial<Record<BackgroundKey, string>>;
 
 export const DEFAULT_BACKGROUND: BackgroundKey = "alps";
@@ -36,6 +31,11 @@ export const BACKGROUNDS = [
     label: "Alps 2",
     image: "/backgrounds/alps2.jpg",
   },
+  {
+    key: "beach",
+    label: "Beach",
+    image: "/backgrounds/beach.jpg",
+  },
   { key: "day", label: "Day" },
   { key: "night", label: "Night" },
   {
@@ -52,7 +52,12 @@ export function backgroundByKey(key: BackgroundKey): BackgroundPreset {
   return BACKGROUNDS.find((bg) => bg.key === key) ?? BACKGROUNDS[0];
 }
 
-export type CustomBackgroundImage = { id: string; url: string };
+export type CustomBackgroundImage = {
+  id: string;
+  url: string;
+  thumbUrl: string;
+  iframeDataUrl: string;
+};
 
 export function resolveBackground(
   key: BackgroundKey,
@@ -110,8 +115,13 @@ export function backgroundBackdropStyle(
 
 export function additiveBackgroundBg(preset: BackgroundPreset, image?: string): string {
   if (preset.image) {
-    const src = image ?? (preset.image.startsWith("blob:") ? undefined : preset.image);
-    return src ? `url("${src}")` : "none";
+    // iframe css resolves urls against the proxied app origin — never inject host-relative
+    // /backgrounds/* paths; wait for the parent to supply a compressed data: url instead.
+    const src =
+      image ??
+      (preset.image.startsWith("blob:") || preset.image.startsWith("/") ? undefined : preset.image);
+    if (!src) return "none";
+    return src.startsWith("data:") ? `url(${src})` : `url("${src}")`;
   }
 
   const gradient = BACKGROUND_GRADIENT[preset.key as keyof typeof BACKGROUND_GRADIENT];

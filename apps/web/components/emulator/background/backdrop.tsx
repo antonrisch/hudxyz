@@ -1,9 +1,10 @@
+import Image from "next/image";
 import {
   BACKDROP_SCALE,
+  backgroundBackdropFilter,
   backgroundBackdropStyle,
   type BackgroundPreset,
 } from "@/lib/emulator/background";
-import { cn } from "@/lib/utils";
 
 export function BackgroundBackdrop({
   preset,
@@ -14,14 +15,34 @@ export function BackgroundBackdrop({
   backgroundBrightness: number;
   backgroundBlur: number;
 }) {
+  const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur);
+
+  if (preset.image) {
+    return (
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <Image
+          src={preset.image}
+          alt=""
+          fill
+          sizes="100vw"
+          quality={75}
+          priority
+          unoptimized={preset.image.startsWith("blob:")}
+          className="origin-center object-cover"
+          style={{
+            transform: `scale(${BACKDROP_SCALE})`,
+            ...(filter && { filter }),
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       aria-hidden
-      className={cn("pointer-events-none absolute inset-0", preset.image && "origin-center")}
-      style={{
-        ...backgroundBackdropStyle(preset, backgroundBrightness, backgroundBlur),
-        ...(preset.image && { transform: `scale(${BACKDROP_SCALE})` }),
-      }}
+      className="pointer-events-none absolute inset-0"
+      style={backgroundBackdropStyle(preset, backgroundBrightness, backgroundBlur)}
     />
   );
 }

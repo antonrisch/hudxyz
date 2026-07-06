@@ -57,6 +57,10 @@
   --color-frame: var(--frame);
   --color-frame-temple: var(--frame-temple);
   --color-frame-temple-dark: var(--frame-temple-dark);
+  --color-bg-day-from: var(--bg-day-from);
+  --color-bg-day-to: var(--bg-day-to);
+  --color-bg-night-from: var(--bg-night-from);
+  --color-bg-night-to: var(--bg-night-to);
 }
 
 :root {
