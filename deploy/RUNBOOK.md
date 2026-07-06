@@ -14,7 +14,7 @@ Browser ──HTTPS──> hud.xyz (Vercel / Next.js)
 | Level  | Examples                                               | Response                                   |
 | ------ | ------------------------------------------------------ | ------------------------------------------ |
 | **P0** | hud.xyz down, proxy used for abuse at scale, data leak | Drop everything; fix or rollback within 1h |
-| **P1** | Simulator broken but site loads, elevated Sentry errors | Fix same day                               |
+| **P1** | Emulator broken but site loads, elevated Sentry errors | Fix same day                               |
 | **P2** | Cosmetic bug, single-user report                       | Next deploy window                         |
 
 ## Escalation
@@ -57,7 +57,7 @@ Full wisp deploy steps: [deploy/README.md](./README.md).
 
 ## Common failures
 
-### Simulator stuck / proxy not loading
+### Emulator stuck / proxy not loading
 
 - Browser devtools → **Console** and **Network** → WebSocket to `wisp` (101 Switching Protocols?)
 - Verify Vercel env: `NEXT_PUBLIC_WISP_URL=wss://kenobi.hudbox.dev/wisp/`
@@ -96,7 +96,7 @@ No public status page yet. For a prolonged P0:
 After any production change:
 
 - [ ] `https://hud.xyz` loads
-- [ ] Load a public URL in the simulator (proxy path works)
+- [ ] Load a public URL in the emulator (proxy path works)
 - [ ] `/privacy` and `/terms` render
 - [ ] Sentry test event (optional) via a thrown error on preview only
 - [ ] `curl -I https://hud.xyz/privacy` shows security headers (HSTS, nosniff, etc.)

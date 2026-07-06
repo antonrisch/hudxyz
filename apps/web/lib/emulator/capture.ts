@@ -1,6 +1,6 @@
 import { snapdom } from "@zumer/snapdom";
-import { waitForIframePaint } from "@/lib/simulator/app-load";
-import { VIEWPORT } from "@/lib/simulator/config";
+import { waitForIframePaint } from "@/lib/emulator/app-load";
+import { VIEWPORT } from "@/lib/emulator/config";
 
 const CAPTURE = {
   width: VIEWPORT,

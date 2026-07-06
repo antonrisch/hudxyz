@@ -1,35 +1,35 @@
 import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
-import Simulator from "@/components/simulator";
-import { SIMULATOR_TAGLINE, SIMULATOR_TITLE } from "@/lib/simulator/config";
-import { loadSimulatorSearchParams, seedFromParams } from "@/lib/simulator/search-params";
+import Emulator from "@/components/emulator";
+import { EMULATOR_TAGLINE, EMULATOR_TITLE } from "@/lib/emulator/config";
+import { loadEmulatorSearchParams, seedFromParams } from "@/lib/emulator/search-params";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
 
 export const metadata: Metadata = {
-  title: SIMULATOR_TITLE,
-  description: SIMULATOR_TAGLINE,
+  title: EMULATOR_TITLE,
+  description: EMULATOR_TAGLINE,
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   openGraph: {
-    title: SIMULATOR_TITLE,
-    description: SIMULATOR_TAGLINE,
+    title: EMULATOR_TITLE,
+    description: EMULATOR_TAGLINE,
     url: "/",
     type: "website",
     siteName: "hud.xyz",
   },
   twitter: {
     card: "summary",
-    title: SIMULATOR_TITLE,
-    description: SIMULATOR_TAGLINE,
+    title: EMULATOR_TITLE,
+    description: EMULATOR_TAGLINE,
   },
 };
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: SIMULATOR_TITLE,
-  description: SIMULATOR_TAGLINE,
+  name: EMULATOR_TITLE,
+  description: EMULATOR_TAGLINE,
   url: siteUrl,
   applicationCategory: "DeveloperApplication",
   operatingSystem: "Web",
@@ -41,14 +41,14 @@ export default async function Page({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const params = await loadSimulatorSearchParams(searchParams);
+  const params = await loadEmulatorSearchParams(searchParams);
   return (
     <main className="flex h-svh flex-col overflow-hidden">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Simulator seed={seedFromParams(params)} />
+      <Emulator seed={seedFromParams(params)} />
     </main>
   );
 }

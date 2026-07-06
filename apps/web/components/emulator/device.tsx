@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
-import { Frames } from "@/components/simulator/frames";
-import { DEVICE_BG, DEVICE_SURFACE, GLASSES_CHROME } from "@/lib/simulator/config";
-import type { Status } from "@/lib/simulator/store";
-import { useSimulator, useSimulatorState } from "@/components/simulator";
-import { releaseChromeFocus } from "@/lib/simulator/input";
+import { Frames } from "@/components/emulator/frames";
+import { DEVICE_BG, DEVICE_SURFACE, GLASSES_CHROME } from "@/lib/emulator/config";
+import type { Status } from "@/lib/emulator/store";
+import { useEmulator, useEmulatorState } from "@/components/emulator";
+import { releaseChromeFocus } from "@/lib/emulator/input";
 import { cn } from "@/lib/utils";
 
 const STATUS_MSG: Partial<Record<Status, string>> = {
@@ -21,12 +21,12 @@ const APP_REVEAL_MS = 300;
 // the frames svg off it decoratively, so glasses ≡ 1:1 at a smaller default zoom). the
 // iframe stays the same element across views/modes/zoom.
 export function Device() {
-  const { iframeRef, displayRef, panZoom, store } = useSimulator();
-  const view = useSimulatorState((s) => s.view);
-  const screen = useSimulatorState((s) => s.screen);
-  const status = useSimulatorState((s) => s.status);
-  const additive = useSimulatorState((s) => s.additive);
-  const lensTint = useSimulatorState((s) => s.lensTint);
+  const { iframeRef, displayRef, panZoom, store } = useEmulator();
+  const view = useEmulatorState((s) => s.view);
+  const screen = useEmulatorState((s) => s.screen);
+  const status = useEmulatorState((s) => s.status);
+  const additive = useEmulatorState((s) => s.additive);
+  const lensTint = useEmulatorState((s) => s.lensTint);
   const isGlasses = view === "glasses";
   const { onPointerDown, ...panGesture } = panZoom.bind();
   const [appRevealed, setAppRevealed] = useState(false);

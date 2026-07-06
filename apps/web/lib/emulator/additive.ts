@@ -3,7 +3,7 @@ import {
   additiveBackgroundFilter,
   BACKDROP_SCALE,
   type BackgroundPreset,
-} from "@/lib/simulator/background";
+} from "@/lib/emulator/background";
 
 const STYLE_ID = "hud-additive-style";
 const ACTIVE_CLASS = "hud-additive";

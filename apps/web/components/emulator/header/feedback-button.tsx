@@ -2,8 +2,8 @@
 
 import { Heart } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { dropFocus } from "@/lib/simulator/input";
-import { FEEDBACK_MAILTO } from "@/lib/simulator/config";
+import { dropFocus } from "@/lib/emulator/input";
+import { FEEDBACK_MAILTO } from "@/lib/emulator/config";
 import { cn } from "@/lib/utils";
 
 export function FeedbackButton({ className }: { className?: string }) {

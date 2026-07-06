@@ -11,11 +11,11 @@ import {
   Undo2,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { ScreenshotButton } from "@/components/simulator/input/screenshot-button";
+import { ScreenshotButton } from "@/components/emulator/input/screenshot-button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useSimulator } from "@/components/simulator";
-import type { Intent } from "@/lib/simulator/store";
-import { dropFocus } from "@/lib/simulator/input";
+import { useEmulator } from "@/components/emulator";
+import type { Intent } from "@/lib/emulator/store";
+import { dropFocus } from "@/lib/emulator/input";
 import type { VariantProps } from "class-variance-authority";
 
 type DirectionIntent = Extract<Intent, "up" | "down" | "left" | "right">;
@@ -53,7 +53,7 @@ const armByIntent = Object.fromEntries(DPAD_ARMS.map((arm) => [arm.intent, arm])
 >;
 
 function useIntentPress(intent: Intent) {
-  const { pressDown, pressUp } = useSimulator();
+  const { pressDown, pressUp } = useEmulator();
 
   const onPointerDown = (e: PointerEvent) => {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -206,7 +206,7 @@ function IntentButton({
 
 // gesture controls; emits intents to the shell.
 export function Dpad() {
-  const { pressedIntents } = useSimulator();
+  const { pressedIntents } = useEmulator();
 
   return (
     <TooltipProvider delay={1000}>

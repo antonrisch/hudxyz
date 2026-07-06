@@ -9,13 +9,13 @@ import {
   PanelRowGroup,
   PanelSection,
   PanelSlider,
-} from "@/components/simulator/panel/fields";
-import { BackgroundPicker } from "@/components/simulator/background/picker";
+} from "@/components/emulator/panel/fields";
+import { BackgroundPicker } from "@/components/emulator/background/picker";
 import { useQueryState } from "nuqs";
-import { useSimulator, useSimulatorState } from "@/components/simulator";
-import { simulatorParsers } from "@/lib/simulator/search-params";
+import { useEmulator, useEmulatorState } from "@/components/emulator";
+import { emulatorParsers } from "@/lib/emulator/search-params";
 
-function syncSimulatorParam<T>(
+function syncEmulatorParam<T>(
   apply: (next: T) => void,
   setParam: (value: T | null | ((old: T) => T | null)) => void | Promise<unknown>,
 ) {
@@ -27,38 +27,38 @@ function syncSimulatorParam<T>(
 
 // display preview controls: view, zoom, and additive blend (shared by the rhs panel + mobile sheet).
 export function DisplayPanel() {
-  const { store } = useSimulator();
-  const additive = useSimulatorState((s) => s.additive);
-  const lensTint = useSimulatorState((s) => s.lensTint);
-  const backgroundBrightness = useSimulatorState((s) => s.backgroundBrightness);
-  const backgroundBlur = useSimulatorState((s) => s.backgroundBlur);
-  const displayBrightness = useSimulatorState((s) => s.displayBrightness);
-  const [, setAdditiveParam] = useQueryState("additive", simulatorParsers.additive);
-  const [, setLensTintParam] = useQueryState("lensTint", simulatorParsers.lensTint);
-  const [, setBgBrightnessParam] = useQueryState("bgBrightness", simulatorParsers.bgBrightness);
-  const [, setBgBlurParam] = useQueryState("bgBlur", simulatorParsers.bgBlur);
+  const { store } = useEmulator();
+  const additive = useEmulatorState((s) => s.additive);
+  const lensTint = useEmulatorState((s) => s.lensTint);
+  const backgroundBrightness = useEmulatorState((s) => s.backgroundBrightness);
+  const backgroundBlur = useEmulatorState((s) => s.backgroundBlur);
+  const displayBrightness = useEmulatorState((s) => s.displayBrightness);
+  const [, setAdditiveParam] = useQueryState("additive", emulatorParsers.additive);
+  const [, setLensTintParam] = useQueryState("lensTint", emulatorParsers.lensTint);
+  const [, setBgBrightnessParam] = useQueryState("bgBrightness", emulatorParsers.bgBrightness);
+  const [, setBgBlurParam] = useQueryState("bgBlur", emulatorParsers.bgBlur);
   const [, setDisplayBrightnessParam] = useQueryState(
     "displayBrightness",
-    simulatorParsers.displayBrightness,
+    emulatorParsers.displayBrightness,
   );
 
-  const setAdditive = syncSimulatorParam(
+  const setAdditive = syncEmulatorParam(
     (next) => store.getState().setAdditive(next),
     setAdditiveParam,
   );
-  const setBgBrightness = syncSimulatorParam(
+  const setBgBrightness = syncEmulatorParam(
     (next) => store.getState().setBackgroundBrightness(next),
     setBgBrightnessParam,
   );
-  const setBgBlur = syncSimulatorParam(
+  const setBgBlur = syncEmulatorParam(
     (next) => store.getState().setBackgroundBlur(next),
     setBgBlurParam,
   );
-  const setDisplayBrightness = syncSimulatorParam(
+  const setDisplayBrightness = syncEmulatorParam(
     (next) => store.getState().setDisplayBrightness(next),
     setDisplayBrightnessParam,
   );
-  const setLensTint = syncSimulatorParam(
+  const setLensTint = syncEmulatorParam(
     (next) => store.getState().setLensTint(next),
     setLensTintParam,
   );

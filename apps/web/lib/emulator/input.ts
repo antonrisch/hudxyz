@@ -1,6 +1,6 @@
 import type { MouseEvent } from "react";
-import { KEY_BY_INTENT } from "@/lib/simulator/config";
-import type { Intent } from "@/lib/simulator/store";
+import { KEY_BY_INTENT } from "@/lib/emulator/config";
+import type { Intent } from "@/lib/emulator/store";
 
 const CODE_BY_INTENT: Record<Intent, string> = {
   up: "ArrowUp",

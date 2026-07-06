@@ -2,7 +2,7 @@ import {
   BACKDROP_SCALE,
   backgroundBackdropStyle,
   type BackgroundPreset,
-} from "@/lib/simulator/background";
+} from "@/lib/emulator/background";
 
 export function BackgroundBackdrop({
   preset,

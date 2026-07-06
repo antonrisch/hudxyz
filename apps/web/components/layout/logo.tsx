@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-// hud.xyz logo: pixel mark + wordmark; always routes to the simulator.
+// hud.xyz logo: pixel mark + wordmark; always routes to the emulator.
 export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, "href">) {
   return (
     <Link
