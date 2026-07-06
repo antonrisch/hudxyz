@@ -1,15 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-  <rect width="20" height="20" fill="#1cb6ac" />
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00F3FE" />
+      <stop offset=".1" stop-color="#00F3FE" />
+      <stop offset=".1" stop-color="#01DCFE" />
+      <stop offset=".2" stop-color="#01DCFE" />
+      <stop offset=".2" stop-color="#01C4FF" />
+      <stop offset=".3" stop-color="#01C4FF" />
+      <stop offset=".3" stop-color="#00A6FF" />
+      <stop offset=".4" stop-color="#00A6FF" />
+      <stop offset=".4" stop-color="#0086FE" />
+      <stop offset=".5" stop-color="#0086FE" />
+      <stop offset=".5" stop-color="#0067FF" />
+      <stop offset=".6" stop-color="#0067FF" />
+      <stop offset=".6" stop-color="#0049FF" />
+      <stop offset=".7" stop-color="#0049FF" />
+      <stop offset=".7" stop-color="#012CFF" />
+      <stop offset=".8" stop-color="#012CFF" />
+      <stop offset=".8" stop-color="#0115FF" />
+      <stop offset=".9" stop-color="#0115FF" />
+      <stop offset=".9" stop-color="#0003FE" />
+      <stop offset="1" stop-color="#0003FE" />
+    </linearGradient>
+  </defs>
+  <rect width="20" height="20" fill="url(#bg)" />
   <path
-    fill="#000"
-    d="M19,7L1,7L1,9L2,9.036L2,10L3,10L3,11L4,11L4,12L7,12L7,11L8,11L8,10L9,10L9,9L11,9L11,10L12,10L12,11L13,11L13,12L16,12L16,11L17,11L17,10L18,10L18,9L19,9L19,7Z"
+    fill-rule="evenodd"
+    clip-rule="evenodd"
+    d="M19 7H1V9L2 9.036V10H3V11H4V12H7V11H8V10H9V9H11V10H12V11H13V12H16V11H17V10H18V9H19V7Z"
+    fill="#fff"
   />
   <path
-    fill="#fff"
-    d="M6,11L5,11L5,10L4,10L4,9L3,9L3,8L4,8L4,9L5,9L5,10L6,10L6,11"
+    fill-rule="evenodd"
+    clip-rule="evenodd"
+    d="M6 11H5V10H4V9H3V8H4V9H5V10H6V11Z"
+    fill="#0003FE"
   />
   <path
-    fill="#fff"
-    d="M15,11L14,11L14,10L13,10L13,9L12,9L12,8L13,8L13,9L14,9L14,10L15,10L15,11"
+    fill-rule="evenodd"
+    clip-rule="evenodd"
+    d="M15 11H14V10H13V9H12V8H13V9H14V10H15V11Z"
+    fill="#0003FE"
   />
 </svg>

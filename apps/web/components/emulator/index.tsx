@@ -7,31 +7,45 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type RefObject,
 } from "react";
 import { useQueryState } from "nuqs";
 import { useStore } from "zustand";
 import {
   createEmulatorStore,
+  getPersistedDisplayPanelOpen,
   type EmulatorState,
   type EmulatorStore,
   type Intent,
   type Seed,
   type View,
 } from "@/lib/emulator/store";
-import { INTENT_BY_KEY, KEY_BY_INTENT } from "@/lib/emulator/config";
-import { environmentByKey } from "@/lib/emulator/environment";
+import { INTENT_BY_KEY } from "@/lib/emulator/config";
+import { dispatchDeviceKey, isHostChromeInput } from "@/lib/emulator/input";
+import { releaseChromeFocus } from "@/lib/emulator/input";
+import { BackgroundBackdrop } from "@/components/emulator/background/backdrop";
+import { resolveBackground } from "@/lib/emulator/background";
+import {
+  getCachedIframeBackgroundImage,
+  prewarmPresetBackgroundImages,
+  resolveIframeBackgroundImage,
+} from "@/lib/emulator/background-image";
+import {
+  measureAdditiveBackdrop,
+  syncAdditive,
+  syncDisplayBrightness,
+} from "@/lib/emulator/additive";
 import { emulatorParsers } from "@/lib/emulator/search-params";
-import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
+import { normalizeWebUrl } from "@/lib/emulator/search-params";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
-import { AppHeader } from "@/components/emulator/app-header";
-import { Dpad } from "@/components/emulator/dpad";
+import { AppHeader } from "@/components/emulator/header/app-header";
+import { Dpad } from "@/components/emulator/input/dpad";
 import { Device } from "@/components/emulator/device";
-import { DisplaySidebar } from "@/components/emulator/display-sidebar";
+import { DisplaySidebarColumn } from "@/components/emulator/panel/sidebar";
 import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
+import { waitForIframePaint } from "@/lib/emulator/app-load";
 import { downloadDisplay } from "@/lib/emulator/capture";
 
 // -- context ------------------------------------------------
@@ -71,9 +85,20 @@ export default function Emulator({ seed }: { seed: Seed }) {
   const [, setModeParam] = useQueryState("mode", emulatorParsers.mode);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
+  const applyAdditiveRef = useRef<() => void>(() => {});
   const view = useStore(store, (s) => s.view);
-  const environment = environmentByKey(useStore(store, (s) => s.environment));
+  const backgroundKey = useStore(store, (s) => s.background);
+  const customBackgroundImages = useStore(store, (s) => s.customBackgroundImages);
+  const activeCustomBackgroundId = useStore(store, (s) => s.activeCustomBackgroundId);
+  const background = resolveBackground(
+    backgroundKey,
+    customBackgroundImages,
+    activeCustomBackgroundId,
+  );
+  const backgroundBrightness = useStore(store, (s) => s.backgroundBrightness);
+  const backgroundBlur = useStore(store, (s) => s.backgroundBlur);
   const panZoom = usePanZoom(view);
   const panZoomRef = useRef(panZoom);
   panZoomRef.current = panZoom;
@@ -88,41 +113,12 @@ export default function Emulator({ seed }: { seed: Seed }) {
     [store],
   );
 
-  // inject a d-pad gesture. app mode -> dispatch the mapped key into the proxied frame's
-  // realm so its listeners accept it. os mode -> drive the baby os (stub seam).
+  // inject a d-pad gesture. app mode -> synthesize the mapped key into the proxied frame.
+  // os mode -> drive the baby os (stub seam).
   const dispatchIntent = useCallback(
     (intent: Intent, type: "keydown" | "keyup") => {
-      if (store.getState().screen !== "app") return; // os input lands here later
-      const iframe = iframeRef.current;
-      const win = iframeRef.current?.contentWindow;
-      if (!win) return;
-      try {
-        iframe?.focus();
-
-        const doc = win.document;
-        const HTMLElementCtor = (win as Window & { HTMLElement: typeof HTMLElement }).HTMLElement;
-        const active = doc.activeElement instanceof HTMLElementCtor ? doc.activeElement : null;
-        const target =
-          active && active !== doc.body && active !== doc.documentElement
-            ? active
-            : doc.querySelector<HTMLElement>(".screen.active .focusable") ??
-              doc.querySelector<HTMLElement>("#game-canvas") ??
-              doc.querySelector<HTMLElement>(".screen.active .screen-content") ??
-              doc.body ??
-              doc.documentElement;
-
-        target?.focus?.({ preventScroll: true });
-
-        const Ev = (win as Window & { KeyboardEvent: typeof KeyboardEvent }).KeyboardEvent;
-        const key = KEY_BY_INTENT[intent];
-        const handled = !target.dispatchEvent(new Ev(type, { key, bubbles: true, cancelable: true }));
-        const activatable = target.matches(
-          'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="menuitem"]',
-        );
-        if (type === "keydown" && intent === "select" && !handled && activatable) target.click?.();
-      } catch {
-        // frame not loaded / not same-origin yet
-      }
+      if (store.getState().screen !== "app") return;
+      dispatchDeviceKey(iframeRef.current, intent, type);
     },
     [store],
   );
@@ -149,6 +145,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
 
   const pressDown = useCallback(
     (intent: Intent) => {
+      releaseChromeFocus();
       setIntentPressed(intent, true);
       press(intent);
     },
@@ -186,6 +183,14 @@ export default function Emulator({ seed }: { seed: Seed }) {
     [store, setModeParam],
   );
 
+  // persisted panel open state lives in localStorage — hydrate after mount so SSR matches.
+  useMountEffect(() => {
+    const open = getPersistedDisplayPanelOpen();
+    if (open !== store.getState().displayPanelOpen) {
+      store.setState({ displayPanelOpen: open });
+    }
+  });
+
   // proxy navigation: react to loadToken (bumped by requestLoad/launchApp/reload).
   useMountEffect(() => {
     let cancelNav = () => {};
@@ -200,20 +205,58 @@ export default function Emulator({ seed }: { seed: Seed }) {
       const el = iframeRef.current;
       if (!el) return;
       const { url } = store.getState();
-      (async () => {
+      const navToken = store.getState().loadToken;
+      const isStale = () => cancelled || store.getState().loadToken !== navToken;
+
+      const onLoad = () => {
+        void (async () => {
+          if (isStale() || store.getState().status !== "loading") return;
+
+          const painted = await waitForIframePaint(el, isStale);
+          if (!painted || isStale() || store.getState().status !== "loading") return;
+
+          applyAdditiveRef.current();
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          );
+          if (isStale() || store.getState().status !== "loading") return;
+
+          store.getState().appReveal();
+        })();
+      };
+
+      el.addEventListener("load", onLoad);
+      const prevCancel = cancelNav;
+      cancelNav = () => {
+        prevCancel();
+        el.removeEventListener("load", onLoad);
+      };
+
+      const loadTimeout = window.setTimeout(() => {
+        if (!isStale() && store.getState().status === "loading") {
+          store.getState().appError();
+        }
+      }, 30_000);
+
+      const clearLoadTimeout = () => window.clearTimeout(loadTimeout);
+      const prevCancel2 = cancelNav;
+      cancelNav = () => {
+        prevCancel2();
+        clearLoadTimeout();
+      };
+
+      void (async () => {
         try {
           if (new URL(url).origin === window.location.origin) {
             el.src = url;
-            store.getState().appReady();
             return;
           }
 
           const frame = (frameRef.current ??= await createFrame(el));
-          if (cancelled) return;
+          if (isStale()) return;
           frame.go(url);
-          store.getState().appReady();
         } catch {
-          if (!cancelled) store.getState().appError();
+          if (!isStale()) store.getState().appError();
         }
       })();
     };
@@ -230,29 +273,196 @@ export default function Emulator({ seed }: { seed: Seed }) {
     };
   });
 
-  // host keys inject into the frame; frame keys only mirror the visual pressed state.
+  // additive preview lives inside the proxied document so black pixels blend with the
+  // background before the iframe crosses transformed emulator chrome.
+  useMountEffect(() => {
+    prewarmPresetBackgroundImages();
+
+    let applyToken = 0;
+    let resolvedImage: string | undefined;
+    let resolvedImageSource: string | undefined;
+    let animationFrame = 0;
+
+    const syncCurrentAdditive = () => {
+      const {
+        additive,
+        lensTint,
+        background: backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
+        backgroundBrightness,
+        backgroundBlur,
+        displayBrightness,
+      } = store.getState();
+      const preset = resolveBackground(
+        backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
+      );
+      const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
+      syncAdditive(
+        iframeRef.current,
+        additive,
+        preset,
+        resolvedImage,
+        geometry,
+        lensTint,
+        backgroundBrightness,
+        backgroundBlur,
+      );
+      syncDisplayBrightness(iframeRef.current, displayBrightness);
+    };
+
+    const applyAdditive = () => {
+      const {
+        additive,
+        background: backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
+      } = store.getState();
+      const token = ++applyToken;
+      const preset = resolveBackground(
+        backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
+      );
+      const source = preset.image;
+      const customIframeDataUrl =
+        backgroundKey === "custom"
+          ? (
+              customBackgroundImages.find((img) => img.id === activeCustomBackgroundId) ??
+              customBackgroundImages[0]
+            )?.iframeDataUrl
+          : undefined;
+
+      if (!additive) {
+        resolvedImage = undefined;
+        resolvedImageSource = undefined;
+        syncCurrentAdditive();
+        return;
+      }
+
+      if (!source) {
+        resolvedImage = undefined;
+        resolvedImageSource = undefined;
+        syncCurrentAdditive();
+        return;
+      }
+
+      const cached = customIframeDataUrl ?? getCachedIframeBackgroundImage(source);
+      if (cached) {
+        resolvedImage = cached;
+        resolvedImageSource = source;
+        syncCurrentAdditive();
+        return;
+      }
+
+      if (source === resolvedImageSource && resolvedImage) {
+        syncCurrentAdditive();
+        return;
+      }
+
+      if (source.startsWith("data:")) {
+        resolvedImage = source;
+        resolvedImageSource = source;
+        syncCurrentAdditive();
+        return;
+      }
+
+      resolvedImage = undefined;
+      resolvedImageSource = source;
+      syncCurrentAdditive();
+
+      void resolveIframeBackgroundImage(source)
+        .then((nextImage) => {
+          if (token !== applyToken) return;
+          resolvedImage = nextImage;
+          resolvedImageSource = source;
+          syncCurrentAdditive();
+        })
+        .catch(() => {
+          if (token !== applyToken) return;
+          resolvedImage = undefined;
+          resolvedImageSource = undefined;
+          syncCurrentAdditive();
+        });
+    };
+
+    const tickGeometry = () => {
+      if (!store.getState().additive) {
+        animationFrame = 0;
+        return;
+      }
+      syncCurrentAdditive();
+      animationFrame = requestAnimationFrame(tickGeometry);
+    };
+
+    const startGeometryLoop = () => {
+      if (animationFrame || !store.getState().additive) return;
+      animationFrame = requestAnimationFrame(tickGeometry);
+    };
+
+    const stopGeometryLoop = () => {
+      if (!animationFrame) return;
+      cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
+    };
+
+    const iframe = iframeRef.current;
+    iframe?.addEventListener("load", applyAdditive);
+    const unsub = store.subscribe((state, prev) => {
+      if (
+        state.additive !== prev.additive ||
+        state.lensTint !== prev.lensTint ||
+        state.background !== prev.background ||
+        state.customBackgroundImages !== prev.customBackgroundImages ||
+        state.activeCustomBackgroundId !== prev.activeCustomBackgroundId ||
+        state.backgroundBrightness !== prev.backgroundBrightness ||
+        state.backgroundBlur !== prev.backgroundBlur ||
+        state.displayBrightness !== prev.displayBrightness
+      ) {
+        applyAdditive();
+      }
+      if (state.additive !== prev.additive) {
+        if (state.additive) startGeometryLoop();
+        else stopGeometryLoop();
+      }
+    });
+
+    applyAdditive();
+    startGeometryLoop();
+    applyAdditiveRef.current = applyAdditive;
+    return () => {
+      applyAdditiveRef.current = () => {};
+      stopGeometryLoop();
+      iframe?.removeEventListener("load", applyAdditive);
+      unsub();
+    };
+  });
+
+  // physical keyboard mirrors the on-screen d-pad: host listeners drive inject + visuals.
+  // if the iframe steals host focus, keys never reach window — blur it back, and mirror
+  // trusted frame keys for visuals only (injection already happened natively there).
   useMountEffect(() => {
     const clearPressed = () => setPressedIntents((prev) => (prev.size ? new Set() : prev));
     const getIntent = (e: KeyboardEvent) => (e.isTrusted ? INTENT_BY_KEY[e.key] : undefined);
-
-    const isEditable = (el: EventTarget | null) => {
-      const tag = (el as HTMLElement | null)?.tagName;
-      return tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON";
+    const appIntent = (e: KeyboardEvent) => {
+      const intent = getIntent(e);
+      if (!intent || store.getState().screen !== "app") return undefined;
+      return intent;
     };
-
-    const iframeFocused = () => document.activeElement === iframeRef.current;
 
     const onHostKeyDown = (e: KeyboardEvent) => {
       if (!e.isTrusted) return;
+      if (applyPanZoomShortcut(e, panZoomRef.current)) return;
       if (e.metaKey && e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
         void captureRef.current();
         return;
       }
-      const intent = getIntent(e);
+      const intent = appIntent(e);
       if (!intent) return;
-      if (isEditable(document.activeElement)) return;
-      if (iframeFocused()) return; // iframe window listener owns trusted keys + visuals
+      if (isHostChromeInput(e.target)) return;
       e.preventDefault();
       setIntentPressed(intent, true);
       pressRef.current(intent);
@@ -262,13 +472,14 @@ export default function Emulator({ seed }: { seed: Seed }) {
       const intent = getIntent(e);
       if (!intent) return;
       setIntentPressed(intent, false);
+      if (!appIntent(e) || isHostChromeInput(e.target)) return;
+      dispatchDeviceKey(iframeRef.current, intent, "keyup");
     };
 
+    // trusted keys that land natively in the frame (iframe had host focus) — visuals only.
     const onFrameKeyDown = (e: KeyboardEvent) => {
-      if (applyPanZoomShortcut(e, panZoomRef.current)) return;
-      const intent = getIntent(e); // ignore keys we inject from the host handler
-      if (!intent) return;
-      if (isEditable(e.target)) return;
+      const intent = appIntent(e);
+      if (!intent || isHostChromeInput(e.target)) return;
       setIntentPressed(intent, true);
     };
 
@@ -278,8 +489,9 @@ export default function Emulator({ seed }: { seed: Seed }) {
       setIntentPressed(intent, false);
     };
 
-    let detachFrame = () => {};
+    const keepHostFocus = () => iframeRef.current?.blur();
 
+    let detachFrame = () => {};
     const attachFrame = () => {
       detachFrame();
       detachFrame = () => {};
@@ -290,7 +502,6 @@ export default function Emulator({ seed }: { seed: Seed }) {
         win.addEventListener("keyup", onFrameKeyUp);
         win.addEventListener("blur", clearPressed);
       } catch {
-        // the iframe can briefly expose a cross-origin WindowProxy while navigating.
         return;
       }
       detachFrame = () => {
@@ -299,14 +510,20 @@ export default function Emulator({ seed }: { seed: Seed }) {
           win.removeEventListener("keyup", onFrameKeyUp);
           win.removeEventListener("blur", clearPressed);
         } catch {
-          // the frame may have navigated cross-origin since the listeners were attached.
+          // navigated cross-origin since attach
         }
       };
     };
 
     const iframe = iframeRef.current;
-    iframe?.addEventListener("load", attachFrame);
-    attachFrame();
+    const onIframeLoad = () => {
+      keepHostFocus();
+      attachFrame();
+    };
+
+    iframe?.addEventListener("focus", keepHostFocus);
+    iframe?.addEventListener("load", onIframeLoad);
+    onIframeLoad();
 
     const onVisibility = () => {
       if (document.visibilityState === "hidden") clearPressed();
@@ -314,12 +531,15 @@ export default function Emulator({ seed }: { seed: Seed }) {
 
     window.addEventListener("keydown", onHostKeyDown);
     window.addEventListener("keyup", onHostKeyUp);
+    window.addEventListener("blur", clearPressed);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      iframe?.removeEventListener("load", attachFrame);
+      iframe?.removeEventListener("focus", keepHostFocus);
+      iframe?.removeEventListener("load", onIframeLoad);
       detachFrame();
       window.removeEventListener("keydown", onHostKeyDown);
       window.removeEventListener("keyup", onHostKeyUp);
+      window.removeEventListener("blur", clearPressed);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   });
@@ -346,26 +566,22 @@ export default function Emulator({ seed }: { seed: Seed }) {
       <div className="flex min-h-0 flex-1 flex-col">
         <AppHeader />
 
-        <div className="mx-2 mb-2 flex min-h-0 flex-1 gap-2 overflow-hidden">
-          {/* device canvas; the d-pad is a floating panel over the bottom edge. the active
-              environment preset drives the stage gradient AND the lens color (one palette,
-              applied as css vars consumed here and in device.tsx). */}
+        <div className="grid min-h-0 flex-1 gap-2 px-2 pb-2 grid-rows-[auto_1fr_auto] sm:grid-cols-[1fr_18rem] sm:grid-rows-1">
+          <DisplaySidebarColumn />
           <div
-            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-linear-to-b from-canvas-from to-canvas-to"
-            style={
-              {
-                "--canvas-from": environment.color,
-                "--canvas-to": environment.color,
-                "--env-color": environment.color,
-              } as CSSProperties
-            }
+            ref={stageRef}
+            className="relative row-start-2 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill sm:col-start-1 sm:row-start-1"
           >
+            <BackgroundBackdrop
+              preset={background}
+              backgroundBrightness={backgroundBrightness}
+              backgroundBlur={backgroundBlur}
+            />
             <Device />
             <div className="pointer-events-none absolute inset-x-0 bottom-2.5 z-20 flex justify-center px-4">
               <Dpad />
             </div>
           </div>
-          <DisplaySidebar />
         </div>
       </div>
     </EmulatorContext.Provider>

@@ -6,10 +6,10 @@ import {
   parseAsStringLiteral,
 } from "nuqs/server";
 import { VIEWS } from "@/lib/emulator/config";
-import { DEFAULT_ENVIRONMENT, ENVIRONMENTS } from "@/lib/emulator/environment";
+import { DEFAULT_BACKGROUND, BACKGROUNDS } from "@/lib/emulator/background";
 import type { Seed, View } from "@/lib/emulator/store";
 
-export const EMULATOR_SHARE_PATH = "https://hud.xyz/emulator";
+export const EMULATOR_SHARE_PATH = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
 
 export function buildEmulatorShareUrl(appUrl?: string): string {
   if (!appUrl) return EMULATOR_SHARE_PATH;
@@ -17,17 +17,21 @@ export function buildEmulatorShareUrl(appUrl?: string): string {
 }
 
 const VIEW_KEYS = VIEWS.map((v) => v.key);
-const ENVIRONMENT_KEYS = ENVIRONMENTS.map((e) => e.key);
+const BACKGROUND_KEYS = BACKGROUNDS.map((bg) => bg.key);
 
 // url <-> emulator state contract. these parsers are the single source of truth for both
 // the initial (server-parsed) seed and the client-side writes, so ssr and hydration agree.
 // nuqs clears a param when it equals its default, keeping shared urls clean.
+// `mode` is url-only (cosmetic chrome); the store field is `view`.
 export const emulatorParsers = {
   mode: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
   url: parseAsString.withDefault(""),
-  additive: parseAsInteger.withDefault(0),
-  environment: parseAsStringLiteral(ENVIRONMENT_KEYS).withDefault(DEFAULT_ENVIRONMENT),
-  lensTint: parseAsBoolean.withDefault(true),
+  additive: parseAsBoolean.withDefault(true),
+  bg: parseAsStringLiteral(BACKGROUND_KEYS).withDefault(DEFAULT_BACKGROUND),
+  lensTint: parseAsBoolean.withDefault(false),
+  bgBrightness: parseAsInteger.withDefault(80),
+  bgBlur: parseAsInteger.withDefault(0),
+  displayBrightness: parseAsInteger.withDefault(100),
 };
 
 // server-side reader: parse Next's searchParams (a promise in app router) into typed values.
@@ -37,15 +41,22 @@ export const loadEmulatorSearchParams = createLoader(emulatorParsers);
 export function seedFromParams(params: {
   mode: View;
   url: string;
-  additive: number;
-  environment: (typeof ENVIRONMENT_KEYS)[number];
+  additive: boolean;
+  bg: (typeof BACKGROUND_KEYS)[number];
   lensTint: boolean;
+  bgBrightness: number;
+  bgBlur: number;
+  displayBrightness: number;
 }): Seed {
   const seed: Seed = {
     view: params.mode,
-    additive: Math.min(100, Math.max(0, params.additive)),
-    environment: params.environment,
+    additive: params.additive,
+    // custom uploads are session-only; a refreshed ?bg=custom has no image to show.
+    background: params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg,
     lensTint: params.lensTint,
+    backgroundBrightness: params.bgBrightness,
+    backgroundBlur: params.bgBlur,
+    displayBrightness: params.displayBrightness,
   };
   if (params.url) {
     seed.url = params.url;
@@ -53,4 +64,30 @@ export function seedFromParams(params: {
     seed.status = "loading";
   }
   return seed;
+}
+
+const WEB_PROTOCOLS = new Set(["http:", "https:"]);
+
+const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+const WEBSITE_HOSTNAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+
+// parse address-bar input into an http(s) href; prepends https:// when no scheme is given.
+export function normalizeWebUrl(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const candidate = HAS_SCHEME.test(trimmed)
+    ? trimmed
+    : trimmed.startsWith("//")
+      ? `https:${trimmed}`
+      : `https://${trimmed}`;
+
+  try {
+    const url = new URL(candidate);
+    if (!WEB_PROTOCOLS.has(url.protocol)) return null;
+    if (!WEBSITE_HOSTNAME.test(url.hostname)) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
 }

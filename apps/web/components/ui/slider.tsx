@@ -1,6 +1,6 @@
-import { Slider as SliderPrimitive } from "@base-ui/react/slider"
+import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 function Slider({
   className,
@@ -15,7 +15,7 @@ function Slider({
     ? value
     : Array.isArray(defaultValue)
       ? defaultValue
-      : [min, max]
+      : [min, max];
 
   return (
     <SliderPrimitive.Root
@@ -29,10 +29,10 @@ function Slider({
       thumbAlignment="edge"
       {...props}
     >
-      <SliderPrimitive.Control className="relative flex min-h-8 w-full cursor-grab touch-none items-center select-none [-webkit-tap-highlight-color:transparent] active:cursor-grabbing data-disabled:cursor-not-allowed data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
+      <SliderPrimitive.Control className="relative flex min-h-6 w-full cursor-grab touch-none items-center select-none [-webkit-tap-highlight-color:transparent] active:cursor-grabbing data-disabled:cursor-not-allowed data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
         <SliderPrimitive.Track
           data-slot="slider-track"
-          className="relative grow overflow-hidden rounded-full bg-foreground/10 select-none data-horizontal:h-2 data-horizontal:w-full data-vertical:h-full data-vertical:w-2"
+          className="relative grow overflow-hidden rounded-full bg-foreground/10 select-none data-horizontal:h-1.5 data-horizontal:w-full data-vertical:h-full data-vertical:w-2"
         >
           <SliderPrimitive.Indicator
             data-slot="slider-range"
@@ -48,7 +48,7 @@ function Slider({
         ))}
       </SliderPrimitive.Control>
     </SliderPrimitive.Root>
-  )
+  );
 }
 
-export { Slider }
+export { Slider };

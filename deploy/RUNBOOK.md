@@ -11,11 +11,11 @@ Browser ──HTTPS──> hud.xyz (Vercel / Next.js)
 
 ## Severity guide
 
-| Level | Examples | Response |
-|-------|----------|----------|
+| Level  | Examples                                               | Response                                   |
+| ------ | ------------------------------------------------------ | ------------------------------------------ |
 | **P0** | hud.xyz down, proxy used for abuse at scale, data leak | Drop everything; fix or rollback within 1h |
-| **P1** | Emulator broken but site loads, elevated Sentry errors | Fix same day |
-| **P2** | Cosmetic bug, single-user report | Next deploy window |
+| **P1** | Emulator broken but site loads, elevated Sentry errors | Fix same day                               |
+| **P2** | Cosmetic bug, single-user report                       | Next deploy window                         |
 
 ## Escalation
 
@@ -31,7 +31,7 @@ Fastest path when a bad deploy shipped:
 
 1. Vercel → **Project** → **Deployments**
 2. Find last known-good production deployment → **⋯** → **Instant Rollback**
-3. Confirm `hud.xyz/emulator` loads and proxy works
+3. Confirm `https://hud.xyz` loads and proxy works
 
 `NEXT_PUBLIC_*` vars are **build-time**. Rolling back does not change env; if the break was a bad env change, fix env and **Redeploy** instead.
 
@@ -95,7 +95,7 @@ No public status page yet. For a prolonged P0:
 
 After any production change:
 
-- [ ] `https://hud.xyz` → redirects to `/emulator`
+- [ ] `https://hud.xyz` loads
 - [ ] Load a public URL in the emulator (proxy path works)
 - [ ] `/privacy` and `/terms` render
 - [ ] Sentry test event (optional) via a thrown error on preview only

@@ -3,7 +3,7 @@ packages:
 allowBuilds:
   # scramjet ships prebuilt dist; bufferutil is an optional ws speedup
   "@mercuryworkshop/scramjet": false
-  '@sentry/cli': true
+  "@sentry/cli": true
   bufferutil: false
   esbuild: false
   sharp: false

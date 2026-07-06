@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
+import { EMULATOR_TAGLINE } from "@/lib/emulator/config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "hud.xyz",
     short_name: "hud.xyz",
-    description: "Emulator for the Meta Ray-Ban Display.",
-    start_url: "/emulator",
+    description: EMULATOR_TAGLINE,
+    start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#1cb6ac",

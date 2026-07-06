@@ -1,14 +1,11 @@
 "use client";
 
-import type { MouseEvent } from "react";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEmulatorState } from "@/components/emulator";
-import { buildEmulatorShareUrl } from "@/lib/emulator/search-params";
-import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
+import { dropFocus } from "@/lib/emulator/input";
+import { buildEmulatorShareUrl, normalizeWebUrl } from "@/lib/emulator/search-params";
 import { toast } from "sonner";
-
-const dropFocus = (e: MouseEvent) => e.preventDefault();
 
 export function ShareMenu() {
   const url = useEmulatorState((s) => s.url);

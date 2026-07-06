@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, "href">) {
   return (
     <Link
-      href="/emulator"
+      href="/"
+      aria-label="hud.xyz home"
       className={cn(
-        "inline-flex items-center gap-2 sm:text-2xl text-lg font-bold tracking-tighter hover:underline",
+        "inline-flex items-center gap-2 sm:text-2xl text-md font-bold tracking-tighter hover:underline",
         className,
       )}
       {...props}
@@ -16,9 +17,9 @@ export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, 
       <img
         src="/icon.svg"
         alt=""
-        width={28}
-        height={28}
-        className="size-7 shrink-0 rounded-md [image-rendering:pixelated]"
+        width={30}
+        height={30}
+        className="size-7.5 shrink-0 [image-rendering:pixelated]"
       />
       hud.xyz
     </Link>

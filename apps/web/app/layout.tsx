@@ -5,6 +5,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
+import { EMULATOR_SUMMARY } from "@/lib/emulator/config";
 import Script from "next/script";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     default: "hud.xyz",
     template: "%s | hud.xyz",
   },
-  description: "Emulator for the Meta Ray-Ban Display.",
+  description: EMULATOR_SUMMARY,
   applicationName: "hud.xyz",
 };
 const archivo = Archivo({ subsets: ["latin"], variable: "--font-sans" });
@@ -34,7 +35,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn("antialiased", archivo.variable, jetbrainsMono.variable, "font-sans")}
     >
-      <body className="flex min-h-svh flex-col">
+      <body className="flex min-h-svh flex-col bg-background">
         <NuqsAdapter>{children}</NuqsAdapter>
         <Toaster />
         {process.env.NODE_ENV === "production" && <Analytics />}

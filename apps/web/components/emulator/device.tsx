@@ -1,27 +1,25 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
-import { Frames } from "@/components/frames";
-import {
-  DEVICE_BG,
-  DEVICE_SURFACE,
-  FRAMES_STAGE_UNITS,
-  LENS_SLOT,
-  VIEWPORT,
-} from "@/lib/emulator/config";
+import { Frames } from "@/components/emulator/frames";
+import { DEVICE_BG, DEVICE_SURFACE, GLASSES_CHROME } from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
+import { releaseChromeFocus } from "@/lib/emulator/input";
 import { cn } from "@/lib/utils";
 
 const STATUS_MSG: Partial<Record<Status, string>> = {
-  loading: "Loading…",
+  loading: "Loading app…",
   error: "Couldn't load. Reload to retry.",
 };
 
-// the device as a pan/zoom canvas. the viewport clips; #hud-device is the content plane
-// (the glasses frame, or the bare 600 surface) pinned at the viewport top-left and
-// transformed by usePanZoom. the iframe stays the same element across views/modes/zoom.
+const APP_REVEAL_MS = 300;
+
+// the device as a pan/zoom canvas. the viewport clips; #hud-device is the content plane —
+// always the bare 600×600 surface, laid out identically in every view (glasses just hangs
+// the frames svg off it decoratively, so glasses ≡ 1:1 at a smaller default zoom). the
+// iframe stays the same element across views/modes/zoom.
 export function Device() {
   const { iframeRef, displayRef, panZoom, store } = useEmulator();
   const view = useEmulatorState((s) => s.view);
@@ -29,31 +27,28 @@ export function Device() {
   const status = useEmulatorState((s) => s.status);
   const additive = useEmulatorState((s) => s.additive);
   const lensTint = useEmulatorState((s) => s.lensTint);
-  const slotRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
   const isGlasses = view === "glasses";
-  const additiveT = additive / 100;
+  const { onPointerDown, ...panGesture } = panZoom.bind();
+  const [appRevealed, setAppRevealed] = useState(false);
 
-  // glasses: scale the fixed 600×600 surface to fill the lens slot. measure the slot's
-  // FRACTIONAL content-box (ResizeObserver inlineSize) rather than clientWidth — clientWidth
-  // is integer-rounded, so the scaled box fell a sub-pixel short and the pan/zoom
-  // magnification turned that gap into a ~1px black edge on the right/bottom. 1:1 view uses
-  // true pixels (scale 1) and pans the surface directly.
-  useLayoutEffect(() => {
-    if (!isGlasses) {
-      setScale(1);
-      return;
-    }
-    const el = slotRef.current;
-    if (!el) return;
+  useEffect(() => {
+    if (status === "loading") setAppRevealed(false);
+    if (status !== "revealing") return;
+    const id = requestAnimationFrame(() => setAppRevealed(true));
+    return () => cancelAnimationFrame(id);
+  }, [status]);
 
-    const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentBoxSize?.[0]?.inlineSize ?? el.clientWidth;
-      if (w) setScale(w / VIEWPORT);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [isGlasses]);
+  useEffect(() => {
+    if (status !== "revealing" || !appRevealed) return;
+    const id = window.setTimeout(() => {
+      if (store.getState().status === "revealing") store.getState().appReady();
+    }, APP_REVEAL_MS + 50);
+    return () => window.clearTimeout(id);
+  }, [status, appRevealed, store]);
+
+  const showLoadOverlay =
+    screen === "app" && (status === "loading" || status === "revealing" || status === "error");
+  const appVisible = status === "revealing" || status === "ready";
 
   return (
     <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden">
@@ -61,68 +56,35 @@ export function Device() {
         ref={panZoom.contentRef}
         id="hud-device"
         className={cn(
-          "absolute left-0 top-0",
-          !isGlasses && "size-150",
+          "absolute left-0 top-0 size-150",
           panZoom.revealed ? "opacity-100" : "opacity-0",
           panZoom.revealed && "transition-opacity duration-200 ease-out",
         )}
-        style={{
-          ...panZoom.style,
-          ...(isGlasses ? { width: `calc(var(--spacing) * ${FRAMES_STAGE_UNITS})` } : undefined),
-        }}
+        style={panZoom.style}
       >
         {isGlasses && (
           <Frames
-            className="block h-auto w-full"
-            lensClassName={lensTint ? "fill-canvas-frame-lens/25" : "fill-transparent"}
+            className="pointer-events-none absolute block"
+            style={GLASSES_CHROME}
+            lensClassName={lensTint ? "fill-lens-tint" : "fill-transparent"}
           />
         )}
-        {/* device surface: the 600×600 plane scaled to fit; the iframe stays mounted so the
-            controller frame can attach. black + rounded shows whenever an app isn't covering it.
-            os + status overlays sit on top of the same surface. */}
         <div
-          ref={slotRef}
-          className={cn(
-            "overflow-hidden rounded-lg",
-            additiveT > 0 ? "bg-black" : DEVICE_SURFACE,
-            isGlasses ? "absolute" : "relative size-full",
-          )}
-          style={isGlasses ? LENS_SLOT : undefined}
+          ref={displayRef}
+          id="hud-display"
+          className={cn("relative z-10 size-full", DEVICE_SURFACE, additive && "bg-transparent")}
         >
-          {/* the 600×600 surface, scaled to fill the slot. keeping the iframe a literal
-              600×600 element gives the proxied app a faithful device viewport (the pan/zoom
-              model in use-pan-zoom also assumes this fixed size). */}
-          <div
-            className="absolute left-0 top-0 origin-top-left"
-            style={{ transform: `scale(${scale})` }}
-          >
-            <div
-              ref={displayRef}
-              id="hud-display"
-              className={cn("relative isolate", additiveT > 0 ? "bg-black" : DEVICE_BG)}
-              style={{ width: VIEWPORT, height: VIEWPORT }}
-            >
-              {/* the world behind the waveguide: --env-color comes from the active
-                  environment preset (set on the canvas wrapper in index.tsx) */}
-              {additiveT > 0 && (
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 bg-(--env-color)"
-                  style={{ opacity: additiveT }}
-                />
-              )}
-              <iframe
-                ref={iframeRef}
-                title="Glasses display"
-                allow="clipboard-read; clipboard-write"
-                className={cn(
-                  "relative size-full border-0",
-                  additiveT > 0 &&
-                    "mix-blend-screen supports-[mix-blend-mode:plus-lighter]:mix-blend-plus-lighter",
-                )}
-              />
-            </div>
-          </div>
+          <iframe
+            ref={iframeRef}
+            title="Glasses display"
+            tabIndex={-1}
+            allow="clipboard-read; clipboard-write"
+            className={cn(
+              "relative size-full border-0 transition-opacity ease-out",
+              appVisible && appRevealed ? "opacity-100" : "opacity-0",
+            )}
+            style={{ transitionDuration: `${APP_REVEAL_MS}ms` }}
+          />
 
           {/* settings: a blurred control overlay over the running app */}
           {screen === "settings" && (
@@ -158,15 +120,25 @@ export function Device() {
             </div>
           )}
 
-          {/* app load status */}
-          {screen === "app" && (status === "loading" || status === "error") && (
+          {/* app load overlay — stays up through revealing, then cross-fades out */}
+          {showLoadOverlay && (
             <div
               className={cn(
-                "absolute inset-0 grid place-items-center px-2 text-center text-[10px] leading-tight",
+                "absolute inset-0 grid place-items-center px-4 text-center transition-opacity ease-out",
                 DEVICE_BG,
+                status === "revealing" && appRevealed
+                  ? "pointer-events-none opacity-0"
+                  : "opacity-100",
               )}
+              style={{ transitionDuration: `${APP_REVEAL_MS}ms` }}
+              onTransitionEnd={(e) => {
+                if (e.propertyName !== "opacity" || status !== "revealing" || !appRevealed) return;
+                store.getState().appReady();
+              }}
             >
-              {STATUS_MSG[status]}
+              {status !== "revealing" && (
+                <p className="text-sm font-medium leading-snug">{STATUS_MSG[status]}</p>
+              )}
             </div>
           )}
         </div>
@@ -179,7 +151,11 @@ export function Device() {
           "absolute inset-0 touch-none",
           screen === "app" ? "cursor-grab active:cursor-grabbing" : "pointer-events-none",
         )}
-        {...panZoom.bind()}
+        {...panGesture}
+        onPointerDown={(e) => {
+          releaseChromeFocus();
+          onPointerDown?.(e);
+        }}
       />
     </div>
   );

@@ -11,15 +11,14 @@ import {
   Undo2,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { ScreenshotButton } from "@/components/emulator/screenshot-button";
+import { ScreenshotButton } from "@/components/emulator/input/screenshot-button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator } from "@/components/emulator";
 import type { Intent } from "@/lib/emulator/store";
+import { dropFocus } from "@/lib/emulator/input";
 import type { VariantProps } from "class-variance-authority";
 
 type DirectionIntent = Extract<Intent, "up" | "down" | "left" | "right">;
-
-const dropFocus = (e: MouseEvent) => e.preventDefault();
 
 const dpadCell =
   "flex size-8 items-center justify-center bg-transparent text-primary-foreground outline-none hover:bg-primary-hover active:bg-primary-active aria-pressed:bg-primary-pressed focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset";
@@ -216,11 +215,7 @@ export function Dpad() {
 
         <DpadCross pressedIntents={pressedIntents} />
 
-        <IntentButton
-          label="Esc"
-          intent="back"
-          pressed={pressedIntents.has("back")}
-        >
+        <IntentButton label="Esc" intent="back" pressed={pressedIntents.has("back")}>
           <Undo2 />
         </IntentButton>
       </div>

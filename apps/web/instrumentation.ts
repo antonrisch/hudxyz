@@ -13,6 +13,4 @@ export async function register() {
   }
 }
 
-export const onRequestError = isSentryEnabled
-  ? Sentry.captureRequestError
-  : () => {};
+export const onRequestError = isSentryEnabled ? Sentry.captureRequestError : () => {};

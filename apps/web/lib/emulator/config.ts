@@ -1,15 +1,15 @@
-import type { CSSProperties } from "react";
 import type { Intent, View } from "@/lib/emulator/store";
 
 // device identity shown in the emulator chrome (model + os build). placeholders — set real values.
 export const DEVICE_MODEL = "Meta Ray-Ban Display";
+export const EMULATOR_TITLE = "Meta Ray-Ban Display Web App Emulator";
+// 1:1 with the official Chrome extension one-liner.
+export const EMULATOR_SUMMARY =
+  "Simulate Meta Ray-Ban Display glasses for web apps — background environments, D-pad input, display settings, record and QA checks.";
+// condensed extension long-form for meta / JSON-LD.
+export const EMULATOR_TAGLINE = `${EMULATOR_SUMMARY} Emulates the 600x600 display with additive blending in your browser so developers can preview and QA without the hardware.`;
 export const OS_VERSION = "125.1";
 
-// glasses stage scale; frame + lens slot share the same container so this scales both.
-export const FRAMES_SCALE = 1.8;
-export const FRAMES_STAGE_UNITS = 240 * FRAMES_SCALE; // tailwind spacing multiplier (was w-240)
-
-// display placement over the right lens, as % of the frames container.
 export const RIGHT_LENS = { left: 58.5, top: 44.5, size: 10.5 };
 
 // device render size (matches the glasses surface)
@@ -19,24 +19,33 @@ export const VIEWPORT = 600;
 // (a % of stage width) into a % of stage height.
 export const FRAMES_ASPECT = 6476 / 2959;
 
-// glasses zoom focal point: the right-lens iframe midpoint, as % of the device stage.
-// the view is translated to center this point, and zoom scales about it.
-export const LENS_CENTER = {
-  x: RIGHT_LENS.left + RIGHT_LENS.size / 2,
-  y: RIGHT_LENS.top + (RIGHT_LENS.size / 2) * FRAMES_ASPECT,
+// glasses chrome is decorative: size it around the fixed 600×600 display.
+const GLASSES_STAGE = {
+  width: VIEWPORT / (RIGHT_LENS.size / 100),
+  height: VIEWPORT / (RIGHT_LENS.size / 100) / FRAMES_ASPECT,
+};
+
+// the frames svg positioned relative to the 600×600 display (the content plane), so its
+// right-lens slot lands exactly on the display. the display renders identically to 1:1
+// mode — the chrome hangs off it, not the other way around.
+export const GLASSES_CHROME = {
+  left: -(RIGHT_LENS.left / 100) * GLASSES_STAGE.width,
+  top: -(RIGHT_LENS.top / 100) * GLASSES_STAGE.height,
+  width: GLASSES_STAGE.width,
+  height: GLASSES_STAGE.height,
 };
 
 // default 600×600 magnification per chrome view (1 = true pixels).
-export const DEFAULT_DEVICE_SCALE = { glasses: 0.67, actual: 1 } as const satisfies Record<
+export const DEFAULT_DEVICE_SCALE = { glasses: 0.6, pixel: 1 } as const satisfies Record<
   View,
   number
 >;
 
-// cosmetic presentation modes; all wrap the SAME persistent device surface.
-// glasses: framed over the lens. 1:1: exact 600×600.
+// cosmetic presentation modes (?mode= in url); all wrap the SAME persistent device surface.
+// glasses: framed over the lens. pixel (label 1:1): exact 600×600.
 export const VIEWS = [
   { key: "glasses", label: "Glasses" },
-  { key: "actual", label: "1:1" },
+  { key: "pixel", label: "1:1" },
 ] as const satisfies ReadonlyArray<{ key: View; label: string }>;
 
 // standardized device surface tint, shared by the surface box, the iframe and the overlays.
@@ -45,15 +54,7 @@ export const DEVICE_BG = "bg-muted/10";
 // the device surface: clipped, rounded, tinted — consistent across every view (it's what
 // shows whenever an app isn't covering it). only the positioning differs, so device.tsx
 // composes this base with per-view layout classes.
-export const DEVICE_SURFACE = `overflow-hidden rounded-lg ${DEVICE_BG}`;
-
-// glasses: place the surface over the right lens, as % of the framed plane.
-export const LENS_SLOT: CSSProperties = {
-  left: `${RIGHT_LENS.left}%`,
-  top: `${RIGHT_LENS.top}%`,
-  width: `${RIGHT_LENS.size}%`,
-  aspectRatio: "1 / 1",
-};
+export const DEVICE_SURFACE = `overflow-hidden rounded-2xl ${DEVICE_BG}`;
 
 // physical keys the glasses emit, mapped to device intents (window keydown -> intent).
 export const INTENT_BY_KEY: Record<string, Intent> = {
@@ -71,8 +72,11 @@ export type SuggestedApp = {
   iconUrl: string;
 };
 
-// icons are same-origin (/public) — /emulator sets COEP require-corp, which blocks
+// icons are same-origin (/public) — the emulator route sets COEP require-corp, which blocks
 // cross-origin images without CORP.
+export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz emulator feedback")}`;
+export const DIRECTORY_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz app directory request")}`;
+
 export const SUGGESTED_APPS = [
   {
     name: "Snake game",
