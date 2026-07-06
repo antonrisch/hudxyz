@@ -85,24 +85,18 @@ function DisplayPanelControlsShell({ toolbarClassName }: { toolbarClassName?: st
   );
 }
 
-// desktop rhs panel — width-collapsed when closed (no unmount).
+// desktop rhs panel — hidden when closed (no width animation; avoids overflow scrollbars).
 export function DisplaySidebarColumn() {
   const open = useSimulatorState((s) => s.displayPanelOpen);
+  if (!open) return null;
 
   return (
-    <div
-      className={cn(
-        "hidden min-h-0 overflow-hidden rounded-2xl border bg-background transition-[width] sm:col-start-2 sm:row-start-1 sm:flex sm:flex-col",
-        open ? "sm:w-72" : "sm:w-0 sm:border-0",
-      )}
-    >
-      <div className="flex min-h-0 w-72 min-w-72 flex-1 flex-col overflow-hidden">
-        <p className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</p>
-        <aside className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <DisplayPanelControlsShell />
-        </aside>
-        <DisplayPanelFooter summary />
-      </div>
+    <div className="hidden min-h-0 w-72 overflow-hidden rounded-2xl border bg-background sm:col-start-2 sm:row-start-1 sm:flex sm:flex-col">
+      <p className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</p>
+      <aside className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <DisplayPanelControlsShell />
+      </aside>
+      <DisplayPanelFooter summary />
     </div>
   );
 }
