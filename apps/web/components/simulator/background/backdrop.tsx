@@ -24,7 +24,7 @@ export function BackgroundBackdrop({
           src={preset.image}
           alt=""
           fill
-          sizes="100vw"
+          sizes="(min-width: 640px) calc(100vw - 19.5rem), calc(100vw - 1rem)"
           quality={75}
           priority
           unoptimized={preset.image.startsWith("blob:")}

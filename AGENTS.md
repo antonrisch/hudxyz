@@ -24,7 +24,7 @@ A single route, **`/`**, renders the `Simulator` component (`components/simulato
 - **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`components/simulator/frames.tsx`).
 - **1:1** — the surface at its exact 600×600 size, no scaling (`pixel` in `?mode=`).
 
-Cosmetic chrome is `?mode=glasses|pixel` (url-only name; store field is `view`). Set client-side via nuqs, so switching never navigates. `?url=` deep-links a target. `/browser` 308-redirects to `/`.
+Cosmetic chrome is `?mode=glasses|pixel` (url-only name; store field is `view`). Set client-side via nuqs, so switching never navigates. `?url=` deep-links a target.
 
 **Structure.** A UI-agnostic core — `lib/simulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `components/simulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, controls, view-switcher, zoom-controls), `header/` (app-header, url-bar, share, feedback), `input/` (dpad, screenshot), plus root `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
 
@@ -38,7 +38,7 @@ Key files:
 - `public/sw.js` — the Scramjet v2 service worker; routes proxied requests and stamps COEP/CORP so the cross-origin-isolated host can embed them.
 - `scripts/copy-proxy-assets.mjs` — copies the Scramjet engine + controller bundles into `/public/scramjet` and `/public/controller` (runs on install/dev/build).
 - `scripts/wisp-server.mjs` — the dev Wisp egress server on `:4000`.
-- `next.config.ts` — sets COOP/COEP on `/` (for Scramjet's wasm), `Service-Worker-Allowed: /` on `/sw.js`, and redirects `/browser` → `/`.
+- `next.config.ts` — sets COOP/COEP on `/` (for Scramjet's wasm) and `Service-Worker-Allowed: /` on `/sw.js`.
 
 **Stack pins:** Scramjet engine `2.0.67-alpha.2` (exact-pinned) + scramjet-controller `0.0.14` (the Controller/Frame API, which takes a ProxyTransport directly) + libcurl-transport `2.0.5` + wisp-js. The controller asserts the engine version at construction, so any version drift fails loudly. The v1 stack (Scramjet 1.1.0 + bare-mux + libcurl 1.5.2) lives on branch `feat/emulator-scramjet` as a stable-engine reference.
 
@@ -46,7 +46,7 @@ Key files:
 
 ## Layout (`apps/web`)
 
-- `app/` — App Router routes: `page.tsx` (home), `simulator/page.tsx`, `layout.tsx` (fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
+- `app/` — App Router routes: `page.tsx` (simulator), `layout.tsx` (fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
 - `components/` — `simulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `input/` + `device`), `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
 - `lib/` — `proxy.ts` (Scramjet proxy), `simulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
 - `public/` — `sw.js` plus the generated `scramjet/` + `controller/` bundles.

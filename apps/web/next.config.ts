@@ -43,7 +43,6 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      { source: "/emulator", destination: "/", permanent: true },
       // index.html keeps relative asset paths under /apps/snake/
       { source: "/apps/snake", destination: "/apps/snake/index.html", permanent: false },
     ];

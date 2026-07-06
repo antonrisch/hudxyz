@@ -389,8 +389,23 @@ export default function Simulator({ seed }: { seed: Seed }) {
     };
 
     const tickGeometry = () => {
-      if (store.getState().additive) syncCurrentAdditive();
+      if (!store.getState().additive) {
+        animationFrame = 0;
+        return;
+      }
+      syncCurrentAdditive();
       animationFrame = requestAnimationFrame(tickGeometry);
+    };
+
+    const startGeometryLoop = () => {
+      if (animationFrame || !store.getState().additive) return;
+      animationFrame = requestAnimationFrame(tickGeometry);
+    };
+
+    const stopGeometryLoop = () => {
+      if (!animationFrame) return;
+      cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
     };
 
     const iframe = iframeRef.current;
@@ -408,14 +423,18 @@ export default function Simulator({ seed }: { seed: Seed }) {
       ) {
         applyAdditive();
       }
+      if (state.additive !== prev.additive) {
+        if (state.additive) startGeometryLoop();
+        else stopGeometryLoop();
+      }
     });
 
     applyAdditive();
-    animationFrame = requestAnimationFrame(tickGeometry);
+    startGeometryLoop();
     applyAdditiveRef.current = applyAdditive;
     return () => {
       applyAdditiveRef.current = () => {};
-      cancelAnimationFrame(animationFrame);
+      stopGeometryLoop();
       iframe?.removeEventListener("load", applyAdditive);
       unsub();
     };
