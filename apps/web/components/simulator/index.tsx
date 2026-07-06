@@ -24,7 +24,7 @@ import { INTENT_BY_KEY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
 import { releaseChromeFocus } from "@/lib/simulator/input";
 import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
-import { resolveBackground, resolveBackdropPlaceholder } from "@/lib/simulator/background";
+import { resolveBackground, resolveBackdropPlaceholder, backgroundByKey } from "@/lib/simulator/background";
 import {
   getCachedIframeBackgroundImage,
   prewarmPresetBackgroundImages,
@@ -290,7 +290,10 @@ export default function Simulator({ seed }: { seed: Seed }) {
   // additive preview lives inside the proxied document so black pixels blend with the
   // background before the iframe crosses transformed simulator chrome.
   useMountEffect(() => {
-    prewarmPresetBackgroundImages();
+    const { additive, background } = store.getState();
+    if (additive && background !== "custom") {
+      prewarmPresetBackgroundImages(background);
+    }
 
     let applyToken = 0;
     let resolvedImage: string | undefined;
@@ -340,7 +343,10 @@ export default function Simulator({ seed }: { seed: Seed }) {
         customBackgroundImages,
         activeCustomBackgroundId,
       );
-      const source = preset.image;
+      const source =
+        backgroundKey === "custom"
+          ? preset.image
+          : (backgroundByKey(backgroundKey).iframeImage ?? preset.image);
       const customIframeDataUrl =
         backgroundKey === "custom"
           ? (
@@ -438,8 +444,14 @@ export default function Simulator({ seed }: { seed: Seed }) {
         applyAdditive();
       }
       if (state.additive !== prev.additive) {
-        if (state.additive) startGeometryLoop();
-        else stopGeometryLoop();
+        if (state.additive) {
+          startGeometryLoop();
+          if (state.background !== "custom") {
+            prewarmPresetBackgroundImages(state.background);
+          }
+        } else {
+          stopGeometryLoop();
+        }
       }
     });
 

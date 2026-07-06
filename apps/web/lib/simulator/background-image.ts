@@ -2,7 +2,9 @@
 // canvas. the proxied iframe cannot load blob:/same-origin urls (scramjet aborts them), so
 // we read the blob in the parent and inject a compressed data: url into iframe css instead.
 
-import { BACKGROUNDS } from "@/lib/simulator/background";
+import { BACKGROUNDS, type BackgroundKey, type BackgroundPreset, backgroundByKey } from "@/lib/simulator/background";
+
+const PHOTO_BACKGROUND_KEYS = ["alps", "alps2", "beach"] as const satisfies readonly BackgroundKey[];
 
 export const CSS_DATA_URL_BUDGET = 900_000;
 const START_EDGE = 2400;
@@ -10,7 +12,7 @@ const START_QUALITY = 0.78;
 const MIN_EDGE = 320;
 const MIN_QUALITY = 0.35;
 const QUALITY_STEP = 0.08;
-// custom uploads get a dedicated thumb blob; preset swatches use css background-image on the full JPEG.
+// custom uploads get a dedicated thumb blob; preset swatches use pre-built thumb webp assets.
 const THUMB_EDGE = 96; // 2× the 48px picker swatch (size-12) for retina
 const THUMB_QUALITY = 0.75;
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
@@ -113,6 +115,46 @@ export function getCachedIframeBackgroundImage(url: string | undefined) {
   return dataUrlCache.get(url);
 }
 
+function presetByIframeImage(url: string) {
+  return BACKGROUNDS.find((bg) => "iframeImage" in bg && bg.iframeImage === url);
+}
+
+// pre-built preset iframe assets skip canvas re-encode — fetch blob → data: url only.
+export async function resolvePresetIframeBackgroundImage(preset: BackgroundPreset) {
+  const url = preset.iframeImage;
+  if (!url) throw new Error(`Preset "${preset.key}" has no iframe image`);
+
+  const cached = getCachedIframeBackgroundImage(url);
+  if (cached) return cached;
+
+  const key = new URL(url, window.location.origin).href;
+  const pending = inflight.get(key);
+  if (pending) return pending;
+
+  const promise = (async () => {
+    const blob = await fetch(key).then((res) => {
+      if (!res.ok) throw new Error(`Could not load background image: ${res.status}`);
+      return res.blob();
+    });
+    const dataUrl = await blobToDataUrl(blob);
+    dataUrlCache.set(key, dataUrl);
+    dataUrlCache.set(url, dataUrl);
+    return dataUrl;
+  })();
+
+  inflight.set(key, promise);
+  try {
+    return await promise;
+  } finally {
+    inflight.delete(key);
+  }
+}
+
+export function presetIframeImageUrl(key: BackgroundKey): string | undefined {
+  const preset = BACKGROUNDS.find((bg) => bg.key === key);
+  return preset && "iframeImage" in preset ? preset.iframeImage : undefined;
+}
+
 // any background image url → compressed data: url for iframe css (cached + deduped).
 export async function resolveIframeBackgroundImage(url: string) {
   const cached = getCachedIframeBackgroundImage(url);
@@ -123,6 +165,9 @@ export async function resolveIframeBackgroundImage(url: string) {
   if (pending) return pending;
 
   const promise = (async () => {
+    const preset = presetByIframeImage(url);
+    if (preset) return resolvePresetIframeBackgroundImage(preset);
+
     const blob = await fetch(url.startsWith("blob:") ? url : key).then((res) => {
       if (!res.ok) throw new Error(`Could not load background image: ${res.status}`);
       return res.blob();
@@ -175,8 +220,25 @@ export async function prepareCustomBackgroundImage(file: File): Promise<{
   }
 }
 
-export function prewarmPresetBackgroundImages() {
-  for (const bg of BACKGROUNDS) {
-    if ("image" in bg && bg.image) void resolveIframeBackgroundImage(bg.image);
+function scheduleIdle(task: () => void) {
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(() => task(), { timeout: 4000 });
+    return;
   }
+  setTimeout(task, 1500);
+}
+
+export function prewarmPresetBackgroundImages(activeKey: BackgroundKey) {
+  const active = PHOTO_BACKGROUND_KEYS.includes(activeKey as (typeof PHOTO_BACKGROUND_KEYS)[number])
+    ? activeKey
+    : PHOTO_BACKGROUND_KEYS[0];
+
+  void resolvePresetIframeBackgroundImage(backgroundByKey(active));
+
+  scheduleIdle(() => {
+    for (const key of PHOTO_BACKGROUND_KEYS) {
+      if (key === active) continue;
+      void resolvePresetIframeBackgroundImage(backgroundByKey(key));
+    }
+  });
 }
