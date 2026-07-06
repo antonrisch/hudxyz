@@ -15,6 +15,7 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { useSimulator } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
+import { cn } from "@/lib/utils";
 
 function ZoomMenuItem({
   label,
@@ -34,7 +35,7 @@ function ZoomMenuItem({
 }
 
 // zoom dropdown: editable percentage, presets, and keyboard shortcuts.
-export function ZoomControls() {
+export function ZoomControls({ className }: { className?: string }) {
   const { panZoom } = useSimulator();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -83,7 +84,7 @@ export function ZoomControls() {
             size="lg"
             aria-label="Zoom"
             onMouseDown={dropFocus}
-            className="h-10 gap-1 px-2 tabular-nums"
+            className={cn("h-10 gap-1 px-2 tabular-nums", className)}
           >
             {percent}%
             <ChevronDown className="size-3.5 opacity-50" />

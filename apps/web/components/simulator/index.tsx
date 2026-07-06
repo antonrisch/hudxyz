@@ -20,11 +20,11 @@ import {
   type Seed,
   type View,
 } from "@/lib/simulator/store";
-import { INTENT_BY_KEY } from "@/lib/simulator/config";
+import { INTENT_BY_KEY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
 import { releaseChromeFocus } from "@/lib/simulator/input";
 import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
-import { resolveBackground } from "@/lib/simulator/background";
+import { resolveBackground, resolveBackdropPlaceholder } from "@/lib/simulator/background";
 import {
   getCachedIframeBackgroundImage,
   prewarmPresetBackgroundImages,
@@ -43,10 +43,15 @@ import type { Frame } from "@mercuryworkshop/scramjet-controller";
 import { AppHeader } from "@/components/simulator/header/app-header";
 import { Dpad } from "@/components/simulator/input/dpad";
 import { Device } from "@/components/simulator/device";
-import { DisplaySidebarColumn } from "@/components/simulator/panel/sidebar";
-import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
+import {
+  DisplayPanelMobileTrigger,
+  DisplaySidebarColumn,
+} from "@/components/simulator/panel/sidebar";
+import { MobileOnly } from "@/components/simulator/mobile-only";
+import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadDisplay } from "@/lib/simulator/capture";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // -- context ------------------------------------------------
 // stable handles for the leaf components: the store (read via useSimulatorState),
@@ -55,6 +60,7 @@ interface SimulatorContextValue {
   store: SimulatorStore;
   iframeRef: RefObject<HTMLIFrameElement | null>;
   displayRef: RefObject<HTMLDivElement | null>;
+  urlInputRef: RefObject<HTMLInputElement | null>;
   load: (raw: string) => void;
   press: (intent: Intent) => void;
   pressDown: (intent: Intent) => void;
@@ -85,6 +91,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const [, setModeParam] = useQueryState("mode", simulatorParsers.mode);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
+  const urlInputRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
   const applyAdditiveRef = useRef<() => void>(() => {});
@@ -93,6 +100,11 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const customBackgroundImages = useStore(store, (s) => s.customBackgroundImages);
   const activeCustomBackgroundId = useStore(store, (s) => s.activeCustomBackgroundId);
   const background = resolveBackground(
+    backgroundKey,
+    customBackgroundImages,
+    activeCustomBackgroundId,
+  );
+  const backdropPlaceholder = resolveBackdropPlaceholder(
     backgroundKey,
     customBackgroundImages,
     activeCustomBackgroundId,
@@ -454,7 +466,6 @@ export default function Simulator({ seed }: { seed: Seed }) {
 
     const onHostKeyDown = (e: KeyboardEvent) => {
       if (!e.isTrusted) return;
-      if (applyPanZoomShortcut(e, panZoomRef.current)) return;
       if (e.metaKey && e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
         void captureRef.current();
@@ -549,6 +560,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
       store,
       iframeRef,
       displayRef,
+      urlInputRef,
       load,
       press,
       pressDown,
@@ -563,27 +575,39 @@ export default function Simulator({ seed }: { seed: Seed }) {
 
   return (
     <SimulatorContext.Provider value={ctx}>
-      <div className="flex min-h-0 flex-1 flex-col">
-        <AppHeader />
+      <TooltipProvider delay={1000}>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <h1 className="sr-only sm:hidden">{SIMULATOR_TITLE}</h1>
+          <AppHeader />
 
-        <div className="grid min-h-0 flex-1 gap-2 px-2 pb-2 grid-rows-[auto_1fr_auto] sm:grid-cols-[1fr_18rem] sm:grid-rows-1">
-          <DisplaySidebarColumn />
-          <div
-            ref={stageRef}
-            className="relative row-start-2 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill sm:col-start-1 sm:row-start-1"
-          >
-            <BackgroundBackdrop
-              preset={background}
-              backgroundBrightness={backgroundBrightness}
-              backgroundBlur={backgroundBlur}
-            />
-            <Device />
-            <div className="pointer-events-none absolute inset-x-0 bottom-2.5 z-20 flex justify-center px-4">
-              <Dpad />
+          <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] gap-2 px-2 pb-2 sm:grid-cols-[1fr_auto]">
+            <DisplaySidebarColumn />
+            <div className="relative grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:col-start-1 sm:row-start-1 sm:grid-rows-1 sm:gap-0">
+              <div
+                ref={stageRef}
+                className="relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill"
+              >
+                <BackgroundBackdrop
+                  preset={background}
+                  placeholder={backdropPlaceholder}
+                  backgroundBrightness={backgroundBrightness}
+                  backgroundBlur={backgroundBlur}
+                />
+                <Device />
+              </div>
+              <div className="flex w-full shrink-0 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-2.5 sm:z-20 sm:w-auto sm:row-start-1 sm:justify-center sm:px-4 sm:py-0">
+                <Dpad
+                  endAction={
+                    <MobileOnly>
+                      <DisplayPanelMobileTrigger />
+                    </MobileOnly>
+                  }
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </TooltipProvider>
     </SimulatorContext.Provider>
   );
 }

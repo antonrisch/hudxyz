@@ -5,7 +5,7 @@ export const DEVICE_MODEL = "Meta Ray-Ban Display";
 export const SIMULATOR_TITLE = "Meta Ray-Ban Display Simulator";
 // 1:1 with the official Chrome extension one-liner.
 export const SIMULATOR_SUMMARY =
-  "Simulate Meta Ray-Ban Display glasses for web apps — background environments, D-pad input, display settings, record and QA checks.";
+  "Simulate Meta Ray-Ban Display glasses for web apps — background environments, D-pad input, display settings, screen capture and QA checks.";
 // condensed extension long-form for meta / JSON-LD.
 export const SIMULATOR_TAGLINE = `${SIMULATOR_SUMMARY} Simulates the 600x600 display with additive blending in your browser so developers can preview and QA without the hardware.`;
 export const OS_VERSION = "125.1";
@@ -41,6 +41,19 @@ export const DEFAULT_DEVICE_SCALE = { glasses: 0.6, pixel: 1 } as const satisfie
   number
 >;
 
+export const MOBILE_DEFAULT_DEVICE_SCALE = { glasses: 0.3 } as const satisfies Pick<
+  Record<View, number>,
+  "glasses"
+>;
+
+export function desktopDeviceScale(view: View): number {
+  return DEFAULT_DEVICE_SCALE[view];
+}
+
+export function mobileGlassesDeviceScale(): number {
+  return MOBILE_DEFAULT_DEVICE_SCALE.glasses;
+}
+
 // cosmetic presentation modes (?mode= in url); all wrap the SAME persistent device surface.
 // glasses: framed over the lens. pixel (label 1:1): exact 600×600.
 export const VIEWS = [
@@ -48,13 +61,14 @@ export const VIEWS = [
   { key: "pixel", label: "1:1" },
 ] as const satisfies ReadonlyArray<{ key: View; label: string }>;
 
-// standardized device surface tint, shared by the surface box, the iframe and the overlays.
-export const DEVICE_BG = "bg-muted/10";
+// standardized device overlay chrome for welcome/loading states on the waveguide surface.
+export const DEVICE_OVERLAY = "bg-muted/20";
+export const DEVICE_OVERLAY_TEXT = "text-4xl font-medium leading-snug text-white/90";
 
-// the device surface: clipped, rounded, tinted — consistent across every view (it's what
+// the device surface: clipped, rounded, black — consistent across every view (it's what
 // shows whenever an app isn't covering it). only the positioning differs, so device.tsx
 // composes this base with per-view layout classes.
-export const DEVICE_SURFACE = `overflow-hidden rounded-2xl ${DEVICE_BG}`;
+export const DEVICE_SURFACE = "overflow-hidden rounded-3xl bg-black";
 
 // physical keys the glasses emit, mapped to device intents (window keydown -> intent).
 export const INTENT_BY_KEY: Record<string, Intent> = {

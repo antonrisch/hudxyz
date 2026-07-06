@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
 import { Frames } from "@/components/simulator/frames";
-import { DEVICE_BG, DEVICE_SURFACE, GLASSES_CHROME } from "@/lib/simulator/config";
+import {
+  DEVICE_OVERLAY,
+  DEVICE_OVERLAY_TEXT,
+  DEVICE_SURFACE,
+  GLASSES_CHROME,
+} from "@/lib/simulator/config";
 import type { Status } from "@/lib/simulator/store";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { releaseChromeFocus } from "@/lib/simulator/input";
@@ -14,6 +19,8 @@ const STATUS_MSG: Partial<Record<Status, string>> = {
   error: "Couldn't load. Reload to retry.",
 };
 
+const WELCOME_MSG = "Enter a URL to get started";
+
 const APP_REVEAL_MS = 300;
 
 // the device as a pan/zoom canvas. the viewport clips; #hud-device is the content plane —
@@ -21,7 +28,7 @@ const APP_REVEAL_MS = 300;
 // the frames svg off it decoratively, so glasses ≡ 1:1 at a smaller default zoom). the
 // iframe stays the same element across views/modes/zoom.
 export function Device() {
-  const { iframeRef, displayRef, panZoom, store } = useSimulator();
+  const { iframeRef, displayRef, panZoom, store, urlInputRef } = useSimulator();
   const view = useSimulatorState((s) => s.view);
   const screen = useSimulatorState((s) => s.screen);
   const status = useSimulatorState((s) => s.status);
@@ -48,7 +55,10 @@ export function Device() {
 
   const showLoadOverlay =
     screen === "app" && (status === "loading" || status === "revealing" || status === "error");
+  const showWelcome = screen === "app" && status === "idle";
   const appVisible = status === "revealing" || status === "ready";
+
+  const focusUrlBar = () => urlInputRef.current?.focus();
 
   return (
     <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden">
@@ -120,12 +130,26 @@ export function Device() {
             </div>
           )}
 
+          {/* empty state — no app navigated yet */}
+          {showWelcome && (
+            <button
+              type="button"
+              onClick={focusUrlBar}
+              className={cn(
+                "absolute inset-0 grid cursor-pointer place-items-center px-4 text-center",
+                DEVICE_OVERLAY,
+              )}
+            >
+              <p className={DEVICE_OVERLAY_TEXT}>{WELCOME_MSG}</p>
+            </button>
+          )}
+
           {/* app load overlay — stays up through revealing, then cross-fades out */}
           {showLoadOverlay && (
             <div
               className={cn(
                 "absolute inset-0 grid place-items-center px-4 text-center transition-opacity ease-out",
-                DEVICE_BG,
+                DEVICE_OVERLAY,
                 status === "revealing" && appRevealed
                   ? "pointer-events-none opacity-0"
                   : "opacity-100",
@@ -137,22 +161,23 @@ export function Device() {
               }}
             >
               {status !== "revealing" && (
-                <p className="text-sm font-medium leading-snug">{STATUS_MSG[status]}</p>
+                <p className={DEVICE_OVERLAY_TEXT}>{STATUS_MSG[status]}</p>
               )}
             </div>
           )}
         </div>
       </div>
 
-      {/* capture overlay: the device takes no mouse input (d-pad only), so the cursor always
-          drives the canvas. drag = pan; pinch / cmd-scroll = zoom (handled on the viewport). */}
+      {/* capture overlay: drag = pan; pinch / cmd-scroll = zoom (desktop only). */}
       <div
         className={cn(
           "absolute inset-0 touch-none",
-          screen === "app" ? "cursor-grab active:cursor-grabbing" : "pointer-events-none",
+          showWelcome ? "pointer-events-none" : "max-sm:pointer-events-none",
+          screen === "app" && panZoom.interactive && "cursor-grab active:cursor-grabbing",
         )}
-        {...panGesture}
+        {...(panZoom.interactive ? panGesture : {})}
         onPointerDown={(e) => {
+          if (!panZoom.interactive) return;
           releaseChromeFocus();
           onPointerDown?.(e);
         }}

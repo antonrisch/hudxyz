@@ -17,11 +17,11 @@ export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, 
       <img
         src="/icon.svg"
         alt=""
-        width={30}
-        height={30}
-        className="size-7.5 shrink-0 [image-rendering:pixelated]"
+        width={40}
+        height={40}
+        className="size-9 shrink-0 sm:size-7.5 [image-rendering:pixelated]"
       />
-      hud.xyz
+      <span className="hidden sm:inline">hud.xyz</span>
     </Link>
   );
 }
