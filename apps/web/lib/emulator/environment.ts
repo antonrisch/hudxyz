@@ -9,9 +9,14 @@ export type EnvironmentPreset = {
   image?: string;
 };
 
-const ENV_GRADIENT = {
+export const ENV_GRADIENT = {
   daylight: "linear-gradient(to bottom, var(--env-day-from), var(--env-day-to))",
   night: "linear-gradient(to bottom, var(--env-night-from), var(--env-night-to))",
+} as const satisfies Partial<Record<EnvironmentKey, string>>;
+
+export const ENV_GRADIENT_FILL = {
+  daylight: "var(--env-day-to)",
+  night: "var(--env-night-to)",
 } as const satisfies Partial<Record<EnvironmentKey, string>>;
 
 export const DEFAULT_ENVIRONMENT: EnvironmentKey = "alps";

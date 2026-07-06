@@ -5,7 +5,8 @@ import { ImagePlus, Moon, Sun, type LucideIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { ENVIRONMENTS, type EnvironmentKey } from "@/lib/emulator/environment";
+import { cn } from "@/lib/utils";
+import { ENV_GRADIENT, ENV_GRADIENT_FILL, ENVIRONMENTS, type EnvironmentKey } from "@/lib/emulator/environment";
 import { prepareCustomEnvironmentImage } from "@/lib/emulator/environment-image";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { dropFocus } from "@/lib/emulator/drop-focus";
@@ -16,6 +17,9 @@ const ENVIRONMENT_ICONS = {
 } satisfies Partial<Record<EnvironmentKey, LucideIcon>>;
 
 const customToggleValue = (id: string) => `custom:${id}`;
+
+const selectedItemClass =
+  "aria-pressed:border-white! aria-pressed:bg-transparent! aria-pressed:ring-[3px] aria-pressed:ring-white/50";
 
 export function EnvironmentPicker() {
   const { store } = useEmulator();
@@ -74,6 +78,7 @@ export function EnvironmentPicker() {
       >
         {ENVIRONMENTS.filter((env) => env.key !== "custom").map((env) => {
           const Icon = ENVIRONMENT_ICONS[env.key as keyof typeof ENVIRONMENT_ICONS];
+          const gradient = ENV_GRADIENT[env.key as keyof typeof ENV_GRADIENT];
           return (
             <ToggleGroupItem
               key={env.key}
@@ -81,13 +86,37 @@ export function EnvironmentPicker() {
               aria-label={env.label}
               onMouseDown={dropFocus}
               onClick={() => setPresetEnvironment(env.key)}
-              className="hover:bg-background/60 size-12 border-muted p-0 aria-pressed:border-border! aria-pressed:bg-background!"
+              style={
+                gradient
+                  ? {
+                      backgroundColor:
+                        ENV_GRADIENT_FILL[env.key as keyof typeof ENV_GRADIENT_FILL],
+                    }
+                  : undefined
+              }
+              className={cn(
+                "relative size-12 overflow-hidden border-0 p-0",
+                selectedItemClass,
+                gradient
+                  ? "text-white hover:bg-transparent! hover:brightness-110"
+                  : "border border-muted hover:bg-background/60",
+              )}
             >
+              {gradient ? (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -inset-1"
+                  style={{
+                    backgroundColor: ENV_GRADIENT_FILL[env.key as keyof typeof ENV_GRADIENT_FILL],
+                    backgroundImage: gradient,
+                  }}
+                />
+              ) : null}
               {"image" in env && env.image ? (
                 // eslint-disable-next-line @next/next/no-img-element -- same-origin preset thumbnail
                 <img src={env.image} alt="" className="size-full rounded-[inherit] object-cover" />
               ) : Icon ? (
-                <Icon className="size-6" />
+                <Icon className="relative size-6" />
               ) : null}
             </ToggleGroupItem>
           );
@@ -100,7 +129,7 @@ export function EnvironmentPicker() {
             aria-label="Custom environment"
             onMouseDown={dropFocus}
             onClick={() => selectCustom(img.id)}
-            className="hover:bg-background/60 size-12 border-muted p-0 aria-pressed:border-border! aria-pressed:bg-background!"
+            className={cn("hover:bg-background/60 size-12 border-muted p-0", selectedItemClass)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- session blob urls */}
             <img src={img.url} alt="" className="size-full rounded-[inherit] object-cover" />
