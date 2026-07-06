@@ -47,10 +47,7 @@ export function Device() {
         <div
           ref={displayRef}
           id="hud-display"
-          className={cn(
-            "relative z-10 size-full overflow-hidden rounded-lg",
-            additive ? "bg-transparent" : DEVICE_SURFACE,
-          )}
+          className={cn("relative z-10 size-full", DEVICE_SURFACE, additive && "bg-transparent")}
         >
           <iframe
             ref={iframeRef}
