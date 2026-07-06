@@ -41,7 +41,7 @@ export function DisplayPanel() {
   };
 
   return (
-    <div className="flex flex-col">
+    <>
       <PanelSection title="Environment">
         <PanelField label="Background">
           <EnvironmentPicker />
@@ -140,6 +140,6 @@ export function DisplayPanel() {
           </PanelRow>
         </PanelRowGroup>
       </PanelSection>
-    </div>
+    </>
   );
 }

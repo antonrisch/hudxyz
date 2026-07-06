@@ -13,9 +13,7 @@ export function AppHeader() {
     <header className="z-50 shrink-0 bg-background">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 p-2">
         <Logo className="justify-self-start" />
-        <div className="flex min-w-0 max-w-[calc(100vw-12rem)] items-center gap-2">
-          <UrlBar />
-        </div>
+        <UrlBar className="max-w-[calc(100vw-12rem)]" />
         <div className="flex items-center gap-2 justify-self-end">
           <DisplayPanelTrigger />
           <FeedbackButton />

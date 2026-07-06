@@ -490,7 +490,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
 
   return (
     <EmulatorContext.Provider value={ctx}>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col">
         <AppHeader />
 
         <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl px-2 pb-2 gap-2">

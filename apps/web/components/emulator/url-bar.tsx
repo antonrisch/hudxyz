@@ -12,9 +12,10 @@ import { SUGGESTED_APPS } from "@/lib/emulator/config";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { dropFocus } from "@/lib/emulator/drop-focus";
+import { cn } from "@/lib/utils";
 
 // address bar: a plain url input + an attached load/reload group, like a browser.
-export function UrlBar() {
+export function UrlBar({ className }: { className?: string }) {
   const { store, load } = useEmulator();
   const url = useEmulatorState((s) => s.url);
   const [, setUrlParam] = useQueryState("url", emulatorParsers.url);
@@ -41,7 +42,7 @@ export function UrlBar() {
   };
 
   return (
-    <div className="group relative min-w-0 w-96 max-w-full">
+    <div className={cn("group relative min-w-0 w-96 max-w-full", className)}>
       <div className="overflow-hidden rounded-xl border bg-muted hover:bg-input/80 focus-within:bg-muted focus-within:hover:bg-muted group-focus-within:rounded-b-none group-focus-within:border-b-transparent">
         <form
           className="flex min-w-0 items-center sm:gap-1 p-0.5"
