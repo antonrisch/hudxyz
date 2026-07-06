@@ -5,25 +5,25 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
-import { VIEWS } from "@/lib/emulator/config";
-import { DEFAULT_BACKGROUND, BACKGROUNDS } from "@/lib/emulator/background";
-import type { Seed, View } from "@/lib/emulator/store";
+import { VIEWS } from "@/lib/simulator/config";
+import { DEFAULT_BACKGROUND, BACKGROUNDS } from "@/lib/simulator/background";
+import type { Seed, View } from "@/lib/simulator/store";
 
-export const EMULATOR_SHARE_PATH = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
+export const SIMULATOR_SHARE_PATH = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
 
-export function buildEmulatorShareUrl(appUrl?: string): string {
-  if (!appUrl) return EMULATOR_SHARE_PATH;
-  return `${EMULATOR_SHARE_PATH}?${new URLSearchParams({ url: appUrl }).toString()}`;
+export function buildSimulatorShareUrl(appUrl?: string): string {
+  if (!appUrl) return SIMULATOR_SHARE_PATH;
+  return `${SIMULATOR_SHARE_PATH}?${new URLSearchParams({ url: appUrl }).toString()}`;
 }
 
 const VIEW_KEYS = VIEWS.map((v) => v.key);
 const BACKGROUND_KEYS = BACKGROUNDS.map((bg) => bg.key);
 
-// url <-> emulator state contract. these parsers are the single source of truth for both
+// url <-> simulator state contract. these parsers are the single source of truth for both
 // the initial (server-parsed) seed and the client-side writes, so ssr and hydration agree.
 // nuqs clears a param when it equals its default, keeping shared urls clean.
 // `mode` is url-only (cosmetic chrome); the store field is `view`.
-export const emulatorParsers = {
+export const simulatorParsers = {
   mode: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
   url: parseAsString.withDefault(""),
   additive: parseAsBoolean.withDefault(true),
@@ -35,7 +35,7 @@ export const emulatorParsers = {
 };
 
 // server-side reader: parse Next's searchParams (a promise in app router) into typed values.
-export const loadEmulatorSearchParams = createLoader(emulatorParsers);
+export const loadSimulatorSearchParams = createLoader(simulatorParsers);
 
 // turn parsed url params into the store's initial state. a deep-linked ?url= arms a load.
 export function seedFromParams(params: {

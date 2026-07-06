@@ -73,7 +73,7 @@ function ensure(): Promise<Controller> {
 }
 
 // attach our own <iframe> to the controller and return its navigable Frame. frame.element
-// === the passed iframe, so the emulator keeps injecting keys via iframe.contentWindow.
+// === the passed iframe, so the simulator keeps injecting keys via iframe.contentWindow.
 // navigate with frame.go(url) — v2 has no encodeUrl helper.
 export async function createFrame(iframe: HTMLIFrameElement): Promise<Frame> {
   return (await ensure()).createFrame(iframe);

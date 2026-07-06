@@ -2,17 +2,17 @@
 
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEmulatorState } from "@/components/emulator";
-import { dropFocus } from "@/lib/emulator/input";
-import { buildEmulatorShareUrl, normalizeWebUrl } from "@/lib/emulator/search-params";
+import { useSimulatorState } from "@/components/simulator";
+import { dropFocus } from "@/lib/simulator/input";
+import { buildSimulatorShareUrl, normalizeWebUrl } from "@/lib/simulator/search-params";
 import { toast } from "sonner";
 
 export function ShareMenu() {
-  const url = useEmulatorState((s) => s.url);
+  const url = useSimulatorState((s) => s.url);
 
   const copyLink = () => {
     const appUrl = normalizeWebUrl(url);
-    void navigator.clipboard.writeText(buildEmulatorShareUrl(appUrl || undefined));
+    void navigator.clipboard.writeText(buildSimulatorShareUrl(appUrl || undefined));
     toast.message("Link copied");
   };
 

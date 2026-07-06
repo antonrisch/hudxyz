@@ -12,47 +12,47 @@ import {
 import { useQueryState } from "nuqs";
 import { useStore } from "zustand";
 import {
-  createEmulatorStore,
+  createSimulatorStore,
   getPersistedDisplayPanelOpen,
-  type EmulatorState,
-  type EmulatorStore,
+  type SimulatorState,
+  type SimulatorStore,
   type Intent,
   type Seed,
   type View,
-} from "@/lib/emulator/store";
-import { INTENT_BY_KEY } from "@/lib/emulator/config";
-import { dispatchDeviceKey, isHostChromeInput } from "@/lib/emulator/input";
-import { releaseChromeFocus } from "@/lib/emulator/input";
-import { BackgroundBackdrop } from "@/components/emulator/background/backdrop";
-import { resolveBackground } from "@/lib/emulator/background";
+} from "@/lib/simulator/store";
+import { INTENT_BY_KEY } from "@/lib/simulator/config";
+import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
+import { releaseChromeFocus } from "@/lib/simulator/input";
+import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
+import { resolveBackground } from "@/lib/simulator/background";
 import {
   getCachedIframeBackgroundImage,
   prewarmPresetBackgroundImages,
   resolveIframeBackgroundImage,
-} from "@/lib/emulator/background-image";
+} from "@/lib/simulator/background-image";
 import {
   measureAdditiveBackdrop,
   syncAdditive,
   syncDisplayBrightness,
-} from "@/lib/emulator/additive";
-import { emulatorParsers } from "@/lib/emulator/search-params";
-import { normalizeWebUrl } from "@/lib/emulator/search-params";
+} from "@/lib/simulator/additive";
+import { simulatorParsers } from "@/lib/simulator/search-params";
+import { normalizeWebUrl } from "@/lib/simulator/search-params";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
-import { AppHeader } from "@/components/emulator/header/app-header";
-import { Dpad } from "@/components/emulator/input/dpad";
-import { Device } from "@/components/emulator/device";
-import { DisplaySidebarColumn } from "@/components/emulator/panel/sidebar";
-import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
-import { waitForIframePaint } from "@/lib/emulator/app-load";
-import { downloadDisplay } from "@/lib/emulator/capture";
+import { AppHeader } from "@/components/simulator/header/app-header";
+import { Dpad } from "@/components/simulator/input/dpad";
+import { Device } from "@/components/simulator/device";
+import { DisplaySidebarColumn } from "@/components/simulator/panel/sidebar";
+import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
+import { waitForIframePaint } from "@/lib/simulator/app-load";
+import { downloadDisplay } from "@/lib/simulator/capture";
 
 // -- context ------------------------------------------------
-// stable handles for the leaf components: the store (read via useEmulatorState),
+// stable handles for the leaf components: the store (read via useSimulatorState),
 // the shared iframe ref, and the two behavior entry points (load / press).
-interface EmulatorContextValue {
-  store: EmulatorStore;
+interface SimulatorContextValue {
+  store: SimulatorStore;
   iframeRef: RefObject<HTMLIFrameElement | null>;
   displayRef: RefObject<HTMLDivElement | null>;
   load: (raw: string) => void;
@@ -65,24 +65,24 @@ interface EmulatorContextValue {
   panZoom: PanZoom;
 }
 
-const EmulatorContext = createContext<EmulatorContextValue | null>(null);
+const SimulatorContext = createContext<SimulatorContextValue | null>(null);
 
-export function useEmulator() {
-  const ctx = useContext(EmulatorContext);
-  if (!ctx) throw new Error("useEmulator must be used within <Emulator>");
+export function useSimulator() {
+  const ctx = useContext(SimulatorContext);
+  if (!ctx) throw new Error("useSimulator must be used within <Simulator>");
   return ctx;
 }
 
 // selector hook over the core store
-export function useEmulatorState<T>(selector: (s: EmulatorState) => T): T {
-  return useStore(useEmulator().store, selector);
+export function useSimulatorState<T>(selector: (s: SimulatorState) => T): T {
+  return useStore(useSimulator().store, selector);
 }
 
 // -- root ---------------------------------------------------
-export default function Emulator({ seed }: { seed: Seed }) {
-  const storeRef = useRef<EmulatorStore>(undefined);
-  const store = (storeRef.current ??= createEmulatorStore(seed));
-  const [, setModeParam] = useQueryState("mode", emulatorParsers.mode);
+export default function Simulator({ seed }: { seed: Seed }) {
+  const storeRef = useRef<SimulatorStore>(undefined);
+  const store = (storeRef.current ??= createSimulatorStore(seed));
+  const [, setModeParam] = useQueryState("mode", simulatorParsers.mode);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -274,7 +274,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
   });
 
   // additive preview lives inside the proxied document so black pixels blend with the
-  // background before the iframe crosses transformed emulator chrome.
+  // background before the iframe crosses transformed simulator chrome.
   useMountEffect(() => {
     prewarmPresetBackgroundImages();
 
@@ -544,7 +544,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
     };
   });
 
-  const ctx = useMemo<EmulatorContextValue>(
+  const ctx = useMemo<SimulatorContextValue>(
     () => ({
       store,
       iframeRef,
@@ -562,7 +562,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
   );
 
   return (
-    <EmulatorContext.Provider value={ctx}>
+    <SimulatorContext.Provider value={ctx}>
       <div className="flex min-h-0 flex-1 flex-col">
         <AppHeader />
 
@@ -584,6 +584,6 @@ export default function Emulator({ seed }: { seed: Seed }) {
           </div>
         </div>
       </div>
-    </EmulatorContext.Provider>
+    </SimulatorContext.Provider>
   );
 }

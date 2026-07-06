@@ -10,7 +10,7 @@ export function PrivacyContent() {
       <h2>Who we are</h2>
       <p>
         {e} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates hud.xyz, a browser-based
-        emulator designed for compatibility with the Meta Ray-Ban Display. We are based in
+        simulator designed for compatibility with the Meta Ray-Ban Display. We are based in
         Queensland, Australia.
       </p>
       <p>
@@ -21,7 +21,7 @@ export function PrivacyContent() {
 
       <h2>What hud.xyz does</h2>
       <p>
-        You can enter a URL to load a public website in the emulator. Requests may be routed through
+        You can enter a URL to load a public website in the simulator. Requests may be routed through
         proxy infrastructure we operate so the page can be displayed. We do not operate or control
         third-party sites you choose to load.
       </p>
@@ -44,21 +44,21 @@ export function PrivacyContent() {
       <p>
         Session replay may capture interactions on hud.xyz itself, such as text entered in the
         address bar. It does not give us control over data handled by third-party sites inside the
-        emulator.
+        simulator.
       </p>
       <p>
         We do not intentionally collect payment details or account credentials. We do not sell
         personal information.
       </p>
       <p>
-        We do not use non-essential cookies in v1. Third-party sites you load in the emulator may
+        We do not use non-essential cookies in v1. Third-party sites you load in the simulator may
         set their own cookies. Our service providers may use cookies or similar technologies as part
         of their services.
       </p>
 
       <h2>Why we use it</h2>
       <p>
-        To run the emulator, process URLs you submit, keep the service reliable, diagnose errors,
+        To run the simulator, process URLs you submit, keep the service reliable, diagnose errors,
         prevent abuse, understand usage, and meet legal obligations.
       </p>
 

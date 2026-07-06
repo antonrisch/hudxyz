@@ -12,17 +12,17 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { DisplayPanel } from "@/components/emulator/panel/controls";
-import { ViewSwitcher } from "@/components/emulator/panel/view-switcher";
-import { ZoomControls } from "@/components/emulator/panel/zoom-controls";
-import { EMULATOR_SUMMARY, EMULATOR_TITLE, FEEDBACK_MAILTO } from "@/lib/emulator/config";
-import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { dropFocus } from "@/lib/emulator/input";
+import { DisplayPanel } from "@/components/simulator/panel/controls";
+import { ViewSwitcher } from "@/components/simulator/panel/view-switcher";
+import { ZoomControls } from "@/components/simulator/panel/zoom-controls";
+import { SIMULATOR_SUMMARY, SIMULATOR_TITLE, FEEDBACK_MAILTO } from "@/lib/simulator/config";
+import { useSimulator, useSimulatorState } from "@/components/simulator";
+import { dropFocus } from "@/lib/simulator/input";
 import { cn } from "@/lib/utils";
 
 function DisplaySidebarIntro() {
   return (
-    <h1 className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{EMULATOR_TITLE}</h1>
+    <h1 className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</h1>
   );
 }
 
@@ -32,7 +32,7 @@ function DisplaySidebarFooter() {
       <Separator />
       <div className="p-3">
         <p className="text-xs text-pretty text-muted-foreground">
-          {EMULATOR_SUMMARY}
+          {SIMULATOR_SUMMARY}
           <br />
           <a
             href={FEEDBACK_MAILTO}
@@ -76,7 +76,7 @@ function DisplayPanelControlsShell() {
 
 // intro + controls + footer; `contents` on mobile (grid rows), flex column on sm+.
 export function DisplaySidebarColumn() {
-  const open = useEmulatorState((s) => s.displayPanelOpen);
+  const open = useSimulatorState((s) => s.displayPanelOpen);
 
   return (
     <div
@@ -102,8 +102,8 @@ export function DisplaySidebarColumn() {
 }
 
 export function DisplayPanelTrigger() {
-  const { store } = useEmulator();
-  const open = useEmulatorState((s) => s.displayPanelOpen);
+  const { store } = useSimulator();
+  const open = useSimulatorState((s) => s.displayPanelOpen);
 
   return (
     <>
@@ -127,8 +127,8 @@ export function DisplayPanelTrigger() {
           className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-sm"
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>{EMULATOR_TITLE}</SheetTitle>
-            <SheetDescription>{EMULATOR_SUMMARY}</SheetDescription>
+            <SheetTitle>{SIMULATOR_TITLE}</SheetTitle>
+            <SheetDescription>{SIMULATOR_SUMMARY}</SheetDescription>
           </SheetHeader>
           <DisplayPanelControlsShell />
         </SheetContent>
