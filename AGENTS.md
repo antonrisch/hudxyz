@@ -27,7 +27,7 @@ A single route, **`/emulator`**, renders the `Emulator` component (`components/e
 
 The active view lives in `?view=` (set client-side via `history.replaceState`, so switching never navigates); `?url=` deep-links a target. `/browser` 308-redirects to `/emulator?view=fit`.
 
-**Structure.** A UI-agnostic core — `lib/emulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `components/emulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `app-header`, `dpad`, `device`, `display-sidebar`, and `display-panel` (+ `url-bar`, `view-switcher`, `zoom-controls`) are the leaf UI. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
+**Structure.** A UI-agnostic core — `lib/emulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `components/emulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, display-panel, view-switcher, zoom-controls), `header/` (url-bar, share, feedback), `input/` (dpad, screenshot), plus root `app-header` and `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
 
 **Same-origin proxy.** Third-party sites set `frame-ancestors` / `X-Frame-Options` that scope framing to themselves. The emulator re-serves the target **from our own origin** through a **Scramjet v2** service-worker proxy, so the browser treats it as same-origin and renders it. Same-origin also lets the D-pad inject keystrokes straight into the frame.
 
@@ -48,8 +48,8 @@ Key files:
 ## Layout (`apps/web`)
 
 - `app/` — App Router routes: `page.tsx` (home), `emulator/page.tsx`, `layout.tsx` (fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
-- `components/` — `emulator/*` (`index.tsx` shell + `app-header` / `url-bar` / `view-switcher` / `dpad` / `device` / `display-sidebar` / `display-panel`), `frames.tsx`, `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
-- `lib/` — `proxy.ts` (Scramjet proxy), `emulator/*` (`store.ts` core state machine + `config.ts`), `utils.ts`.
+- `components/` — `emulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `input/` + `app-header` / `device`), `frames.tsx`, `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
+- `lib/` — `proxy.ts` (Scramjet proxy), `emulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
 - `public/` — `sw.js` plus the generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`.
 
