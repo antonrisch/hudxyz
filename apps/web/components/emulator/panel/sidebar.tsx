@@ -25,7 +25,7 @@ function DisplayPanelShell() {
   return (
     <>
       <div className="shrink-0">
-        <h2 className="px-3 py-2.5 text-md leading-snug font-semibold">{DEVICE_MODEL} Emulator</h2>
+        <h2 className="p-3 text-md leading-snug font-semibold">{DEVICE_MODEL} Emulator</h2>
         <div className="flex items-center justify-between gap-2 px-3 pb-2.5">
           <ViewSwitcher />
           <ZoomControls />
@@ -70,7 +70,7 @@ export function DisplaySidebar() {
   if (!open) return null;
 
   return (
-    <aside className="hidden min-h-0 w-72 shrink-0 flex-col overflow-hidden sm:flex rounded-2xl border bg-sidebar">
+    <aside className="hidden min-h-0 w-72 shrink-0 flex-col overflow-hidden sm:flex rounded-2xl border bg-background">
       <DisplayPanelShell />
     </aside>
   );

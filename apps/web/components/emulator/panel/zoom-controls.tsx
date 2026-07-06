@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -25,7 +26,7 @@ function ZoomMenuItem({
   onSelect: () => void;
 }) {
   return (
-    <DropdownMenuItem className="justify-between" onClick={onSelect}>
+    <DropdownMenuItem className="justify-between px-2 py-1.5" onClick={onSelect}>
       {label}
       {shortcut}
     </DropdownMenuItem>
@@ -89,11 +90,11 @@ export function ZoomControls() {
           </Button>
         }
       />
-      <DropdownMenuContent align="end" className="w-52 p-0">
-        <div
-          className="p-2"
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuGroup
           onPointerDown={(e) => e.preventDefault()}
           onPointerUp={(e) => e.stopPropagation()}
+          className="p-1"
         >
           <Input
             aria-label="Zoom percentage"
@@ -108,9 +109,9 @@ export function ZoomControls() {
             onBlur={(e) => commitZoom(e.target.value)}
             onKeyDown={handleZoomKeyDown}
           />
-        </div>
-        <DropdownMenuSeparator className="mx-0" />
-        <div className="p-1">
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
           <ZoomMenuItem
             label="Zoom in"
             shortcut={
@@ -143,7 +144,7 @@ export function ZoomControls() {
             onSelect={() => panZoom.zoomTo(1)}
           />
           <ZoomMenuItem label="Zoom to 200%" onSelect={() => panZoom.zoomTo(2)} />
-        </div>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
