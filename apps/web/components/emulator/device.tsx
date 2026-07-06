@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
 import { Frames } from "@/components/emulator/frames";
 import { DEVICE_BG, DEVICE_SURFACE, GLASSES_CHROME } from "@/lib/emulator/config";
@@ -9,9 +10,11 @@ import { releaseChromeFocus } from "@/lib/emulator/input";
 import { cn } from "@/lib/utils";
 
 const STATUS_MSG: Partial<Record<Status, string>> = {
-  loading: "Loading…",
+  loading: "Loading app…",
   error: "Couldn't load. Reload to retry.",
 };
+
+const APP_REVEAL_MS = 300;
 
 // the device as a pan/zoom canvas. the viewport clips; #hud-device is the content plane —
 // always the bare 600×600 surface, laid out identically in every view (glasses just hangs
@@ -26,6 +29,26 @@ export function Device() {
   const lensTint = useEmulatorState((s) => s.lensTint);
   const isGlasses = view === "glasses";
   const { onPointerDown, ...panGesture } = panZoom.bind();
+  const [appRevealed, setAppRevealed] = useState(false);
+
+  useEffect(() => {
+    if (status === "loading") setAppRevealed(false);
+    if (status !== "revealing") return;
+    const id = requestAnimationFrame(() => setAppRevealed(true));
+    return () => cancelAnimationFrame(id);
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== "revealing" || !appRevealed) return;
+    const id = window.setTimeout(() => {
+      if (store.getState().status === "revealing") store.getState().appReady();
+    }, APP_REVEAL_MS + 50);
+    return () => window.clearTimeout(id);
+  }, [status, appRevealed, store]);
+
+  const showLoadOverlay =
+    screen === "app" && (status === "loading" || status === "revealing" || status === "error");
+  const appVisible = status === "revealing" || status === "ready";
 
   return (
     <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden">
@@ -56,7 +79,11 @@ export function Device() {
             title="Glasses display"
             tabIndex={-1}
             allow="clipboard-read; clipboard-write"
-            className="relative size-full border-0"
+            className={cn(
+              "relative size-full border-0 transition-opacity ease-out",
+              appVisible && appRevealed ? "opacity-100" : "opacity-0",
+            )}
+            style={{ transitionDuration: `${APP_REVEAL_MS}ms` }}
           />
 
           {/* settings: a blurred control overlay over the running app */}
@@ -93,15 +120,25 @@ export function Device() {
             </div>
           )}
 
-          {/* app load status */}
-          {screen === "app" && (status === "loading" || status === "error") && (
+          {/* app load overlay — stays up through revealing, then cross-fades out */}
+          {showLoadOverlay && (
             <div
               className={cn(
-                "absolute inset-0 grid place-items-center px-2 text-center text-[10px] leading-tight",
+                "absolute inset-0 grid place-items-center px-4 text-center transition-opacity ease-out",
                 DEVICE_BG,
+                status === "revealing" && appRevealed
+                  ? "pointer-events-none opacity-0"
+                  : "opacity-100",
               )}
+              style={{ transitionDuration: `${APP_REVEAL_MS}ms` }}
+              onTransitionEnd={(e) => {
+                if (e.propertyName !== "opacity" || status !== "revealing" || !appRevealed) return;
+                store.getState().appReady();
+              }}
             >
-              {STATUS_MSG[status]}
+              {status !== "revealing" && (
+                <p className="text-sm font-medium leading-snug">{STATUS_MSG[status]}</p>
+              )}
             </div>
           )}
         </div>

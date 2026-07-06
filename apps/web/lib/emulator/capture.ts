@@ -1,4 +1,5 @@
 import { snapdom } from "@zumer/snapdom";
+import { waitForIframePaint } from "@/lib/emulator/app-load";
 import { VIEWPORT } from "@/lib/emulator/config";
 
 const CAPTURE = {
@@ -14,17 +15,13 @@ function captureFilename() {
 }
 
 async function waitForIframeDocument(iframe: HTMLIFrameElement): Promise<Document | null> {
-  for (let i = 0; i < 100; i++) {
-    try {
-      const doc = iframe.contentDocument;
-      if (doc?.body && (doc.body.childNodes.length > 0 || doc.readyState === "complete"))
-        return doc;
-    } catch {
-      return null;
-    }
-    await new Promise((r) => requestAnimationFrame(r));
+  const painted = await waitForIframePaint(iframe, () => false);
+  if (!painted) return null;
+  try {
+    return iframe.contentDocument;
+  } catch {
+    return null;
   }
-  return null;
 }
 
 // same-origin proxied app — independent of host view chrome (glasses scale, pan/zoom, etc.).

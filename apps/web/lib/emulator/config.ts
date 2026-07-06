@@ -48,7 +48,7 @@ export const DEVICE_BG = "bg-muted/10";
 // the device surface: clipped, rounded, tinted — consistent across every view (it's what
 // shows whenever an app isn't covering it). only the positioning differs, so device.tsx
 // composes this base with per-view layout classes.
-export const DEVICE_SURFACE = `overflow-hidden rounded-lg ${DEVICE_BG}`;
+export const DEVICE_SURFACE = `overflow-hidden rounded-2xl ${DEVICE_BG}`;
 
 // physical keys the glasses emit, mapped to device intents (window keydown -> intent).
 export const INTENT_BY_KEY: Record<string, Intent> = {

@@ -27,6 +27,7 @@ import { BackgroundBackdrop } from "@/components/emulator/background/backdrop";
 import { resolveBackground } from "@/lib/emulator/background";
 import {
   getCachedIframeBackgroundImage,
+  prewarmPresetBackgroundImages,
   resolveIframeBackgroundImage,
 } from "@/lib/emulator/background-image";
 import {
@@ -44,6 +45,7 @@ import { Dpad } from "@/components/emulator/input/dpad";
 import { Device } from "@/components/emulator/device";
 import { DisplaySidebar } from "@/components/emulator/panel/sidebar";
 import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
+import { waitForIframePaint } from "@/lib/emulator/app-load";
 import { downloadDisplay } from "@/lib/emulator/capture";
 
 // -- context ------------------------------------------------
@@ -85,6 +87,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
   const displayRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
+  const applyAdditiveRef = useRef<() => void>(() => {});
   const view = useStore(store, (s) => s.view);
   const backgroundKey = useStore(store, (s) => s.background);
   const customBackgroundImages = useStore(store, (s) => s.customBackgroundImages);
@@ -202,20 +205,58 @@ export default function Emulator({ seed }: { seed: Seed }) {
       const el = iframeRef.current;
       if (!el) return;
       const { url } = store.getState();
-      (async () => {
+      const navToken = store.getState().loadToken;
+      const isStale = () => cancelled || store.getState().loadToken !== navToken;
+
+      const onLoad = () => {
+        void (async () => {
+          if (isStale() || store.getState().status !== "loading") return;
+
+          const painted = await waitForIframePaint(el, isStale);
+          if (!painted || isStale() || store.getState().status !== "loading") return;
+
+          applyAdditiveRef.current();
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          );
+          if (isStale() || store.getState().status !== "loading") return;
+
+          store.getState().appReveal();
+        })();
+      };
+
+      el.addEventListener("load", onLoad);
+      const prevCancel = cancelNav;
+      cancelNav = () => {
+        prevCancel();
+        el.removeEventListener("load", onLoad);
+      };
+
+      const loadTimeout = window.setTimeout(() => {
+        if (!isStale() && store.getState().status === "loading") {
+          store.getState().appError();
+        }
+      }, 30_000);
+
+      const clearLoadTimeout = () => window.clearTimeout(loadTimeout);
+      const prevCancel2 = cancelNav;
+      cancelNav = () => {
+        prevCancel2();
+        clearLoadTimeout();
+      };
+
+      void (async () => {
         try {
           if (new URL(url).origin === window.location.origin) {
             el.src = url;
-            store.getState().appReady();
             return;
           }
 
           const frame = (frameRef.current ??= await createFrame(el));
-          if (cancelled) return;
+          if (isStale()) return;
           frame.go(url);
-          store.getState().appReady();
         } catch {
-          if (!cancelled) store.getState().appError();
+          if (!isStale()) store.getState().appError();
         }
       })();
     };
@@ -235,6 +276,8 @@ export default function Emulator({ seed }: { seed: Seed }) {
   // additive preview lives inside the proxied document so black pixels blend with the
   // background before the iframe crosses transformed emulator chrome.
   useMountEffect(() => {
+    prewarmPresetBackgroundImages();
+
     let applyToken = 0;
     let resolvedImage: string | undefined;
     let resolvedImageSource: string | undefined;
@@ -284,6 +327,13 @@ export default function Emulator({ seed }: { seed: Seed }) {
         activeCustomBackgroundId,
       );
       const source = preset.image;
+      const customIframeDataUrl =
+        backgroundKey === "custom"
+          ? (
+              customBackgroundImages.find((img) => img.id === activeCustomBackgroundId) ??
+              customBackgroundImages[0]
+            )?.iframeDataUrl
+          : undefined;
 
       if (!additive) {
         resolvedImage = undefined;
@@ -299,7 +349,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
         return;
       }
 
-      const cached = getCachedIframeBackgroundImage(source);
+      const cached = customIframeDataUrl ?? getCachedIframeBackgroundImage(source);
       if (cached) {
         resolvedImage = cached;
         resolvedImageSource = source;
@@ -312,7 +362,14 @@ export default function Emulator({ seed }: { seed: Seed }) {
         return;
       }
 
-      resolvedImage = source.startsWith("data:") ? source : undefined;
+      if (source.startsWith("data:")) {
+        resolvedImage = source;
+        resolvedImageSource = source;
+        syncCurrentAdditive();
+        return;
+      }
+
+      resolvedImage = undefined;
       resolvedImageSource = source;
       syncCurrentAdditive();
 
@@ -355,7 +412,9 @@ export default function Emulator({ seed }: { seed: Seed }) {
 
     applyAdditive();
     animationFrame = requestAnimationFrame(tickGeometry);
+    applyAdditiveRef.current = applyAdditive;
     return () => {
+      applyAdditiveRef.current = () => {};
       cancelAnimationFrame(animationFrame);
       iframe?.removeEventListener("load", applyAdditive);
       unsub();
