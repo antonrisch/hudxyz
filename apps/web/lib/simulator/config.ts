@@ -2,7 +2,7 @@ import type { Intent, View } from "@/lib/simulator/store";
 
 // device identity shown in the simulator chrome (model + os build). placeholders — set real values.
 export const DEVICE_MODEL = "Meta Ray-Ban Display";
-export const SIMULATOR_TITLE = "Meta Ray-Ban Display Web App Simulator";
+export const SIMULATOR_TITLE = "Meta Ray-Ban Display Simulator";
 // 1:1 with the official Chrome extension one-liner.
 export const SIMULATOR_SUMMARY =
   "Simulate Meta Ray-Ban Display glasses for web apps — background environments, D-pad input, display settings, record and QA checks.";
