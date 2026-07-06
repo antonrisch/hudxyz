@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type MouseEvent } from "react";
+import { useRef, useState } from "react";
 import { useQueryState } from "nuqs";
 import { RotateCw, X } from "lucide-react";
 import { toast } from "sonner";
@@ -11,9 +11,7 @@ import { DIRECTORY_MAILTO } from "@/components/emulator/feedback-button";
 import { SUGGESTED_APPS } from "@/lib/emulator/config";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { emulatorParsers } from "@/lib/emulator/search-params";
-
-// keep controls from taking focus so physical d-pad keys stay live
-const dropFocus = (e: MouseEvent) => e.preventDefault();
+import { dropFocus } from "@/lib/emulator/drop-focus";
 
 // address bar: a plain url input + an attached load/reload group, like a browser.
 export function UrlBar() {

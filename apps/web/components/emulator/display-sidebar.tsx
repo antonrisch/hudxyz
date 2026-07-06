@@ -1,6 +1,5 @@
 "use client";
 
-import type { MouseEvent } from "react";
 import Link from "next/link";
 import { PanelRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,9 +16,8 @@ import { DisplayPanel } from "@/components/emulator/display-panel";
 import { FEEDBACK_MAILTO } from "@/components/emulator/feedback-button";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { DEVICE_MODEL } from "@/lib/emulator/config";
+import { dropFocus } from "@/lib/emulator/drop-focus";
 import { cn } from "@/lib/utils";
-
-const dropFocus = (e: MouseEvent) => e.preventDefault();
 
 function DisplayPanelShell() {
   return (

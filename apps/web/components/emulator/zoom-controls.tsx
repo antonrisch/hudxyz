@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEmulator } from "@/components/emulator";
+import { dropFocus } from "@/lib/emulator/drop-focus";
 import { ButtonGroup } from "@/components/ui/button-group";
-
-const dropFocus = (e: MouseEvent) => e.preventDefault();
 
 // canvas zoom: −, +, and an editable percentage. mirrors the view-switcher pill.
 export function ZoomControls() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ChangeEvent, type MouseEvent } from "react";
+import { useRef, type ChangeEvent } from "react";
 import { ImagePlus, Moon, Sun, type LucideIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -8,8 +8,7 @@ import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { ENVIRONMENTS, type EnvironmentKey } from "@/lib/emulator/environment";
 import { prepareCustomEnvironmentImage } from "@/lib/emulator/environment-image";
 import { emulatorParsers } from "@/lib/emulator/search-params";
-
-const dropFocus = (e: MouseEvent) => e.preventDefault();
+import { dropFocus } from "@/lib/emulator/drop-focus";
 
 const ENVIRONMENT_ICONS = {
   daylight: Sun,

@@ -1,11 +1,9 @@
 "use client";
 
-import type { MouseEvent } from "react";
 import { Heart } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { dropFocus } from "@/lib/emulator/drop-focus";
 import { cn } from "@/lib/utils";
-
-const dropFocus = (e: MouseEvent) => e.preventDefault();
 
 export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz emulator feedback")}`;
 export const DIRECTORY_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz app directory request")}`;

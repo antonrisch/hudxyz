@@ -1,12 +1,10 @@
 "use client";
 
-import type { MouseEvent } from "react";
 import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-
-const dropFocus = (e: MouseEvent) => e.preventDefault();
+import { dropFocus } from "@/lib/emulator/drop-focus";
 
 export function ScreenshotButton() {
   const { captureDisplay } = useEmulator();
