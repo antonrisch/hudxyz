@@ -17,6 +17,11 @@ function readDisplayPanelOpen(): boolean {
   }
 }
 
+// client-only; call after hydration to sync persisted panel state.
+export function getPersistedDisplayPanelOpen(): boolean {
+  return readDisplayPanelOpen();
+}
+
 function writeDisplayPanelOpen(open: boolean) {
   try {
     localStorage.setItem(DISPLAY_PANEL_OPEN_KEY, String(open));
@@ -91,6 +96,7 @@ export type Seed = Partial<
     | "backgroundBrightness"
     | "backgroundBlur"
     | "displayBrightness"
+    | "displayPanelOpen"
   >
 >;
 
@@ -109,7 +115,7 @@ export function createEmulatorStore(seed?: Seed) {
     backgroundBrightness: seed?.backgroundBrightness ?? 80,
     backgroundBlur: seed?.backgroundBlur ?? 0,
     displayBrightness: seed?.displayBrightness ?? 100,
-    displayPanelOpen: readDisplayPanelOpen(),
+    displayPanelOpen: seed?.displayPanelOpen ?? true,
 
     setScreen: (screen) => set({ screen }),
     setView: (view) => set({ view }),
