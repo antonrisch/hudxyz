@@ -74,7 +74,7 @@ function DisplayPanelControlsShell({ toolbarClassName }: { toolbarClassName?: st
           className={cn("flex items-center justify-between gap-2 px-3 pb-2.5", toolbarClassName)}
         >
           <ViewSwitcher />
-          <ZoomControls className="hidden sm:flex" />
+          <ZoomControls />
         </div>
         <Separator />
       </div>

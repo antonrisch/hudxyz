@@ -168,16 +168,15 @@ export function Device() {
         </div>
       </div>
 
-      {/* capture overlay: drag = pan; pinch / cmd-scroll = zoom (desktop only). */}
+      {/* capture overlay: drag = pan; pinch / cmd-scroll = zoom. */}
       <div
         className={cn(
           "absolute inset-0 touch-none",
-          showWelcome ? "pointer-events-none" : "max-sm:pointer-events-none",
-          screen === "app" && panZoom.interactive && "cursor-grab active:cursor-grabbing",
+          (showWelcome || screen !== "app") && "pointer-events-none",
+          screen === "app" && !showWelcome && "cursor-grab active:cursor-grabbing",
         )}
-        {...(panZoom.interactive ? panGesture : {})}
+        {...panGesture}
         onPointerDown={(e) => {
-          if (!panZoom.interactive) return;
           releaseChromeFocus();
           onPointerDown?.(e);
         }}

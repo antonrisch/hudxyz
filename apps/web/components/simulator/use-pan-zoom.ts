@@ -34,9 +34,8 @@ const isTypingTarget = (el: EventTarget | null) => {
 // cmd/ctrl +/-/0 → canvas zoom; returns true when handled (caller should not fall through).
 export function applyPanZoomShortcut(
   e: KeyboardEvent,
-  pan: Pick<PanZoom, "zoomIn" | "zoomOut" | "reset" | "interactive">,
+  pan: Pick<PanZoom, "zoomIn" | "zoomOut" | "reset">,
 ): boolean {
-  if (!pan.interactive) return false;
   if (!e.metaKey && !e.ctrlKey) return false;
   if (isTypingTarget(e.target)) return false;
 
@@ -68,7 +67,6 @@ export interface PanZoom {
   style: CSSProperties; // transform for the content; origin top-left
   revealed: boolean; // false while layout is applied; fades in on the next frame
   scale: number; // 600×600 magnification; 1 = true device pixels on screen
-  interactive: boolean; // false on mobile: zoom/pan locked to per-view defaults
   zoomIn: () => void;
   zoomOut: () => void;
   zoomTo: (scale: number) => void;
@@ -82,13 +80,10 @@ export interface PanZoom {
 // zoom about the viewport center.
 export function usePanZoom(view: View): PanZoom {
   const mobile = useMobileLayout();
-  const interactive = !mobile;
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const mobileRef = useRef(mobile);
   mobileRef.current = mobile;
-  const viewRef = useRef(view);
-  viewRef.current = view;
 
   const resolveDeviceScale = useCallback(
     (v: View = view) => {
@@ -166,7 +161,6 @@ export function usePanZoom(view: View): PanZoom {
 
   // zoom about a viewport point, keeping the content point under it fixed
   const setDeviceScaleAt = useCallback((clientX: number, clientY: number, nextDevice: number) => {
-    if (mobileRef.current) return;
     const vp = viewportRef.current;
     if (!vp) return;
     const r = vp.getBoundingClientRect();
@@ -182,7 +176,6 @@ export function usePanZoom(view: View): PanZoom {
   }, []);
 
   const zoomAt = useCallback((clientX: number, clientY: number, factor: number) => {
-    if (mobileRef.current) return;
     const vp = viewportRef.current;
     if (!vp) return;
     const r = vp.getBoundingClientRect();
@@ -212,7 +205,6 @@ export function usePanZoom(view: View): PanZoom {
 
   const zoomTo = useCallback(
     (nextDeviceScale: number) => {
-      if (mobileRef.current) return;
       const vp = viewportRef.current;
       if (!vp) return;
       const r = vp.getBoundingClientRect();
@@ -238,12 +230,10 @@ export function usePanZoom(view: View): PanZoom {
   stepZoomRef.current = stepZoom;
 
   const panShortcutRef = useRef({
-    interactive,
     zoomIn: () => stepZoomRef.current(ZOOM_STEP),
     zoomOut: () => stepZoomRef.current(-ZOOM_STEP),
     reset: () => resetRef.current(),
   });
-  panShortcutRef.current.interactive = interactive;
 
   // cmd/ctrl +/-/0 on the host page (blocks browser page zoom).
   useMountEffect(() => {
@@ -258,7 +248,6 @@ export function usePanZoom(view: View): PanZoom {
     const vp = viewportRef.current;
     if (!vp) return;
     const onWheel = (e: WheelEvent) => {
-      if (mobileRef.current) return;
       e.preventDefault();
       if (e.ctrlKey || e.metaKey) {
         zoomAtRef.current(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.01));
@@ -270,12 +259,8 @@ export function usePanZoom(view: View): PanZoom {
     return () => vp.removeEventListener("wheel", onWheel);
   });
 
-  const computeDefaultRef = useRef(computeDefault);
-  computeDefaultRef.current = computeDefault;
-  const resolveDeviceScaleRef = useRef(resolveDeviceScale);
-  resolveDeviceScaleRef.current = resolveDeviceScale;
-
-  // desktop: keep the viewport center anchored on resize. mobile: refit the locked scale.
+  // keep the viewport center anchored on resize (don't left-align): shift the pan by half
+  // the size delta so the world point under the center stays put, preserving the pan/zoom.
   useMountEffect(() => {
     const vp = viewportRef.current;
     if (!vp) return;
@@ -288,14 +273,6 @@ export function usePanZoom(view: View): PanZoom {
       prev = { w, h };
       if (dw === 0 && dh === 0) return;
 
-      if (mobileRef.current) {
-        const ds = resolveDeviceScaleRef.current(viewRef.current);
-        deviceScaleRef.current = ds;
-        setDeviceScale(ds);
-        setT(computeDefaultRef.current(ds));
-        return;
-      }
-
       setT((cur) => ({ ...cur, x: cur.x + dw / 2, y: cur.y + dh / 2 }));
     });
     ro.observe(vp);
@@ -305,21 +282,18 @@ export function usePanZoom(view: View): PanZoom {
   const bind = useGesture(
     {
       onDrag: ({ delta: [dx, dy] }) => {
-        if (mobileRef.current) return;
         setT((cur) => ({ ...cur, x: cur.x + dx, y: cur.y + dy }));
       },
       onPinch: ({ first, movement: [scale], origin: [x, y] }) => {
-        if (mobileRef.current) return;
         if (first) pinchStartScale.current = deviceScaleRef.current;
         setDeviceScaleAtRef.current(x, y, pinchStartScale.current * scale);
       },
     },
     {
-      drag: { preventDefault: true, enabled: interactive },
+      drag: { preventDefault: true },
       eventOptions: { passive: false },
       pinch: {
         preventDefault: true,
-        enabled: interactive,
         scaleBounds: { min: SCALE_MIN, max: SCALE_MAX },
       },
     },
@@ -329,7 +303,6 @@ export function usePanZoom(view: View): PanZoom {
     viewportRef,
     contentRef,
     revealed,
-    interactive,
     style: {
       transform: `translate(${t.x}px, ${t.y}px) scale(${t.scale})`,
       transformOrigin: "0 0",
