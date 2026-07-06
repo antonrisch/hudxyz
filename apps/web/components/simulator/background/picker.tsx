@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRef, type ChangeEvent, type ReactNode } from "react";
 import { ImagePlus, Moon, Sun, X } from "lucide-react";
 import { useQueryState } from "nuqs";
@@ -39,21 +38,14 @@ const selectChrome = (selected: boolean) =>
   );
 
 const SWATCH = "size-12 rounded-lg";
-const PICKER_PX = 48;
 
 function SwatchThumb({ src }: { src: string }) {
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
-      <Image
-        src={src}
-        alt=""
-        fill
-        sizes={`${PICKER_PX}px`}
-        quality={75}
-        unoptimized={src.startsWith("blob:")}
-        className="object-cover"
-      />
-    </div>
+    <div
+      aria-hidden
+      className="absolute inset-0 rounded-[inherit] bg-cover bg-center"
+      style={{ backgroundImage: `url(${src})` }}
+    />
   );
 }
 

@@ -10,7 +10,7 @@ const START_QUALITY = 0.78;
 const MIN_EDGE = 320;
 const MIN_QUALITY = 0.35;
 const QUALITY_STEP = 0.08;
-// picker thumb for custom uploads only — preset swatches use next/image on the full JPEG.
+// custom uploads get a dedicated thumb blob; preset swatches use css background-image on the full JPEG.
 const THUMB_EDGE = 96; // 2× the 48px picker swatch (size-12) for retina
 const THUMB_QUALITY = 0.75;
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
