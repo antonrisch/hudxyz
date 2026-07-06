@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
 import Simulator from "@/components/simulator";
 import { SIMULATOR_TAGLINE, SIMULATOR_TITLE } from "@/lib/simulator/config";
-import {
-  backgroundImageHref,
-  DEFAULT_BACKGROUND,
-} from "@/lib/simulator/background";
+import { backgroundImageHref, DEFAULT_BACKGROUND } from "@/lib/simulator/background";
 import { loadSimulatorSearchParams, seedFromParams } from "@/lib/simulator/search-params";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
@@ -40,11 +37,7 @@ const jsonLd = {
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
 };
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
+export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await loadSimulatorSearchParams(searchParams);
   const preloadBackground =
     backgroundImageHref(params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg) ?? null;
