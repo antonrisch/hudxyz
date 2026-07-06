@@ -15,17 +15,44 @@ import { Separator } from "@/components/ui/separator";
 import { DisplayPanel } from "@/components/emulator/panel/controls";
 import { ViewSwitcher } from "@/components/emulator/panel/view-switcher";
 import { ZoomControls } from "@/components/emulator/panel/zoom-controls";
-import { FEEDBACK_MAILTO } from "@/lib/emulator/config";
-import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { DEVICE_MODEL } from "@/lib/emulator/config";
+import { SIMULATOR_SUMMARY, SIMULATOR_TITLE, FEEDBACK_MAILTO } from "@/lib/emulator/config";
+import { useSimulator, useSimulatorState } from "@/components/emulator";
 import { dropFocus } from "@/lib/emulator/input";
 import { cn } from "@/lib/utils";
 
-function DisplayPanelShell() {
+function DisplaySidebarIntro() {
+  return <h1 className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</h1>;
+}
+
+function DisplaySidebarFooter() {
+  return (
+    <footer className="mt-auto shrink-0">
+      <Separator />
+      <div className="p-3">
+        <p className="text-xs text-pretty text-muted-foreground">
+          {SIMULATOR_SUMMARY}
+          <br />
+          <a href={FEEDBACK_MAILTO} className="hover:text-foreground hover:underline underline-offset-4">
+            Contact
+          </a>
+          {" · "}
+          <Link href="/privacy" className="hover:text-foreground hover:underline underline-offset-4">
+            Privacy
+          </Link>
+          {" · "}
+          <Link href="/terms" className="hover:text-foreground hover:underline underline-offset-4">
+            Terms
+          </Link>
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+function DisplayPanelControlsShell() {
   return (
     <>
       <div className="shrink-0">
-        <h2 className="p-3 text-md leading-snug font-semibold">{DEVICE_MODEL} Emulator</h2>
         <div className="flex items-center justify-between gap-2 px-3 pb-2.5">
           <ViewSwitcher />
           <ZoomControls />
@@ -35,50 +62,40 @@ function DisplayPanelShell() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <DisplayPanel />
       </div>
-      <DisplaySidebarFooter />
     </>
   );
 }
 
-function DisplaySidebarFooter() {
+// intro + controls + footer; `contents` on mobile (grid rows), flex column on sm+.
+export function DisplaySidebarColumn() {
+  const open = useSimulatorState((s) => s.displayPanelOpen);
+
   return (
-    <div className="shrink-0">
-      <Separator />
-      <nav aria-label="Site" className="p-3 text-xs text-muted-foreground">
-        <a
-          href={FEEDBACK_MAILTO}
-          className="font-medium text-foreground hover:underline underline-offset-4"
-        >
-          antonhudxyz@gmail.com
-        </a>
-        {" · "}
-        <Link href="/privacy" className="hover:text-foreground hover:underline underline-offset-4">
-          Privacy
-        </Link>
-        {" · "}
-        <Link href="/terms" className="hover:text-foreground hover:underline underline-offset-4">
-          Terms
-        </Link>
-      </nav>
+    <div
+      className={cn(
+        "contents sm:flex sm:col-start-2 sm:row-start-1 sm:min-h-0 sm:flex-col sm:overflow-hidden sm:rounded-2xl sm:border sm:bg-background",
+      )}
+    >
+      <header className="row-start-1 shrink-0 rounded-2xl border bg-background sm:rounded-none sm:border-0 sm:bg-transparent">
+        <DisplaySidebarIntro />
+      </header>
+
+      {open ? (
+        <aside className="hidden min-h-0 flex-1 flex-col overflow-hidden sm:flex">
+          <DisplayPanelControlsShell />
+        </aside>
+      ) : null}
+
+      <div className="row-start-3 shrink-0 rounded-2xl bg-background sm:mt-auto sm:rounded-none sm:bg-transparent">
+        <DisplaySidebarFooter />
+      </div>
     </div>
   );
 }
 
-// rhs display panel: persistent collapsible on sm+, sheet drawer below.
-export function DisplaySidebar() {
-  const open = useEmulatorState((s) => s.displayPanelOpen);
-  if (!open) return null;
-
-  return (
-    <aside className="hidden min-h-0 w-72 shrink-0 flex-col overflow-hidden sm:flex rounded-2xl border bg-background">
-      <DisplayPanelShell />
-    </aside>
-  );
-}
-
 export function DisplayPanelTrigger() {
-  const { store } = useEmulator();
-  const open = useEmulatorState((s) => s.displayPanelOpen);
+  const { store } = useSimulator();
+  const open = useSimulatorState((s) => s.displayPanelOpen);
 
   return (
     <>
@@ -102,10 +119,10 @@ export function DisplayPanelTrigger() {
           className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-sm"
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Display</SheetTitle>
-            <SheetDescription>Display preview settings</SheetDescription>
+            <SheetTitle>{SIMULATOR_TITLE}</SheetTitle>
+            <SheetDescription>{SIMULATOR_SUMMARY}</SheetDescription>
           </SheetHeader>
-          <DisplayPanelShell />
+          <DisplayPanelControlsShell />
         </SheetContent>
       </Sheet>
 

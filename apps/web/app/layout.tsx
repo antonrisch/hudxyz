@@ -5,6 +5,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
+import { SIMULATOR_SUMMARY } from "@/lib/emulator/config";
 import Script from "next/script";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     default: "hud.xyz",
     template: "%s | hud.xyz",
   },
-  description: "Emulator for the Meta Ray-Ban Display.",
+  description: SIMULATOR_SUMMARY,
   applicationName: "hud.xyz",
 };
 const archivo = Archivo({ subsets: ["latin"], variable: "--font-sans" });

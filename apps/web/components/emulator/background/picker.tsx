@@ -4,14 +4,14 @@ import Image from "next/image";
 import { useRef, type ChangeEvent, type ReactNode } from "react";
 import { ImagePlus, Moon, Sun, X } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { useEmulator, useEmulatorState } from "@/components/emulator";
+import { useSimulator, useSimulatorState } from "@/components/emulator";
 import { cn } from "@/lib/utils";
 import { BACKGROUNDS, type BackgroundKey } from "@/lib/emulator/background";
 import {
   prepareCustomBackgroundImage,
   revokeBackgroundImageUrl,
 } from "@/lib/emulator/background-image";
-import { emulatorParsers } from "@/lib/emulator/search-params";
+import { simulatorParsers } from "@/lib/emulator/search-params";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { dropFocus } from "@/lib/emulator/input";
 
@@ -135,12 +135,12 @@ function CustomSwatch({
 }
 
 export function BackgroundPicker() {
-  const { store } = useEmulator();
+  const { store } = useSimulator();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const background = useEmulatorState((s) => s.background);
-  const customBackgroundImages = useEmulatorState((s) => s.customBackgroundImages);
-  const activeCustomBackgroundId = useEmulatorState((s) => s.activeCustomBackgroundId);
-  const [, setBackgroundParam] = useQueryState("bg", emulatorParsers.bg);
+  const background = useSimulatorState((s) => s.background);
+  const customBackgroundImages = useSimulatorState((s) => s.customBackgroundImages);
+  const activeCustomBackgroundId = useSimulatorState((s) => s.activeCustomBackgroundId);
+  const [, setBackgroundParam] = useQueryState("bg", simulatorParsers.bg);
 
   const selected =
     background === "custom" && activeCustomBackgroundId

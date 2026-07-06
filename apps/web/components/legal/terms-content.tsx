@@ -16,7 +16,7 @@ export function TermsContent() {
 
       <h2>The service</h2>
       <p>
-        hud.xyz lets you load public websites in an emulator viewport. Traffic may egress through
+        hud.xyz lets you load public websites in an simulator viewport. Traffic may egress through
         infrastructure we operate rather than directly from your browser. Third-party sites are not
         owned, operated, or endorsed by us.
       </p>
@@ -39,7 +39,7 @@ export function TermsContent() {
       <p>
         You load third-party websites at your own direction. We do not review or control that
         content and do not endorse it. Third-party sites may log requests from our infrastructure.
-        The emulator is a development and preview tool, not a general-purpose anonymous browser.
+        The simulator is a development and preview tool, not a general-purpose anonymous browser.
       </p>
 
       <h2>Trademarks</h2>

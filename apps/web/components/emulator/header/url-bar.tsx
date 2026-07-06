@@ -6,18 +6,18 @@ import { RotateCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEmulator, useEmulatorState } from "@/components/emulator";
+import { useSimulator, useSimulatorState } from "@/components/emulator";
 import { DIRECTORY_MAILTO } from "@/lib/emulator/config";
 import { SUGGESTED_APPS } from "@/lib/emulator/config";
-import { emulatorParsers, normalizeWebUrl } from "@/lib/emulator/search-params";
+import { simulatorParsers, normalizeWebUrl } from "@/lib/emulator/search-params";
 import { dropFocus } from "@/lib/emulator/input";
 import { cn } from "@/lib/utils";
 
 // address bar: a plain url input + an attached load/reload group, like a browser.
 export function UrlBar({ className }: { className?: string }) {
-  const { store, load } = useEmulator();
-  const url = useEmulatorState((s) => s.url);
-  const [, setUrlParam] = useQueryState("url", emulatorParsers.url);
+  const { store, load } = useSimulator();
+  const url = useSimulatorState((s) => s.url);
+  const [, setUrlParam] = useQueryState("url", simulatorParsers.url);
   const inputRef = useRef<HTMLInputElement>(null);
   const [reloadSpin, setReloadSpin] = useState(0);
 

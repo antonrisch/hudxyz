@@ -1,7 +1,13 @@
 import type { Intent, View } from "@/lib/emulator/store";
 
-// device identity shown in the emulator chrome (model + os build). placeholders — set real values.
+// device identity shown in the simulator chrome (model + os build). placeholders — set real values.
 export const DEVICE_MODEL = "Meta Ray-Ban Display";
+export const SIMULATOR_TITLE = "Meta Ray-Ban Display Web App Simulator";
+// 1:1 with the official Chrome extension one-liner.
+export const SIMULATOR_SUMMARY =
+  "Simulate Meta Ray-Ban Display glasses for web apps — background environments, D-pad input, display settings, record and QA checks.";
+// condensed extension long-form for meta / JSON-LD.
+export const SIMULATOR_TAGLINE = `${SIMULATOR_SUMMARY} Simulates the 600x600 display with additive blending in your browser so developers can preview and QA without the hardware.`;
 export const OS_VERSION = "125.1";
 
 export const RIGHT_LENS = { left: 58.5, top: 44.5, size: 10.5 };
@@ -66,9 +72,9 @@ export type SuggestedApp = {
   iconUrl: string;
 };
 
-// icons are same-origin (/public) — /emulator sets COEP require-corp, which blocks
+// icons are same-origin (/public) — the simulator route sets COEP require-corp, which blocks
 // cross-origin images without CORP.
-export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz emulator feedback")}`;
+export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz simulator feedback")}`;
 export const DIRECTORY_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz app directory request")}`;
 
 export const SUGGESTED_APPS = [

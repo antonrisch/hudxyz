@@ -21,7 +21,7 @@ export function PrivacyContent() {
 
       <h2>What hud.xyz does</h2>
       <p>
-        You can enter a URL to load a public website in the emulator. Requests may be routed through
+        You can enter a URL to load a public website in the simulator. Requests may be routed through
         proxy infrastructure we operate so the page can be displayed. We do not operate or control
         third-party sites you choose to load.
       </p>
@@ -51,14 +51,14 @@ export function PrivacyContent() {
         personal information.
       </p>
       <p>
-        We do not use non-essential cookies in v1. Third-party sites you load in the emulator may
+        We do not use non-essential cookies in v1. Third-party sites you load in the simulator may
         set their own cookies. Our service providers may use cookies or similar technologies as part
         of their services.
       </p>
 
       <h2>Why we use it</h2>
       <p>
-        To run the emulator, process URLs you submit, keep the service reliable, diagnose errors,
+        To run the simulator, process URLs you submit, keep the service reliable, diagnose errors,
         prevent abuse, understand usage, and meet legal obligations.
       </p>
 

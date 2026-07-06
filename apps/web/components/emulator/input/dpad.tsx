@@ -13,7 +13,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ScreenshotButton } from "@/components/emulator/input/screenshot-button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useEmulator } from "@/components/emulator";
+import { useSimulator } from "@/components/emulator";
 import type { Intent } from "@/lib/emulator/store";
 import { dropFocus } from "@/lib/emulator/input";
 import type { VariantProps } from "class-variance-authority";
@@ -53,7 +53,7 @@ const armByIntent = Object.fromEntries(DPAD_ARMS.map((arm) => [arm.intent, arm])
 >;
 
 function useIntentPress(intent: Intent) {
-  const { pressDown, pressUp } = useEmulator();
+  const { pressDown, pressUp } = useSimulator();
 
   const onPointerDown = (e: PointerEvent) => {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -206,7 +206,7 @@ function IntentButton({
 
 // gesture controls; emits intents to the shell.
 export function Dpad() {
-  const { pressedIntents } = useEmulator();
+  const { pressedIntents } = useSimulator();
 
   return (
     <TooltipProvider delay={1000}>

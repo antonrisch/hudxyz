@@ -5,7 +5,7 @@ import {
   type BackgroundKey,
 } from "@/lib/emulator/background";
 
-const DISPLAY_PANEL_OPEN_KEY = "emulator.displayPanelOpen";
+const DISPLAY_PANEL_OPEN_KEY = "simulator.displayPanelOpen";
 
 function readDisplayPanelOpen(): boolean {
   try {
@@ -30,7 +30,7 @@ function writeDisplayPanelOpen(open: boolean) {
   }
 }
 
-// headless emulator core: a DOM-free state machine. all side effects (proxy, iframe,
+// headless simulator core: a DOM-free state machine. all side effects (proxy, iframe,
 // history, pan/zoom) live in the shell hooks that subscribe to this store, so the core
 // stays unit-testable in node and liftable into a package later. (pan/zoom needs DOM
 // measurement, so it lives in usePanZoom, not here.)
@@ -42,7 +42,7 @@ export type Status = "idle" | "loading" | "revealing" | "ready" | "error"; // ap
 export type View = "glasses" | "pixel"; // host chrome around the device (?mode= in url)
 export type Intent = "up" | "down" | "left" | "right" | "select" | "back"; // d-pad gestures
 
-export interface EmulatorState {
+export interface SimulatorState {
   screen: Screen;
   view: View;
   url: string; // address-bar text / current app url
@@ -80,11 +80,11 @@ export interface EmulatorState {
   launchApp: (url: string) => void; // from the os: load + show the app
 }
 
-export type EmulatorStore = ReturnType<typeof createEmulatorStore>;
+export type SimulatorStore = ReturnType<typeof createSimulatorStore>;
 
 export type Seed = Partial<
   Pick<
-    EmulatorState,
+    SimulatorState,
     | "screen"
     | "view"
     | "url"
@@ -102,8 +102,8 @@ export type Seed = Partial<
   >
 >;
 
-export function createEmulatorStore(seed?: Seed) {
-  return createStore<EmulatorState>()((set) => ({
+export function createSimulatorStore(seed?: Seed) {
+  return createStore<SimulatorState>()((set) => ({
     screen: seed?.screen ?? "app",
     view: seed?.view ?? "glasses",
     url: seed?.url ?? "",
