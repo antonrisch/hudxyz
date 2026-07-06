@@ -2,7 +2,7 @@
 
 import { Heart } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { dropFocus } from "@/lib/emulator/drop-focus";
+import { dropFocus } from "@/lib/emulator/input";
 import { FEEDBACK_MAILTO } from "@/lib/emulator/config";
 import { cn } from "@/lib/utils";
 

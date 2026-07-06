@@ -12,11 +12,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { DisplayPanel } from "@/components/emulator/panel/display-panel";
+import { DisplayPanel } from "@/components/emulator/panel/controls";
 import { FEEDBACK_MAILTO } from "@/lib/emulator/config";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { DEVICE_MODEL } from "@/lib/emulator/config";
-import { dropFocus } from "@/lib/emulator/drop-focus";
+import { dropFocus } from "@/lib/emulator/input";
 import { cn } from "@/lib/utils";
 
 function DisplayPanelShell() {

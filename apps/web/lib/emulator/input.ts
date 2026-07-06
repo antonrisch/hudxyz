@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { KEY_BY_INTENT } from "@/lib/emulator/config";
 import type { Intent } from "@/lib/emulator/store";
 
@@ -76,4 +77,13 @@ export function dispatchDeviceKey(
     // frame not loaded / not same-origin yet
     return false;
   }
+}
+
+// keep controls from taking focus so physical d-pad keys stay live
+export const dropFocus = (e: MouseEvent) => e.preventDefault();
+
+// return to device input after interacting with sidebar chrome (sliders, url bar, etc.)
+export function releaseChromeFocus() {
+  const el = document.activeElement;
+  if (isHostChromeInput(el)) (el as HTMLElement).blur();
 }

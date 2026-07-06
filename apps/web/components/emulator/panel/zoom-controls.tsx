@@ -4,7 +4,7 @@ import { useState, type KeyboardEvent } from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEmulator } from "@/components/emulator";
-import { dropFocus } from "@/lib/emulator/drop-focus";
+import { dropFocus } from "@/lib/emulator/input";
 import { ButtonGroup } from "@/components/ui/button-group";
 
 // canvas zoom: −, +, and an editable percentage. mirrors the view-switcher pill.

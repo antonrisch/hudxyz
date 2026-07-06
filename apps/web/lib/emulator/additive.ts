@@ -22,7 +22,7 @@ const SHEET = `
 html.${ACTIVE_CLASS} {
   height: 100%;
   overflow: hidden;
-  background: var(--bg-fill, #1e293b);
+  background: var(--stage-fill, #1e293b);
 }
 
 html.${ACTIVE_CLASS}::before {
@@ -34,7 +34,7 @@ html.${ACTIVE_CLASS}::before {
   height: var(--hud-bg-height, 100vh);
   z-index: 0;
   pointer-events: none;
-  background-color: var(--bg-fill, #1e293b);
+  background-color: var(--stage-fill, #1e293b);
   background-image: var(--bg-image, none);
   background-size: var(--bg-image-size, cover);
   background-position: center;
@@ -123,7 +123,7 @@ export function syncAdditive(
 
     root.classList.add(ACTIVE_CLASS);
     root.classList.toggle(LENS_TINT_CLASS, lensTint);
-    root.style.setProperty("--bg-fill", host.getPropertyValue("--bg-fill").trim() || "#1e293b");
+    root.style.setProperty("--stage-fill", host.getPropertyValue("--stage-fill").trim() || "#1e293b");
     root.style.setProperty("--lens-tint", host.getPropertyValue("--lens-tint").trim());
     root.style.setProperty("--bg-image", additiveBackgroundBg(background, image));
     root.style.setProperty("--bg-image-size", background.image ? "cover" : "auto");

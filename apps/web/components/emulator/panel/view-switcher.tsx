@@ -4,7 +4,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { VIEWS } from "@/lib/emulator/config";
 import type { View } from "@/lib/emulator/store";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { dropFocus } from "@/lib/emulator/drop-focus";
+import { dropFocus } from "@/lib/emulator/input";
 
 // swaps only the cosmetic chrome around the persistent device surface.
 export function ViewSwitcher() {

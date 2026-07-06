@@ -52,7 +52,7 @@
 
   /* custom colors */
   --color-volt: var(--volt);
-  --color-bg-fill: var(--bg-fill);
+  --color-stage-fill: var(--stage-fill);
   --color-lens-tint: var(--lens-tint);
   --color-frame: var(--frame);
   --color-frame-temple: var(--frame-temple);
@@ -100,7 +100,7 @@
   --volt: #ceff00;
 
   /* emulator backgrounds */
-  --bg-fill: #1e293b;
+  --stage-fill: #1e293b;
   --bg-day-from: #225b96;
   --bg-day-to: #e1ca9b;
   --bg-night-from: color-mix(in oklch, var(--bg-day-from) 12%, #121823);

@@ -6,10 +6,10 @@ import { useQueryState } from "nuqs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { cn } from "@/lib/utils";
-import { BG_GRADIENT, BG_GRADIENT_FILL, BACKGROUNDS, type BackgroundKey } from "@/lib/emulator/background";
+import { BACKGROUND_GRADIENT, BACKGROUND_GRADIENT_FILL, BACKGROUNDS, type BackgroundKey } from "@/lib/emulator/background";
 import { prepareCustomBackgroundImage } from "@/lib/emulator/background-image";
 import { emulatorParsers } from "@/lib/emulator/search-params";
-import { dropFocus } from "@/lib/emulator/drop-focus";
+import { dropFocus } from "@/lib/emulator/input";
 
 const BACKGROUND_ICONS = {
   day: Sun,
@@ -78,7 +78,7 @@ export function BackgroundPicker() {
       >
         {BACKGROUNDS.filter((bg) => bg.key !== "custom").map((bg) => {
           const Icon = BACKGROUND_ICONS[bg.key as keyof typeof BACKGROUND_ICONS];
-          const gradient = BG_GRADIENT[bg.key as keyof typeof BG_GRADIENT];
+          const gradient = BACKGROUND_GRADIENT[bg.key as keyof typeof BACKGROUND_GRADIENT];
           return (
             <ToggleGroupItem
               key={bg.key}
@@ -89,7 +89,7 @@ export function BackgroundPicker() {
               style={
                 gradient
                   ? {
-                      backgroundColor: BG_GRADIENT_FILL[bg.key as keyof typeof BG_GRADIENT_FILL],
+                      backgroundColor: BACKGROUND_GRADIENT_FILL[bg.key as keyof typeof BACKGROUND_GRADIENT_FILL],
                     }
                   : undefined
               }
@@ -106,7 +106,7 @@ export function BackgroundPicker() {
                   aria-hidden
                   className="pointer-events-none absolute -inset-1"
                   style={{
-                    backgroundColor: BG_GRADIENT_FILL[bg.key as keyof typeof BG_GRADIENT_FILL],
+                    backgroundColor: BACKGROUND_GRADIENT_FILL[bg.key as keyof typeof BACKGROUND_GRADIENT_FILL],
                     backgroundImage: gradient,
                   }}
                 />

@@ -52,7 +52,7 @@ export interface EmulatorState {
   background: BackgroundKey; // world behind the waveguide (decoupled from canvas chrome)
   customBackgroundImages: CustomBackgroundImage[]; // session uploads (cleared on refresh)
   activeCustomBackgroundId: string | null;
-  lensTint: boolean; // cosmetic G-15 tint on svg lenses + additive env layer
+  lensTint: boolean; // cosmetic G-15 tint on svg lenses + additive bg layer
   backgroundBrightness: number; // 0–100, 100 = full (absolute brightness filter)
   backgroundBlur: number; // 0–100 gaussian blur on the stage backdrop
   displayBrightness: number; // 0–100, 100 = full visibility (extension semantics)

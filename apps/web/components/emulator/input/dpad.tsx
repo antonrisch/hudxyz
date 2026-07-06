@@ -15,7 +15,7 @@ import { ScreenshotButton } from "@/components/emulator/input/screenshot-button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator } from "@/components/emulator";
 import type { Intent } from "@/lib/emulator/store";
-import { dropFocus } from "@/lib/emulator/drop-focus";
+import { dropFocus } from "@/lib/emulator/input";
 import type { VariantProps } from "class-variance-authority";
 
 type DirectionIntent = Extract<Intent, "up" | "down" | "left" | "right">;

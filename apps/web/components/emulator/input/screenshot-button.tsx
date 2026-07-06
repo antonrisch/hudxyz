@@ -4,7 +4,7 @@ import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { dropFocus } from "@/lib/emulator/drop-focus";
+import { dropFocus } from "@/lib/emulator/input";
 
 export function ScreenshotButton() {
   const { captureDisplay } = useEmulator();

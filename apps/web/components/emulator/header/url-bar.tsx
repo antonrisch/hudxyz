@@ -9,9 +9,8 @@ import { Input } from "@/components/ui/input";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { DIRECTORY_MAILTO } from "@/lib/emulator/config";
 import { SUGGESTED_APPS } from "@/lib/emulator/config";
-import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
-import { emulatorParsers } from "@/lib/emulator/search-params";
-import { dropFocus } from "@/lib/emulator/drop-focus";
+import { emulatorParsers, normalizeWebUrl } from "@/lib/emulator/search-params";
+import { dropFocus } from "@/lib/emulator/input";
 import { cn } from "@/lib/utils";
 
 // address bar: a plain url input + an attached load/reload group, like a browser.

@@ -5,7 +5,7 @@ import { Frames } from "@/components/emulator/frames";
 import { DEVICE_BG, DEVICE_SURFACE, GLASSES_CHROME } from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { releaseChromeFocus } from "@/lib/emulator/drop-focus";
+import { releaseChromeFocus } from "@/lib/emulator/input";
 import { cn } from "@/lib/utils";
 
 const STATUS_MSG: Partial<Record<Status, string>> = {

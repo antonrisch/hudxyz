@@ -22,7 +22,7 @@ import {
 } from "@/lib/emulator/store";
 import { INTENT_BY_KEY } from "@/lib/emulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/emulator/input";
-import { releaseChromeFocus } from "@/lib/emulator/drop-focus";
+import { releaseChromeFocus } from "@/lib/emulator/input";
 import { BackgroundBackdrop } from "@/components/emulator/background/backdrop";
 import { resolveBackground } from "@/lib/emulator/background";
 import {
@@ -35,11 +35,11 @@ import {
   syncDisplayBrightness,
 } from "@/lib/emulator/additive";
 import { emulatorParsers } from "@/lib/emulator/search-params";
-import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
+import { normalizeWebUrl } from "@/lib/emulator/search-params";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
-import { AppHeader } from "@/components/emulator/app-header";
+import { AppHeader } from "@/components/emulator/header/app-header";
 import { Dpad } from "@/components/emulator/input/dpad";
 import { Device } from "@/components/emulator/device";
 import { DisplaySidebar } from "@/components/emulator/panel/sidebar";
@@ -488,7 +488,7 @@ export default function Emulator({ seed }: { seed: Seed }) {
           {/* device canvas; the d-pad is a floating panel over the bottom edge. */}
           <div
             ref={stageRef}
-            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-bg-fill"
+            className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-stage-fill"
           >
             <BackgroundBackdrop
               preset={background}

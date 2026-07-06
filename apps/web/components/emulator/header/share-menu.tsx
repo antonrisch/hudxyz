@@ -3,9 +3,8 @@
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEmulatorState } from "@/components/emulator";
-import { dropFocus } from "@/lib/emulator/drop-focus";
-import { buildEmulatorShareUrl } from "@/lib/emulator/search-params";
-import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
+import { dropFocus } from "@/lib/emulator/input";
+import { buildEmulatorShareUrl, normalizeWebUrl } from "@/lib/emulator/search-params";
 import { toast } from "sonner";
 
 export function ShareMenu() {

@@ -9,12 +9,12 @@ export type BackgroundPreset = {
   image?: string;
 };
 
-export const BG_GRADIENT = {
+export const BACKGROUND_GRADIENT = {
   day: "linear-gradient(to bottom, var(--bg-day-from), var(--bg-day-to))",
   night: "linear-gradient(to bottom, var(--bg-night-from), var(--bg-night-to))",
 } as const satisfies Partial<Record<BackgroundKey, string>>;
 
-export const BG_GRADIENT_FILL = {
+export const BACKGROUND_GRADIENT_FILL = {
   day: "var(--bg-day-to)",
   night: "var(--bg-night-to)",
 } as const satisfies Partial<Record<BackgroundKey, string>>;
@@ -57,11 +57,12 @@ export type CustomBackgroundImage = { id: string; url: string };
 export function resolveBackground(
   key: BackgroundKey,
   customImages: readonly CustomBackgroundImage[],
-  activeCustomId: string | null,
+  activeCustomBackgroundId: string | null,
 ): BackgroundPreset {
   const preset = backgroundByKey(key);
   if (key !== "custom" || customImages.length === 0) return preset;
-  const active = customImages.find((img) => img.id === activeCustomId) ?? customImages[0];
+  const active =
+    customImages.find((img) => img.id === activeCustomBackgroundId) ?? customImages[0];
   return { ...preset, image: active.url };
 }
 
@@ -94,7 +95,7 @@ export function backgroundBackdropStyle(
 
   if (preset.image) {
     return {
-      backgroundColor: "var(--bg-fill)",
+      backgroundColor: "var(--stage-fill)",
       backgroundImage: `url(${preset.image})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
@@ -102,10 +103,10 @@ export function backgroundBackdropStyle(
     };
   }
 
-  const gradient = BG_GRADIENT[preset.key as keyof typeof BG_GRADIENT];
+  const gradient = BACKGROUND_GRADIENT[preset.key as keyof typeof BACKGROUND_GRADIENT];
   if (gradient) return { backgroundImage: gradient, ...(filter && { filter }) };
 
-  return { backgroundColor: "var(--bg-fill)", ...(filter && { filter }) };
+  return { backgroundColor: "var(--stage-fill)", ...(filter && { filter }) };
 }
 
 export function additiveBackgroundBg(preset: BackgroundPreset, image?: string): string {
@@ -114,7 +115,7 @@ export function additiveBackgroundBg(preset: BackgroundPreset, image?: string): 
     return src ? `url("${src}")` : "none";
   }
 
-  const gradient = BG_GRADIENT[preset.key as keyof typeof BG_GRADIENT];
+  const gradient = BACKGROUND_GRADIENT[preset.key as keyof typeof BACKGROUND_GRADIENT];
   return gradient ? resolveHostBackgroundImage(gradient) : "none";
 }
 
