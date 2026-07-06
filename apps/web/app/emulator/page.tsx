@@ -4,7 +4,7 @@ import Emulator from "@/components/emulator";
 import { loadEmulatorSearchParams, seedFromParams } from "@/lib/emulator/search-params";
 
 export const metadata: Metadata = {
-  title: "Emulator",
+  title: "Meta Ray-Ban Display Emulator",
   description:
     "Preview Meta Ray-Ban Display web apps in a 600x600 emulator with D-pad controls. No glasses required.",
 };
