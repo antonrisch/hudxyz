@@ -8,6 +8,8 @@ export type BackgroundPreset = {
   key: BackgroundKey;
   label: string;
   image?: string;
+  thumb?: string;
+  iframeImage?: string;
   placeholderColor?: string;
   lqip?: string;
 };
@@ -29,26 +31,32 @@ export const DEFAULT_BACKGROUND: BackgroundKey = "alps";
 // photo backgrounds are slightly overscaled so blur never exposes the stage edge.
 export const BACKDROP_SCALE = 1.1;
 
-// preset photos ship as JPEG in /public/backgrounds/ (longest edge ≤3200px, ~300–800KB).
+// preset photos ship as WebP in /public/backgrounds/ (display ~200–300KB @1920px).
 export const BACKGROUNDS = [
   {
     key: "alps",
     label: "Alps",
-    image: "/backgrounds/alps.jpg",
+    image: "/backgrounds/alps.webp",
+    thumb: "/backgrounds/alps-thumb.webp",
+    iframeImage: "/backgrounds/alps-iframe.webp",
     placeholderColor: "#355677",
     lqip: BACKGROUND_LQIP.alps,
   },
   {
     key: "alps2",
     label: "Alps 2",
-    image: "/backgrounds/alps2.jpg",
+    image: "/backgrounds/alps2.webp",
+    thumb: "/backgrounds/alps2-thumb.webp",
+    iframeImage: "/backgrounds/alps2-iframe.webp",
     placeholderColor: "#4f597d",
     lqip: BACKGROUND_LQIP.alps2,
   },
   {
     key: "beach",
     label: "Beach",
-    image: "/backgrounds/beach.jpg",
+    image: "/backgrounds/beach.webp",
+    thumb: "/backgrounds/beach-thumb.webp",
+    iframeImage: "/backgrounds/beach-iframe.webp",
     placeholderColor: "#bdbbac",
     lqip: BACKGROUND_LQIP.beach,
   },

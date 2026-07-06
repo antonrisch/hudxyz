@@ -51,7 +51,13 @@ export default async function Page({
   return (
     <main className="flex h-svh flex-col overflow-hidden">
       {preloadBackground ? (
-        <link rel="preload" as="image" href={preloadBackground} fetchPriority="high" />
+        <link
+          rel="preload"
+          as="image"
+          href={preloadBackground}
+          type="image/webp"
+          fetchPriority="high"
+        />
       ) : null}
       <script
         type="application/ld+json"

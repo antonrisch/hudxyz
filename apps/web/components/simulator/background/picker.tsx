@@ -5,7 +5,7 @@ import { ImagePlus, Moon, Sun, X } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { cn } from "@/lib/utils";
-import { BACKGROUNDS, type BackgroundKey } from "@/lib/simulator/background";
+import { BACKGROUNDS, type BackgroundKey, type BackgroundPreset } from "@/lib/simulator/background";
 import {
   prepareCustomBackgroundImage,
   revokeBackgroundImageUrl,
@@ -201,9 +201,10 @@ export function BackgroundPicker() {
         }
 
         if ("image" in bg && bg.image) {
+          const preset = bg as BackgroundPreset;
           return (
             <Swatch key={bg.key} label={bg.label} selected={isSelected} onSelect={onSelect}>
-              <SwatchThumb src={bg.image} />
+              <SwatchThumb src={preset.thumb ?? preset.image!} />
             </Swatch>
           );
         }
