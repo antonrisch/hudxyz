@@ -13,12 +13,28 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { DisplayPanel, DisplayPanelHeader } from "@/components/emulator/display-panel";
+import { DisplayPanel } from "@/components/emulator/display-panel";
 import { FEEDBACK_MAILTO } from "@/components/emulator/feedback-button";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
+import { DEVICE_MODEL } from "@/lib/emulator/config";
 import { cn } from "@/lib/utils";
 
 const dropFocus = (e: MouseEvent) => e.preventDefault();
+
+function DisplayPanelShell() {
+  return (
+    <>
+      <div className="shrink-0">
+        <h2 className="px-3 py-2.5 text-md leading-snug font-semibold">{DEVICE_MODEL} Emulator</h2>
+        <Separator />
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <DisplayPanel />
+      </div>
+      <DisplaySidebarFooter />
+    </>
+  );
+}
 
 function DisplaySidebarFooter() {
   return (
@@ -51,11 +67,7 @@ export function DisplaySidebar() {
 
   return (
     <aside className="hidden min-h-0 w-72 shrink-0 flex-col overflow-hidden sm:flex rounded-2xl border bg-sidebar">
-      <DisplayPanelHeader />
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <DisplayPanel />
-      </div>
-      <DisplaySidebarFooter />
+      <DisplayPanelShell />
     </aside>
   );
 }
@@ -86,11 +98,7 @@ export function DisplayPanelTrigger() {
             <SheetTitle>Display</SheetTitle>
             <SheetDescription>Display preview settings</SheetDescription>
           </SheetHeader>
-          <DisplayPanelHeader />
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <DisplayPanel />
-          </div>
-          <DisplaySidebarFooter />
+          <DisplayPanelShell />
         </SheetContent>
       </Sheet>
 

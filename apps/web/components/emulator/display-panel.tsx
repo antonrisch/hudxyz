@@ -16,17 +16,7 @@ import { ViewSwitcher } from "@/components/emulator/view-switcher";
 import { ZoomControls } from "@/components/emulator/zoom-controls";
 import { useQueryState } from "nuqs";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
-import { DEVICE_MODEL } from "@/lib/emulator/config";
 import { emulatorParsers } from "@/lib/emulator/search-params";
-
-export function DisplayPanelHeader() {
-  return (
-    <div className="shrink-0">
-      <h2 className="px-3 py-2.5 text-md leading-snug font-semibold">{DEVICE_MODEL} Emulator</h2>
-      <Separator />
-    </div>
-  );
-}
 
 // display preview controls: view, zoom, and additive blend (shared by the rhs panel + mobile sheet).
 export function DisplayPanel() {
