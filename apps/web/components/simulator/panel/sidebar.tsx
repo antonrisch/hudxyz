@@ -25,16 +25,16 @@ function LegalLinks() {
     <>
       <a
         href={FEEDBACK_MAILTO}
-        className="hover:text-foreground hover:underline underline-offset-4"
+        className="text-foreground hover:underline underline-offset-4"
       >
         Contact
       </a>
       {" · "}
-      <Link href="/privacy" className="hover:text-foreground hover:underline underline-offset-4">
+      <Link href="/privacy" className="text-foreground hover:underline underline-offset-4">
         Privacy
       </Link>
       {" · "}
-      <Link href="/terms" className="hover:text-foreground hover:underline underline-offset-4">
+      <Link href="/terms" className="text-foreground hover:underline underline-offset-4">
         Terms
       </Link>
     </>
@@ -46,10 +46,9 @@ function DisplayPanelFooter({ summary }: { summary?: boolean }) {
     return (
       <footer className="mt-auto shrink-0">
         <Separator />
-        <div className="p-3">
-          <p className="text-xs text-pretty text-muted-foreground">
-            {SIMULATOR_SUMMARY}
-            <br />
+        <div className="flex flex-col gap-2 p-3">
+          <p className="text-xs text-pretty text-muted-foreground">{SIMULATOR_SUMMARY}</p>
+          <p className="text-xs">
             <LegalLinks />
           </p>
         </div>
