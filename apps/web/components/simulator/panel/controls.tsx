@@ -9,11 +9,11 @@ import {
   PanelRowGroup,
   PanelSection,
   PanelSlider,
-} from "@/components/emulator/panel/fields";
-import { BackgroundPicker } from "@/components/emulator/background/picker";
+} from "@/components/simulator/panel/fields";
+import { BackgroundPicker } from "@/components/simulator/background/picker";
 import { useQueryState } from "nuqs";
-import { useSimulator, useSimulatorState } from "@/components/emulator";
-import { simulatorParsers } from "@/lib/emulator/search-params";
+import { useSimulator, useSimulatorState } from "@/components/simulator";
+import { simulatorParsers } from "@/lib/simulator/search-params";
 
 function syncSimulatorParam<T>(
   apply: (next: T) => void,

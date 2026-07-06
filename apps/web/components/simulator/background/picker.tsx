@@ -4,16 +4,16 @@ import Image from "next/image";
 import { useRef, type ChangeEvent, type ReactNode } from "react";
 import { ImagePlus, Moon, Sun, X } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { useSimulator, useSimulatorState } from "@/components/emulator";
+import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { cn } from "@/lib/utils";
-import { BACKGROUNDS, type BackgroundKey } from "@/lib/emulator/background";
+import { BACKGROUNDS, type BackgroundKey } from "@/lib/simulator/background";
 import {
   prepareCustomBackgroundImage,
   revokeBackgroundImageUrl,
-} from "@/lib/emulator/background-image";
-import { simulatorParsers } from "@/lib/emulator/search-params";
+} from "@/lib/simulator/background-image";
+import { simulatorParsers } from "@/lib/simulator/search-params";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { dropFocus } from "@/lib/emulator/input";
+import { dropFocus } from "@/lib/simulator/input";
 
 const GRADIENT_SWATCH = {
   day: {

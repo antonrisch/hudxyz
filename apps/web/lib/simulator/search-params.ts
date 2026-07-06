@@ -5,9 +5,9 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
-import { VIEWS } from "@/lib/emulator/config";
-import { DEFAULT_BACKGROUND, BACKGROUNDS } from "@/lib/emulator/background";
-import type { Seed, View } from "@/lib/emulator/store";
+import { VIEWS } from "@/lib/simulator/config";
+import { DEFAULT_BACKGROUND, BACKGROUNDS } from "@/lib/simulator/background";
+import type { Seed, View } from "@/lib/simulator/store";
 
 export const SIMULATOR_SHARE_PATH = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
 
@@ -19,7 +19,7 @@ export function buildSimulatorShareUrl(appUrl?: string): string {
 const VIEW_KEYS = VIEWS.map((v) => v.key);
 const BACKGROUND_KEYS = BACKGROUNDS.map((bg) => bg.key);
 
-// url <-> emulator state contract. these parsers are the single source of truth for both
+// url <-> simulator state contract. these parsers are the single source of truth for both
 // the initial (server-parsed) seed and the client-side writes, so ssr and hydration agree.
 // nuqs clears a param when it equals its default, keeping shared urls clean.
 // `mode` is url-only (cosmetic chrome); the store field is `view`.

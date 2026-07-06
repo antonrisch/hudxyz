@@ -10,7 +10,7 @@ export function PrivacyContent() {
       <h2>Who we are</h2>
       <p>
         {e} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates hud.xyz, a browser-based
-        emulator designed for compatibility with the Meta Ray-Ban Display. We are based in
+        simulator designed for compatibility with the Meta Ray-Ban Display. We are based in
         Queensland, Australia.
       </p>
       <p>
@@ -44,7 +44,7 @@ export function PrivacyContent() {
       <p>
         Session replay may capture interactions on hud.xyz itself, such as text entered in the
         address bar. It does not give us control over data handled by third-party sites inside the
-        emulator.
+        simulator.
       </p>
       <p>
         We do not intentionally collect payment details or account credentials. We do not sell

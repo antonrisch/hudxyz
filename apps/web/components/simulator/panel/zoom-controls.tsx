@@ -13,8 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { useSimulator } from "@/components/emulator";
-import { dropFocus } from "@/lib/emulator/input";
+import { useSimulator } from "@/components/simulator";
+import { dropFocus } from "@/lib/simulator/input";
 
 function ZoomMenuItem({
   label,

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { SIMULATOR_TAGLINE } from "@/lib/emulator/config";
+import { SIMULATOR_TAGLINE } from "@/lib/simulator/config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {

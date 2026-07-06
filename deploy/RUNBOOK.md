@@ -57,7 +57,7 @@ Full wisp deploy steps: [deploy/README.md](./README.md).
 
 ## Common failures
 
-### Emulator stuck / proxy not loading
+### Simulator stuck / proxy not loading
 
 - Browser devtools → **Console** and **Network** → WebSocket to `wisp` (101 Switching Protocols?)
 - Verify Vercel env: `NEXT_PUBLIC_WISP_URL=wss://kenobi.hudbox.dev/wisp/`

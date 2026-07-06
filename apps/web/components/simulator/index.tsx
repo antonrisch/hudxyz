@@ -19,34 +19,34 @@ import {
   type Intent,
   type Seed,
   type View,
-} from "@/lib/emulator/store";
-import { INTENT_BY_KEY } from "@/lib/emulator/config";
-import { dispatchDeviceKey, isHostChromeInput } from "@/lib/emulator/input";
-import { releaseChromeFocus } from "@/lib/emulator/input";
-import { BackgroundBackdrop } from "@/components/emulator/background/backdrop";
-import { resolveBackground } from "@/lib/emulator/background";
+} from "@/lib/simulator/store";
+import { INTENT_BY_KEY } from "@/lib/simulator/config";
+import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
+import { releaseChromeFocus } from "@/lib/simulator/input";
+import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
+import { resolveBackground } from "@/lib/simulator/background";
 import {
   getCachedIframeBackgroundImage,
   prewarmPresetBackgroundImages,
   resolveIframeBackgroundImage,
-} from "@/lib/emulator/background-image";
+} from "@/lib/simulator/background-image";
 import {
   measureAdditiveBackdrop,
   syncAdditive,
   syncDisplayBrightness,
-} from "@/lib/emulator/additive";
-import { simulatorParsers } from "@/lib/emulator/search-params";
-import { normalizeWebUrl } from "@/lib/emulator/search-params";
+} from "@/lib/simulator/additive";
+import { simulatorParsers } from "@/lib/simulator/search-params";
+import { normalizeWebUrl } from "@/lib/simulator/search-params";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
-import { AppHeader } from "@/components/emulator/header/app-header";
-import { Dpad } from "@/components/emulator/input/dpad";
-import { Device } from "@/components/emulator/device";
-import { DisplaySidebarColumn } from "@/components/emulator/panel/sidebar";
-import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/emulator/use-pan-zoom";
-import { waitForIframePaint } from "@/lib/emulator/app-load";
-import { downloadDisplay } from "@/lib/emulator/capture";
+import { AppHeader } from "@/components/simulator/header/app-header";
+import { Dpad } from "@/components/simulator/input/dpad";
+import { Device } from "@/components/simulator/device";
+import { DisplaySidebarColumn } from "@/components/simulator/panel/sidebar";
+import { applyPanZoomShortcut, usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
+import { waitForIframePaint } from "@/lib/simulator/app-load";
+import { downloadDisplay } from "@/lib/simulator/capture";
 
 // -- context ------------------------------------------------
 // stable handles for the leaf components: the store (read via useSimulatorState),

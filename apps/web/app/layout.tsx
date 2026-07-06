@@ -5,7 +5,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
-import { SIMULATOR_SUMMARY } from "@/lib/emulator/config";
+import { SIMULATOR_SUMMARY } from "@/lib/simulator/config";
 import Script from "next/script";
 
 export const metadata: Metadata = {

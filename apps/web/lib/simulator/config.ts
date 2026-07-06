@@ -1,4 +1,4 @@
-import type { Intent, View } from "@/lib/emulator/store";
+import type { Intent, View } from "@/lib/simulator/store";
 
 // device identity shown in the simulator chrome (model + os build). placeholders — set real values.
 export const DEVICE_MODEL = "Meta Ray-Ban Display";

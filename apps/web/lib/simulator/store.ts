@@ -3,7 +3,7 @@ import {
   DEFAULT_BACKGROUND,
   type CustomBackgroundImage,
   type BackgroundKey,
-} from "@/lib/emulator/background";
+} from "@/lib/simulator/background";
 
 const DISPLAY_PANEL_OPEN_KEY = "simulator.displayPanelOpen";
 

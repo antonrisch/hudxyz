@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
-import Simulator from "@/components/emulator";
-import { SIMULATOR_TAGLINE, SIMULATOR_TITLE } from "@/lib/emulator/config";
-import { loadSimulatorSearchParams, seedFromParams } from "@/lib/emulator/search-params";
+import Simulator from "@/components/simulator";
+import { SIMULATOR_TAGLINE, SIMULATOR_TITLE } from "@/lib/simulator/config";
+import { loadSimulatorSearchParams, seedFromParams } from "@/lib/simulator/search-params";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
 

@@ -6,11 +6,11 @@ import { RotateCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useSimulator, useSimulatorState } from "@/components/emulator";
-import { DIRECTORY_MAILTO } from "@/lib/emulator/config";
-import { SUGGESTED_APPS } from "@/lib/emulator/config";
-import { simulatorParsers, normalizeWebUrl } from "@/lib/emulator/search-params";
-import { dropFocus } from "@/lib/emulator/input";
+import { useSimulator, useSimulatorState } from "@/components/simulator";
+import { DIRECTORY_MAILTO } from "@/lib/simulator/config";
+import { SUGGESTED_APPS } from "@/lib/simulator/config";
+import { simulatorParsers, normalizeWebUrl } from "@/lib/simulator/search-params";
+import { dropFocus } from "@/lib/simulator/input";
 import { cn } from "@/lib/utils";
 
 // address bar: a plain url input + an attached load/reload group, like a browser.

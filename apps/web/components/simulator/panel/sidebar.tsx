@@ -12,16 +12,18 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { DisplayPanel } from "@/components/emulator/panel/controls";
-import { ViewSwitcher } from "@/components/emulator/panel/view-switcher";
-import { ZoomControls } from "@/components/emulator/panel/zoom-controls";
-import { SIMULATOR_SUMMARY, SIMULATOR_TITLE, FEEDBACK_MAILTO } from "@/lib/emulator/config";
-import { useSimulator, useSimulatorState } from "@/components/emulator";
-import { dropFocus } from "@/lib/emulator/input";
+import { DisplayPanel } from "@/components/simulator/panel/controls";
+import { ViewSwitcher } from "@/components/simulator/panel/view-switcher";
+import { ZoomControls } from "@/components/simulator/panel/zoom-controls";
+import { SIMULATOR_SUMMARY, SIMULATOR_TITLE, FEEDBACK_MAILTO } from "@/lib/simulator/config";
+import { useSimulator, useSimulatorState } from "@/components/simulator";
+import { dropFocus } from "@/lib/simulator/input";
 import { cn } from "@/lib/utils";
 
 function DisplaySidebarIntro() {
-  return <h1 className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</h1>;
+  return (
+    <h1 className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</h1>
+  );
 }
 
 function DisplaySidebarFooter() {
@@ -32,11 +34,17 @@ function DisplaySidebarFooter() {
         <p className="text-xs text-pretty text-muted-foreground">
           {SIMULATOR_SUMMARY}
           <br />
-          <a href={FEEDBACK_MAILTO} className="hover:text-foreground hover:underline underline-offset-4">
+          <a
+            href={FEEDBACK_MAILTO}
+            className="hover:text-foreground hover:underline underline-offset-4"
+          >
             Contact
           </a>
           {" · "}
-          <Link href="/privacy" className="hover:text-foreground hover:underline underline-offset-4">
+          <Link
+            href="/privacy"
+            className="hover:text-foreground hover:underline underline-offset-4"
+          >
             Privacy
           </Link>
           {" · "}

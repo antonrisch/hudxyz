@@ -21,7 +21,7 @@ The simulator reproduces the two things that make the device different from a no
 
 A single route, **`/`**, renders the `Simulator` component (`components/simulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
 
-- **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`components/emulator/frames.tsx`).
+- **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`components/simulator/frames.tsx`).
 - **1:1** — the surface at its exact 600×600 size, no scaling (`pixel` in `?mode=`).
 
 Cosmetic chrome is `?mode=glasses|pixel` (url-only name; store field is `view`). Set client-side via nuqs, so switching never navigates. `?url=` deep-links a target. `/browser` 308-redirects to `/`.
@@ -47,8 +47,8 @@ Key files:
 ## Layout (`apps/web`)
 
 - `app/` — App Router routes: `page.tsx` (home), `simulator/page.tsx`, `layout.tsx` (fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
-- `components/` — `emulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `input/` + `device`), `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
-- `lib/` — `proxy.ts` (Scramjet proxy), `emulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
+- `components/` — `simulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `input/` + `device`), `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
+- `lib/` — `proxy.ts` (Scramjet proxy), `simulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
 - `public/` — `sw.js` plus the generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`.
 
