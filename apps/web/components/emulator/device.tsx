@@ -5,6 +5,7 @@ import { Frames } from "@/components/frames";
 import { DEVICE_BG, DEVICE_SURFACE, GLASSES_CHROME } from "@/lib/emulator/config";
 import type { Status } from "@/lib/emulator/store";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
+import { releaseChromeFocus } from "@/lib/emulator/drop-focus";
 import { cn } from "@/lib/utils";
 
 const STATUS_MSG: Partial<Record<Status, string>> = {
@@ -24,6 +25,7 @@ export function Device() {
   const additive = useEmulatorState((s) => s.additive);
   const lensTint = useEmulatorState((s) => s.lensTint);
   const isGlasses = view === "glasses";
+  const { onPointerDown, ...panGesture } = panZoom.bind();
 
   return (
     <div ref={panZoom.viewportRef} className="relative min-h-0 w-full flex-1 overflow-hidden">
@@ -52,6 +54,7 @@ export function Device() {
           <iframe
             ref={iframeRef}
             title="Glasses display"
+            tabIndex={-1}
             allow="clipboard-read; clipboard-write"
             className="relative size-full border-0"
           />
@@ -111,7 +114,11 @@ export function Device() {
           "absolute inset-0 touch-none",
           screen === "app" ? "cursor-grab active:cursor-grabbing" : "pointer-events-none",
         )}
-        {...panZoom.bind()}
+        {...panGesture}
+        onPointerDown={(e) => {
+          releaseChromeFocus();
+          onPointerDown?.(e);
+        }}
       />
     </div>
   );
