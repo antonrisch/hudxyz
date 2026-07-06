@@ -30,16 +30,16 @@ export const GLASSES_CHROME = {
 };
 
 // default 600×600 magnification per chrome view (1 = true pixels).
-export const DEFAULT_DEVICE_SCALE = { glasses: 0.6, actual: 1 } as const satisfies Record<
+export const DEFAULT_DEVICE_SCALE = { glasses: 0.6, pixel: 1 } as const satisfies Record<
   View,
   number
 >;
 
-// cosmetic presentation modes; all wrap the SAME persistent device surface.
-// glasses: framed over the lens. 1:1: exact 600×600.
+// cosmetic presentation modes (?mode= in url); all wrap the SAME persistent device surface.
+// glasses: framed over the lens. pixel (label 1:1): exact 600×600.
 export const VIEWS = [
   { key: "glasses", label: "Glasses" },
-  { key: "actual", label: "1:1" },
+  { key: "pixel", label: "1:1" },
 ] as const satisfies ReadonlyArray<{ key: View; label: string }>;
 
 // standardized device surface tint, shared by the surface box, the iframe and the overlays.

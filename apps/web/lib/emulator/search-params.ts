@@ -22,6 +22,7 @@ const BACKGROUND_KEYS = BACKGROUNDS.map((bg) => bg.key);
 // url <-> emulator state contract. these parsers are the single source of truth for both
 // the initial (server-parsed) seed and the client-side writes, so ssr and hydration agree.
 // nuqs clears a param when it equals its default, keeping shared urls clean.
+// `mode` is url-only (cosmetic chrome); the store field is `view`.
 export const emulatorParsers = {
   mode: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
   url: parseAsString.withDefault(""),

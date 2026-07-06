@@ -21,11 +21,10 @@ The emulator reproduces the two things that make the device different from a nor
 
 A single route, **`/emulator`**, renders the `Emulator` component (`components/emulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
 
-- **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`components/frames.tsx`).
-- **Fit** — the 600×600 surface scaled to fill the available area.
-- **1:1** — the surface at its exact 600×600 size, no scaling.
+- **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`components/emulator/frames.tsx`).
+- **1:1** — the surface at its exact 600×600 size, no scaling (`pixel` in `?mode=`).
 
-The active view lives in `?view=` (set client-side via `history.replaceState`, so switching never navigates); `?url=` deep-links a target. `/browser` 308-redirects to `/emulator?view=fit`.
+Cosmetic chrome is `?mode=glasses|pixel` (url-only name; store field is `view`). Set client-side via nuqs, so switching never navigates. `?url=` deep-links a target. `/browser` 308-redirects to `/emulator`.
 
 **Structure.** A UI-agnostic core — `lib/emulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `components/emulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, display-panel, view-switcher, zoom-controls), `header/` (url-bar, share, feedback), `input/` (dpad, screenshot), plus root `app-header` and `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
 
@@ -39,7 +38,7 @@ Key files:
 - `public/sw.js` — the Scramjet v2 service worker; routes proxied requests and stamps COEP/CORP so the cross-origin-isolated host can embed them.
 - `scripts/copy-proxy-assets.mjs` — copies the Scramjet engine + controller bundles into `/public/scramjet` and `/public/controller` (runs on install/dev/build).
 - `scripts/wisp-server.mjs` — the dev Wisp egress server on `:4000`.
-- `next.config.ts` — sets COOP/COEP on `/emulator` (for Scramjet's wasm), `Service-Worker-Allowed: /` on `/sw.js`, and redirects `/browser` → `/emulator?view=fit`.
+- `next.config.ts` — sets COOP/COEP on `/emulator` (for Scramjet's wasm), `Service-Worker-Allowed: /` on `/sw.js`, and redirects `/browser` → `/emulator`.
 
 **Stack pins:** Scramjet engine `2.0.67-alpha.2` (exact-pinned) + scramjet-controller `0.0.14` (the Controller/Frame API, which takes a ProxyTransport directly) + libcurl-transport `2.0.5` + wisp-js. The controller asserts the engine version at construction, so any version drift fails loudly. The v1 stack (Scramjet 1.1.0 + bare-mux + libcurl 1.5.2) lives on branch `feat/emulator-scramjet` as a stable-engine reference.
 
