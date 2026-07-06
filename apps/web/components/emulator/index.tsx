@@ -271,8 +271,12 @@ export default function Emulator({ seed }: { seed: Seed }) {
     };
 
     const applyAdditive = () => {
-      const { additive, background: backgroundKey, customBackgroundImages, activeCustomBackgroundId } =
-        store.getState();
+      const {
+        additive,
+        background: backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
+      } = store.getState();
       const token = ++applyToken;
       const preset = resolveBackground(
         backgroundKey,

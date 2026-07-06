@@ -123,7 +123,10 @@ export function syncAdditive(
 
     root.classList.add(ACTIVE_CLASS);
     root.classList.toggle(LENS_TINT_CLASS, lensTint);
-    root.style.setProperty("--stage-fill", host.getPropertyValue("--stage-fill").trim() || "#1e293b");
+    root.style.setProperty(
+      "--stage-fill",
+      host.getPropertyValue("--stage-fill").trim() || "#1e293b",
+    );
     root.style.setProperty("--lens-tint", host.getPropertyValue("--lens-tint").trim());
     root.style.setProperty("--bg-image", additiveBackgroundBg(background, image));
     root.style.setProperty("--bg-image-size", background.image ? "cover" : "auto");

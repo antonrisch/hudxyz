@@ -91,7 +91,10 @@ export function DisplayPanelTrigger() {
             </Button>
           }
         />
-        <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-sm">
+        <SheetContent
+          side="right"
+          className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-sm"
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>Display</SheetTitle>
             <SheetDescription>Display preview settings</SheetDescription>

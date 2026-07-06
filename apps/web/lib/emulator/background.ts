@@ -61,8 +61,7 @@ export function resolveBackground(
 ): BackgroundPreset {
   const preset = backgroundByKey(key);
   if (key !== "custom" || customImages.length === 0) return preset;
-  const active =
-    customImages.find((img) => img.id === activeCustomBackgroundId) ?? customImages[0];
+  const active = customImages.find((img) => img.id === activeCustomBackgroundId) ?? customImages[0];
   return { ...preset, image: active.url };
 }
 

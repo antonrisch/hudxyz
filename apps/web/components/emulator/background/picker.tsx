@@ -6,7 +6,12 @@ import { useQueryState } from "nuqs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { cn } from "@/lib/utils";
-import { BACKGROUND_GRADIENT, BACKGROUND_GRADIENT_FILL, BACKGROUNDS, type BackgroundKey } from "@/lib/emulator/background";
+import {
+  BACKGROUND_GRADIENT,
+  BACKGROUND_GRADIENT_FILL,
+  BACKGROUNDS,
+  type BackgroundKey,
+} from "@/lib/emulator/background";
 import { prepareCustomBackgroundImage } from "@/lib/emulator/background-image";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { dropFocus } from "@/lib/emulator/input";
@@ -89,7 +94,8 @@ export function BackgroundPicker() {
               style={
                 gradient
                   ? {
-                      backgroundColor: BACKGROUND_GRADIENT_FILL[bg.key as keyof typeof BACKGROUND_GRADIENT_FILL],
+                      backgroundColor:
+                        BACKGROUND_GRADIENT_FILL[bg.key as keyof typeof BACKGROUND_GRADIENT_FILL],
                     }
                   : undefined
               }
@@ -106,7 +112,8 @@ export function BackgroundPicker() {
                   aria-hidden
                   className="pointer-events-none absolute -inset-1"
                   style={{
-                    backgroundColor: BACKGROUND_GRADIENT_FILL[bg.key as keyof typeof BACKGROUND_GRADIENT_FILL],
+                    backgroundColor:
+                      BACKGROUND_GRADIENT_FILL[bg.key as keyof typeof BACKGROUND_GRADIENT_FILL],
                     backgroundImage: gradient,
                   }}
                 />
