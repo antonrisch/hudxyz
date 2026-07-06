@@ -13,7 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { DisplayPanel } from "@/components/emulator/display-panel";
+import { DisplayPanel, DisplayPanelHeader } from "@/components/emulator/display-panel";
 import { FEEDBACK_MAILTO } from "@/components/emulator/feedback-button";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { cn } from "@/lib/utils";
@@ -50,7 +50,8 @@ export function DisplaySidebar() {
   if (!open) return null;
 
   return (
-    <aside className="hidden w-72 shrink-0 flex-col sm:flex rounded-2xl border bg-sidebar">
+    <aside className="hidden min-h-0 w-72 shrink-0 flex-col overflow-hidden sm:flex rounded-2xl border bg-sidebar">
+      <DisplayPanelHeader />
       <div className="min-h-0 flex-1 overflow-y-auto">
         <DisplayPanel />
       </div>
@@ -80,11 +81,12 @@ export function DisplayPanelTrigger() {
             </Button>
           }
         />
-        <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-sm">
+        <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-sm">
           <SheetHeader className="sr-only">
             <SheetTitle>Display</SheetTitle>
             <SheetDescription>Display preview settings</SheetDescription>
           </SheetHeader>
+          <DisplayPanelHeader />
           <div className="min-h-0 flex-1 overflow-y-auto">
             <DisplayPanel />
           </div>
