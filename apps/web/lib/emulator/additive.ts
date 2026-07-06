@@ -20,7 +20,8 @@ type AdditiveBackdropGeometry = {
 
 const SHEET = `
 html.${ACTIVE_CLASS} {
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
   background: var(--env-fill, #1e293b);
 }
 
@@ -55,7 +56,8 @@ html.${ACTIVE_CLASS}.${LENS_TINT_CLASS}::after {
 html.${ACTIVE_CLASS} body {
   position: relative;
   z-index: 1;
-  min-height: 100vh;
+  min-height: 100%;
+  overflow: hidden;
   mix-blend-mode: screen !important;
 }
 `;

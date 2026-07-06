@@ -10,7 +10,7 @@ import { DisplayPanelTrigger } from "@/components/emulator/display-sidebar";
 // view / zoom / additive live in the rhs display panel (sheet below sm).
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-50 bg-background">
+    <header className="z-50 shrink-0 bg-background">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 p-2">
         <Logo className="justify-self-start" />
         <div className="flex min-w-0 max-w-[calc(100vw-12rem)] items-center gap-2">

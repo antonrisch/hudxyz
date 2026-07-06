@@ -490,10 +490,10 @@ export default function Emulator({ seed }: { seed: Seed }) {
 
   return (
     <EmulatorContext.Provider value={ctx}>
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <AppHeader />
 
-        <div className="flex min-h-0 flex-1 rounded-2xl overflow-hidden px-2 pb-2 gap-2">
+        <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl px-2 pb-2 gap-2">
           {/* device canvas; the d-pad is a floating panel over the bottom edge. */}
           <div
             ref={stageRef}
