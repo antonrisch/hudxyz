@@ -102,7 +102,7 @@ function CustomSwatch({
   onRemove: () => void;
 }) {
   return (
-    <div className={cn("relative shrink-0", SWATCH)}>
+    <div className={cn("group relative shrink-0", SWATCH)}>
       <Swatch
         label="Custom background"
         selected={selected}
@@ -116,7 +116,7 @@ function CustomSwatch({
         variant="outline"
         size="icon-xs"
         aria-label="Remove custom background"
-        className="absolute -top-1.5 -right-1.5 z-10 size-4 rounded-full bg-background shadow-sm"
+        className="absolute -top-2 -right-2 z-10 size-5 rounded-full bg-background opacity-0 shadow-sm group-hover:opacity-100 focus-visible:opacity-100"
         onMouseDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -128,7 +128,7 @@ function CustomSwatch({
           onRemove();
         }}
       >
-        <X className="size-2.5" />
+        <X className="size-3" />
       </Button>
     </div>
   );
