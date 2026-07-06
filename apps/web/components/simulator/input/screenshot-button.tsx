@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
+import { cn } from "@/lib/utils";
 
-export function ScreenshotButton() {
+export function ScreenshotButton({ className }: { className?: string }) {
   const { captureDisplay } = useSimulator();
   const canCapture = useSimulatorState((s) => s.screen === "app" && s.status === "ready");
 
@@ -19,6 +20,7 @@ export function ScreenshotButton() {
             variant="default"
             size="icon"
             aria-label="Screenshot"
+            className={cn(className)}
             onMouseDown={dropFocus}
             onClick={() => canCapture && void captureDisplay()}
           >

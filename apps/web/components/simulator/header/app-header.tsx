@@ -5,18 +5,21 @@ import { UrlBar } from "@/components/simulator/header/url-bar";
 import { FeedbackButton } from "@/components/simulator/header/feedback-button";
 import { ShareMenu } from "@/components/simulator/header/share-menu";
 import { DisplayPanelTrigger } from "@/components/simulator/panel/sidebar";
+import { DesktopOnly } from "@/components/simulator/mobile-only";
 
-// simulator toolbar: logo left, url bar center, display + share right.
+// simulator toolbar: logo + url bar + share/feedback (+ desktop display panel toggle).
 export function AppHeader() {
   return (
     <header aria-label="Simulator toolbar" className="z-50 shrink-0">
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 p-2">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 p-2">
         <Logo className="justify-self-start" />
-        <UrlBar className="max-w-[calc(100vw-12rem)]" />
+        <UrlBar className="min-w-0 w-full max-w-full sm:max-w-96 sm:justify-self-center" />
         <div className="flex items-center gap-2 justify-self-end">
-          <DisplayPanelTrigger />
           <FeedbackButton />
           <ShareMenu />
+          <DesktopOnly>
+            <DisplayPanelTrigger />
+          </DesktopOnly>
         </div>
       </div>
     </header>

@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { BACKGROUND_LQIP } from "@/lib/simulator/background-lqip";
 
 // backgrounds drive the canvas stage and the additive preview behind the waveguide.
 export type BackgroundKey = "alps" | "alps2" | "beach" | "day" | "night" | "custom";
@@ -7,6 +8,15 @@ export type BackgroundPreset = {
   key: BackgroundKey;
   label: string;
   image?: string;
+  placeholderColor?: string;
+  lqip?: string;
+};
+
+export const STAGE_FILL_FALLBACK = "var(--stage-fill)";
+
+export type BackdropPlaceholder = {
+  color: string;
+  lqip?: string;
 };
 
 export const BACKGROUND_GRADIENT = {
@@ -25,16 +35,22 @@ export const BACKGROUNDS = [
     key: "alps",
     label: "Alps",
     image: "/backgrounds/alps.jpg",
+    placeholderColor: "#355677",
+    lqip: BACKGROUND_LQIP.alps,
   },
   {
     key: "alps2",
     label: "Alps 2",
     image: "/backgrounds/alps2.jpg",
+    placeholderColor: "#4f597d",
+    lqip: BACKGROUND_LQIP.alps2,
   },
   {
     key: "beach",
     label: "Beach",
     image: "/backgrounds/beach.jpg",
+    placeholderColor: "#bdbbac",
+    lqip: BACKGROUND_LQIP.beach,
   },
   { key: "day", label: "Day" },
   { key: "night", label: "Night" },
@@ -68,6 +84,30 @@ export function resolveBackground(
   if (key !== "custom" || customImages.length === 0) return preset;
   const active = customImages.find((img) => img.id === activeCustomBackgroundId) ?? customImages[0];
   return { ...preset, image: active.url };
+}
+
+export function resolveBackdropPlaceholder(
+  key: BackgroundKey,
+  customImages: readonly CustomBackgroundImage[],
+  activeCustomBackgroundId: string | null,
+): BackdropPlaceholder {
+  if (key === "custom" && customImages.length > 0) {
+    const active =
+      customImages.find((img) => img.id === activeCustomBackgroundId) ?? customImages[0];
+    return { color: STAGE_FILL_FALLBACK, lqip: active.thumbUrl };
+  }
+
+  const preset = backgroundByKey(key);
+  if (preset.placeholderColor) {
+    return { color: preset.placeholderColor, lqip: preset.lqip };
+  }
+
+  return { color: STAGE_FILL_FALLBACK };
+}
+
+export function backgroundImageHref(key: BackgroundKey): string | undefined {
+  if (key === "custom") return undefined;
+  return backgroundByKey(key).image;
 }
 
 const MAX_BACKGROUND_BLUR_PX = 24;

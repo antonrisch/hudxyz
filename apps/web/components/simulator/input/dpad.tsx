@@ -10,47 +10,30 @@ import {
   Pointer,
   Undo2,
 } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { ScreenshotButton } from "@/components/simulator/input/screenshot-button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSimulator } from "@/components/simulator";
 import type { Intent } from "@/lib/simulator/store";
 import { dropFocus } from "@/lib/simulator/input";
-import type { VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
-type DirectionIntent = Extract<Intent, "up" | "down" | "left" | "right">;
+const flankClass = "size-10 shrink-0 sm:size-8";
 
 const dpadCell =
-  "flex size-8 items-center justify-center bg-transparent text-primary-foreground outline-none hover:bg-primary-hover active:bg-primary-active aria-pressed:bg-primary-pressed focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset";
+  "flex size-8 touch-manipulation items-center justify-center bg-transparent text-primary-foreground outline-none hover:bg-primary-hover active:bg-primary-active aria-pressed:bg-primary-pressed focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset";
 
 const dpadCrossPath =
   "M40 0H56Q64 0 64 8V32H88Q96 32 96 40V56Q96 64 88 64H64V88Q64 96 56 96H40Q32 96 32 88V64H8Q0 64 0 56V40Q0 32 8 32H32V8Q32 0 40 0Z";
 
 const dpadCrossClip = `path("${dpadCrossPath}")`;
 
-const DPAD_ARMS: { intent: DirectionIntent; Icon: LucideIcon; label: string }[] = [
-  { intent: "up", Icon: ArrowBigUp, label: "Swipe up" },
-  { intent: "left", Icon: ArrowBigLeft, label: "Swipe left" },
-  { intent: "right", Icon: ArrowBigRight, label: "Swipe right" },
-  { intent: "down", Icon: ArrowBigDown, label: "Swipe down" },
-];
-
-const DPAD_GRID = [
-  null,
-  "up",
-  null,
-  "left",
-  "select",
-  "right",
-  null,
-  "down",
-  null,
-] as const satisfies readonly (DirectionIntent | "select" | null)[];
-
-const armByIntent = Object.fromEntries(DPAD_ARMS.map((arm) => [arm.intent, arm])) as Record<
-  DirectionIntent,
-  (typeof DPAD_ARMS)[number]
->;
+const DPAD_CELLS = [
+  { intent: "up" as const, Icon: ArrowBigUp, label: "Swipe up", placement: "col-start-2 row-start-1" },
+  { intent: "left" as const, Icon: ArrowBigLeft, label: "Swipe left", placement: "col-start-1 row-start-2" },
+  { intent: "select" as const, Icon: Pointer, label: "Enter", placement: "col-start-2 row-start-2" },
+  { intent: "right" as const, Icon: ArrowBigRight, label: "Swipe right", placement: "col-start-3 row-start-2" },
+  { intent: "down" as const, Icon: ArrowBigDown, label: "Swipe down", placement: "col-start-2 row-start-3" },
+] as const;
 
 function useIntentPress(intent: Intent) {
   const { pressDown, pressUp } = useSimulator();
@@ -69,67 +52,38 @@ function useIntentPress(intent: Intent) {
   return { onPointerDown, onPointerUp, onPointerCancel: onPointerUp, onClick };
 }
 
-function DpadArm({
+function CrossCell({
+  intent,
   Icon,
   label,
   pressed,
-  intent,
+  placement,
 }: {
+  intent: Intent;
   Icon: LucideIcon;
   label: string;
   pressed?: boolean;
-  intent: DirectionIntent;
+  placement: string;
 }) {
   const press = useIntentPress(intent);
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <button
-            type="button"
-            aria-label={label}
-            aria-pressed={pressed}
-            onMouseDown={dropFocus}
-            {...press}
-            className={dpadCell}
-          >
-            <Icon className="size-4 shrink-0" />
-          </button>
-        }
-      />
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-function DpadSelect({ pressed }: { pressed?: boolean }) {
-  const press = useIntentPress("select");
-
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <button
-            type="button"
-            aria-label="Enter"
-            aria-pressed={pressed}
-            onMouseDown={dropFocus}
-            {...press}
-            className={dpadCell}
-          >
-            <Pointer className="size-4 shrink-0" />
-          </button>
-        }
-      />
-      <TooltipContent>Enter</TooltipContent>
-    </Tooltip>
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={pressed}
+      onMouseDown={dropFocus}
+      {...press}
+      className={cn(dpadCell, placement)}
+    >
+      <Icon className="size-4 shrink-0" />
+    </button>
   );
 }
 
 function DpadCross({ pressedIntents }: { pressedIntents: ReadonlySet<Intent> }) {
   return (
-    <div className="relative inline-block size-24">
+    <div className="relative size-24 shrink-0">
       <svg
         aria-hidden
         viewBox="-1 -1 98 98"
@@ -144,81 +98,48 @@ function DpadCross({ pressedIntents }: { pressedIntents: ReadonlySet<Intent> }) 
         />
       </svg>
       <div
-        className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0"
+        className="absolute inset-0 grid grid-cols-3 grid-rows-3"
         style={{ clipPath: dpadCrossClip }}
       >
-        {DPAD_GRID.map((cell, i) => {
-          if (cell === null) return <div key={i} />;
-          if (cell === "select") {
-            return <DpadSelect key={cell} pressed={pressedIntents.has("select")} />;
-          }
-          const { Icon, label, intent } = armByIntent[cell];
-          return (
-            <DpadArm
-              key={cell}
-              Icon={Icon}
-              label={label}
-              intent={intent}
-              pressed={pressedIntents.has(intent)}
-            />
-          );
-        })}
+        {DPAD_CELLS.map((cell) => (
+          <CrossCell
+            key={cell.intent}
+            intent={cell.intent}
+            Icon={cell.Icon}
+            label={cell.label}
+            placement={cell.placement}
+            pressed={pressedIntents.has(cell.intent)}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
-function IntentButton({
-  label,
-  intent,
-  pressed,
-  children,
-  variant = "default",
-}: {
-  label: string;
-  intent: Intent;
-  pressed?: boolean;
-  children: ReactNode;
-  variant?: VariantProps<typeof buttonVariants>["variant"];
-}) {
-  const press = useIntentPress(intent);
-
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            variant={variant}
-            size="icon"
-            aria-label={label}
-            aria-pressed={pressed}
-            onMouseDown={dropFocus}
-            {...press}
-          >
-            {children}
-          </Button>
-        }
-      />
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
 // gesture controls; emits intents to the shell.
-export function Dpad() {
+export function Dpad({ endAction }: { endAction?: ReactNode }) {
   const { pressedIntents } = useSimulator();
+  const press = useIntentPress("back");
 
   return (
-    <TooltipProvider delay={1000}>
-      <div className="pointer-events-auto flex items-center gap-4 rounded-xl bg-muted px-2 py-1 shadow-lg">
-        <ScreenshotButton />
+    <div className="pointer-events-auto flex w-full items-center justify-between gap-2 rounded-xl bg-muted px-2 py-1 shadow-lg sm:w-max sm:shrink-0 sm:justify-center sm:gap-4">
+      <ScreenshotButton className={flankClass} />
 
-        <DpadCross pressedIntents={pressedIntents} />
+      <DpadCross pressedIntents={pressedIntents} />
 
-        <IntentButton label="Esc" intent="back" pressed={pressedIntents.has("back")}>
-          <Undo2 />
-        </IntentButton>
-      </div>
-    </TooltipProvider>
+      <Button
+        variant="default"
+        size="icon"
+        className={flankClass}
+        aria-label="Esc"
+        aria-pressed={pressedIntents.has("back")}
+        onMouseDown={dropFocus}
+        {...press}
+      >
+        <Undo2 />
+      </Button>
+
+      {endAction}
+    </div>
   );
 }

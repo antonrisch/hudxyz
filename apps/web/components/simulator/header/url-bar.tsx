@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useQueryState } from "nuqs";
 import { RotateCw, X } from "lucide-react";
 import { toast } from "sonner";
@@ -15,17 +15,16 @@ import { cn } from "@/lib/utils";
 
 // address bar: a plain url input + an attached load/reload group, like a browser.
 export function UrlBar({ className }: { className?: string }) {
-  const { store, load } = useSimulator();
+  const { store, load, urlInputRef } = useSimulator();
   const url = useSimulatorState((s) => s.url);
   const [, setUrlParam] = useQueryState("url", simulatorParsers.url);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [reloadSpin, setReloadSpin] = useState(0);
 
   const submitUrl = (rawUrl: string) => {
     const nextUrl = normalizeWebUrl(rawUrl);
     if (!nextUrl) {
       toast.message("Enter a web app URL like https://example.com");
-      inputRef.current?.focus();
+      urlInputRef.current?.focus();
       return false;
     }
 
@@ -41,7 +40,7 @@ export function UrlBar({ className }: { className?: string }) {
   };
 
   return (
-    <div className={cn("group relative min-w-0 w-96 max-w-full", className)}>
+    <div className={cn("group relative min-w-0 w-full max-w-full", className)}>
       <div className="overflow-hidden rounded-xl border bg-muted hover:bg-input/80 focus-within:bg-muted focus-within:hover:bg-muted group-focus-within:rounded-b-none group-focus-within:border-b-transparent">
         <form
           className="flex min-w-0 items-center sm:gap-1 p-0.5"
@@ -51,7 +50,7 @@ export function UrlBar({ className }: { className?: string }) {
           }}
         >
           <Input
-            ref={inputRef}
+            ref={urlInputRef}
             value={url}
             onChange={(e) => store.getState().setUrl(e.target.value)}
             onKeyDown={(e) => {
@@ -77,7 +76,7 @@ export function UrlBar({ className }: { className?: string }) {
               onClick={() => {
                 store.getState().setUrl("");
                 void setUrlParam(null);
-                inputRef.current?.focus();
+                urlInputRef.current?.focus();
               }}
             >
               <X />

@@ -12,11 +12,14 @@ export function FeedbackButton({ className }: { className?: string }) {
       href={FEEDBACK_MAILTO}
       aria-label="Feedback"
       onMouseDown={dropFocus}
-      className={cn(buttonVariants({ variant: "outline", size: "lg" }), "shrink-0", className)}
+      className={cn(
+        buttonVariants({ variant: "outline", size: "lg" }),
+        "shrink-0 max-sm:size-10 max-sm:px-0",
+        className,
+      )}
     >
-      <Heart className="inline fill-rose-500 text-rose-500 sm:hidden" />
+      <Heart className="fill-rose-500 text-rose-500" />
       <span className="hidden sm:inline">Feedback</span>
-      <Heart className="hidden fill-rose-500 text-rose-500 sm:inline" />
     </a>
   );
 }

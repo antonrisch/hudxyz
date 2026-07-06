@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { PanelRight } from "lucide-react";
+import { PanelRight, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -41,34 +41,40 @@ function LegalLinks() {
   );
 }
 
-function DisplaySidebarIntro() {
-  return (
-    <h1 className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</h1>
-  );
-}
+function DisplayPanelFooter({ summary }: { summary?: boolean }) {
+  if (summary) {
+    return (
+      <footer className="mt-auto shrink-0">
+        <Separator />
+        <div className="p-3">
+          <p className="text-xs text-pretty text-muted-foreground">
+            {SIMULATOR_SUMMARY}
+            <br />
+            <LegalLinks />
+          </p>
+        </div>
+      </footer>
+    );
+  }
 
-function DisplaySidebarFooter() {
   return (
-    <footer className="mt-auto shrink-0">
-      <Separator />
-      <div className="p-3">
-        <p className="text-xs text-pretty text-muted-foreground">
-          {SIMULATOR_SUMMARY}
-          <br />
-          <LegalLinks />
-        </p>
-      </div>
+    <footer className="shrink-0 border-t p-3">
+      <p className="text-xs text-muted-foreground">
+        <LegalLinks />
+      </p>
     </footer>
   );
 }
 
-function DisplayPanelControlsShell() {
+function DisplayPanelControlsShell({ toolbarClassName }: { toolbarClassName?: string }) {
   return (
     <>
       <div className="shrink-0">
-        <div className="flex items-center justify-between gap-2 px-3 pb-2.5">
+        <div
+          className={cn("flex items-center justify-between gap-2 px-3 pb-2.5", toolbarClassName)}
+        >
           <ViewSwitcher />
-          <ZoomControls />
+          <ZoomControls className="hidden sm:flex" />
         </div>
         <Separator />
       </div>
@@ -79,24 +85,59 @@ function DisplayPanelControlsShell() {
   );
 }
 
-// intro + controls + footer; desktop sidebar only — mobile uses the settings sheet.
+// desktop rhs panel — width-collapsed when closed (no unmount).
 export function DisplaySidebarColumn() {
   const open = useSimulatorState((s) => s.displayPanelOpen);
 
   return (
-    <div className="hidden min-h-0 flex-col overflow-hidden rounded-2xl border bg-background sm:col-start-2 sm:row-start-1 sm:flex">
-      <header className="shrink-0">
-        <DisplaySidebarIntro />
-      </header>
-
-      {open ? (
+    <div
+      className={cn(
+        "hidden min-h-0 overflow-hidden rounded-2xl border bg-background transition-[width] sm:col-start-2 sm:row-start-1 sm:flex sm:flex-col",
+        open ? "sm:w-72" : "sm:w-0 sm:border-0",
+      )}
+    >
+      <div className="flex min-h-0 w-72 min-w-72 flex-1 flex-col overflow-hidden">
+        <p className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</p>
         <aside className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <DisplayPanelControlsShell />
         </aside>
-      ) : null}
-
-      <DisplaySidebarFooter />
+        <DisplayPanelFooter summary />
+      </div>
     </div>
+  );
+}
+
+export function DisplayPanelMobileTrigger() {
+  return (
+    <Sheet>
+      <SheetTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Display settings"
+            onMouseDown={dropFocus}
+            className="size-10 shrink-0"
+          >
+            <SlidersHorizontal />
+          </Button>
+        }
+      />
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-sm"
+      >
+        <SheetHeader className="shrink-0 space-y-0 border-b p-3 pr-12 pb-2">
+          <SheetTitle className="text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</SheetTitle>
+          <SheetDescription className="sr-only">{SIMULATOR_SUMMARY}</SheetDescription>
+        </SheetHeader>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <DisplayPanelControlsShell toolbarClassName="pt-2 pr-12" />
+        </div>
+        <DisplayPanelFooter />
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -105,53 +146,17 @@ export function DisplayPanelTrigger() {
   const open = useSimulatorState((s) => s.displayPanelOpen);
 
   return (
-    <>
-      <Sheet>
-        <SheetTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              aria-label="Display settings"
-              onMouseDown={dropFocus}
-              className="size-10 px-0 sm:hidden"
-            >
-              <PanelRight />
-            </Button>
-          }
-        />
-        <SheetContent
-          side="right"
-          className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-sm"
-        >
-          <SheetHeader className="sr-only">
-            <SheetTitle>{SIMULATOR_TITLE}</SheetTitle>
-            <SheetDescription>{SIMULATOR_SUMMARY}</SheetDescription>
-          </SheetHeader>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <DisplayPanelControlsShell />
-          </div>
-          <footer className="shrink-0 border-t p-3">
-            <p className="text-xs text-muted-foreground">
-              <LegalLinks />
-            </p>
-          </footer>
-        </SheetContent>
-      </Sheet>
-
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        aria-label={open ? "Hide display panel" : "Show display panel"}
-        aria-pressed={open}
-        onMouseDown={dropFocus}
-        onClick={() => store.getState().toggleDisplayPanel()}
-        className={cn("hidden size-10 px-0 sm:inline-flex", open && "bg-muted")}
-      >
-        <PanelRight />
-      </Button>
-    </>
+    <Button
+      type="button"
+      variant="outline"
+      size="lg"
+      aria-label={open ? "Hide display panel" : "Show display panel"}
+      aria-pressed={open}
+      onMouseDown={dropFocus}
+      onClick={() => store.getState().toggleDisplayPanel()}
+      className={cn("size-10 px-0", open && "bg-muted")}
+    >
+      <PanelRight />
+    </Button>
   );
 }
