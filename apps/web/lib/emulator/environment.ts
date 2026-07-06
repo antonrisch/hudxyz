@@ -57,6 +57,7 @@ export function environmentBackdropFilter(
   _preset: EnvironmentPreset,
   backgroundBrightness: number,
   backgroundBlur: number,
+  blurScale = 1,
 ): string | undefined {
   const parts: string[] = [];
 
@@ -64,7 +65,7 @@ export function environmentBackdropFilter(
     parts.push(`brightness(${backgroundBrightness / 100})`);
   }
 
-  const blurPx = (backgroundBlur / 100) * MAX_BACKGROUND_BLUR_PX;
+  const blurPx = (backgroundBlur / 100) * MAX_BACKGROUND_BLUR_PX * blurScale;
   if (blurPx > 0) parts.push(`blur(${blurPx}px)`);
 
   return parts.length > 0 ? parts.join(" ") : undefined;
@@ -107,9 +108,11 @@ export function additiveEnvFilter(
   preset: EnvironmentPreset,
   backgroundBrightness = 80,
   backgroundBlur = 0,
+  blurScale = 1,
 ): string {
   return (
-    environmentBackdropFilter(preset, backgroundBrightness, backgroundBlur) ?? "none"
+    environmentBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale) ??
+    "none"
   );
 }
 

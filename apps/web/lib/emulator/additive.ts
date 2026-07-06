@@ -14,6 +14,8 @@ type AdditiveBackdropGeometry = {
   top: number;
   width: number;
   height: number;
+  // layout size ÷ painted size; <1 when the display is zoomed in on screen.
+  displayScale: number;
 };
 
 const SHEET = `
@@ -74,14 +76,18 @@ export function measureAdditiveBackdrop(
   const height = stageRect.height * BACKDROP_SCALE;
   const left = stageRect.left - (width - stageRect.width) / 2;
   const top = stageRect.top - (height - stageRect.height) / 2;
-  const scaleX = display.offsetWidth / displayRect.width;
-  const scaleY = display.offsetHeight / displayRect.height;
+  const displayScale =
+    displayRect.width > 0 ? display.offsetWidth / displayRect.width : 1;
+  const scaleX = displayScale;
+  const scaleY =
+    displayRect.height > 0 ? display.offsetHeight / displayRect.height : displayScale;
 
   return {
     left: (left - displayRect.left) * scaleX,
     top: (top - displayRect.top) * scaleY,
     width: width * scaleX,
     height: height * scaleY,
+    displayScale,
   };
 }
 
@@ -121,9 +127,11 @@ export function syncAdditive(
     root.style.setProperty("--lens-tint", host.getPropertyValue("--lens-tint").trim());
     root.style.setProperty("--env-bg", additiveEnvBg(environment, image));
     root.style.setProperty("--env-bg-size", environment.image ? "cover" : "auto");
+    const canvasBlurScale = environment.image ? BACKDROP_SCALE : 1;
+    const blurScale = canvasBlurScale * (geometry?.displayScale ?? 1);
     root.style.setProperty(
       "--env-filter",
-      additiveEnvFilter(environment, backgroundBrightness, backgroundBlur),
+      additiveEnvFilter(environment, backgroundBrightness, backgroundBlur, blurScale),
     );
     root.style.setProperty("--hud-env-left", `${geometry?.left ?? 0}px`);
     root.style.setProperty("--hud-env-top", `${geometry?.top ?? 0}px`);
