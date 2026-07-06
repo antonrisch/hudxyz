@@ -11,8 +11,6 @@ import {
   PanelSlider,
 } from "@/components/emulator/panel/fields";
 import { BackgroundPicker } from "@/components/emulator/background/picker";
-import { ViewSwitcher } from "@/components/emulator/panel/view-switcher";
-import { ZoomControls } from "@/components/emulator/panel/zoom-controls";
 import { useQueryState } from "nuqs";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { emulatorParsers } from "@/lib/emulator/search-params";
@@ -136,20 +134,6 @@ export function DisplayPanel() {
           value={displayBrightness}
           onChange={setDisplayBrightness}
         />
-      </PanelSection>
-
-      <Separator />
-
-      <PanelSection title="Device">
-        <PanelRowGroup>
-          <PanelRow label="Mode">
-            <ViewSwitcher />
-          </PanelRow>
-
-          <PanelRow label="Zoom">
-            <ZoomControls />
-          </PanelRow>
-        </PanelRowGroup>
       </PanelSection>
     </>
   );

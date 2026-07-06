@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { DisplayPanel } from "@/components/emulator/panel/controls";
+import { ViewSwitcher } from "@/components/emulator/panel/view-switcher";
+import { ZoomControls } from "@/components/emulator/panel/zoom-controls";
 import { FEEDBACK_MAILTO } from "@/lib/emulator/config";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { DEVICE_MODEL } from "@/lib/emulator/config";
@@ -24,6 +26,10 @@ function DisplayPanelShell() {
     <>
       <div className="shrink-0">
         <h2 className="px-3 py-2.5 text-md leading-snug font-semibold">{DEVICE_MODEL} Emulator</h2>
+        <div className="flex items-center justify-between gap-2 px-3 pb-2.5">
+          <ViewSwitcher />
+          <ZoomControls />
+        </div>
         <Separator />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
