@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 // environments drive the canvas stage and the additive preview behind the waveguide.
-export type EnvironmentKey = "alps" | "daylight" | "night" | "custom";
+export type EnvironmentKey = "alps" | "alps2" | "daylight" | "night" | "custom";
 
 export type EnvironmentPreset = {
   key: EnvironmentKey;
@@ -16,11 +16,17 @@ const ENV_GRADIENT = {
 
 export const DEFAULT_ENVIRONMENT: EnvironmentKey = "alps";
 
+// preset photos ship as JPEG in /public/environments/ (longest edge ≤3200px, ~300–800KB).
 export const ENVIRONMENTS = [
   {
     key: "alps",
     label: "Alps",
     image: "/environments/alps.jpg",
+  },
+  {
+    key: "alps2",
+    label: "Alps 2",
+    image: "/environments/alps2.jpg",
   },
   { key: "daylight", label: "Day" },
   { key: "night", label: "Night" },
@@ -111,8 +117,7 @@ export function additiveEnvFilter(
   blurScale = 1,
 ): string {
   return (
-    environmentBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale) ??
-    "none"
+    environmentBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale) ?? "none"
   );
 }
 
