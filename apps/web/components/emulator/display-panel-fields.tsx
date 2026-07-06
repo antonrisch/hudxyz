@@ -38,10 +38,7 @@ export function PanelSection({
       >
         <span className="text-sm font-bold text-foreground">{title}</span>
         <ChevronDown
-          className={cn(
-            "size-4 shrink-0 text-muted-foreground",
-            open && "rotate-180",
-          )}
+          className={cn("size-4 shrink-0 text-muted-foreground", open && "rotate-180")}
         />
       </button>
       {open ? <div className="flex flex-col gap-4 pb-3">{children}</div> : null}

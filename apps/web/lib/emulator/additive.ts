@@ -76,11 +76,9 @@ export function measureAdditiveBackdrop(
   const height = stageRect.height * BACKDROP_SCALE;
   const left = stageRect.left - (width - stageRect.width) / 2;
   const top = stageRect.top - (height - stageRect.height) / 2;
-  const displayScale =
-    displayRect.width > 0 ? display.offsetWidth / displayRect.width : 1;
+  const displayScale = displayRect.width > 0 ? display.offsetWidth / displayRect.width : 1;
   const scaleX = displayScale;
-  const scaleY =
-    displayRect.height > 0 ? display.offsetHeight / displayRect.height : displayScale;
+  const scaleY = displayRect.height > 0 ? display.offsetHeight / displayRect.height : displayScale;
 
   return {
     left: (left - displayRect.left) * scaleX,
@@ -143,10 +141,7 @@ export function syncAdditive(
 }
 
 // matches the Meta chrome extension: filter on the app body, not a host overlay.
-export function syncDisplayBrightness(
-  iframe: HTMLIFrameElement | null,
-  displayBrightness: number,
-) {
+export function syncDisplayBrightness(iframe: HTMLIFrameElement | null, displayBrightness: number) {
   const doc = iframe?.contentDocument;
   if (!doc?.body) return;
 

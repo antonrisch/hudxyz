@@ -101,7 +101,7 @@
 
   /* emulator environments */
   --env-fill: #1e293b;
-  --env-day-from: #225B96;
+  --env-day-from: #225b96;
   --env-day-to: #e1ca9b;
   --env-night-from: color-mix(in oklch, var(--env-day-from) 12%, #121823);
   --env-night-to: color-mix(in oklch, var(--env-day-from) 38%, #25344b);

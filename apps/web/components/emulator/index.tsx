@@ -26,7 +26,11 @@ import {
   getCachedIframeEnvironmentImage,
   resolveIframeEnvironmentImage,
 } from "@/lib/emulator/environment-image";
-import { measureAdditiveBackdrop, syncAdditive, syncDisplayBrightness } from "@/lib/emulator/additive";
+import {
+  measureAdditiveBackdrop,
+  syncAdditive,
+  syncDisplayBrightness,
+} from "@/lib/emulator/additive";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 import { normalizeWebUrl } from "@/lib/emulator/normalize-url";
 import { useMountEffect } from "@/lib/use-mount-effect";
