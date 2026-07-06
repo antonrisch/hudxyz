@@ -1,4 +1,4 @@
-// custom environment photos are resized client-side and held as blob: urls for the host
+// custom background photos are resized client-side and held as blob: urls for the host
 // canvas. the proxied iframe cannot load blob:/same-origin urls (scramjet aborts them), so
 // we read the blob in the parent and inject a compressed data: url into iframe css instead.
 
@@ -74,15 +74,15 @@ export async function compressBlobForIframeCss(blob: Blob) {
   return { blob: out, dataUrl };
 }
 
-export function getCachedIframeEnvironmentImage(url: string | undefined) {
+export function getCachedIframeBackgroundImage(url: string | undefined) {
   if (!url) return undefined;
   if (url.startsWith("data:")) return url;
   return dataUrlCache.get(url);
 }
 
-// any environment image url → compressed data: url for iframe css (cached + deduped).
-export async function resolveIframeEnvironmentImage(url: string) {
-  const cached = getCachedIframeEnvironmentImage(url);
+// any background image url → compressed data: url for iframe css (cached + deduped).
+export async function resolveIframeBackgroundImage(url: string) {
+  const cached = getCachedIframeBackgroundImage(url);
   if (cached) return cached;
 
   const key = url.startsWith("blob:") ? url : new URL(url, window.location.origin).href;
@@ -91,7 +91,7 @@ export async function resolveIframeEnvironmentImage(url: string) {
 
   const promise = (async () => {
     const blob = await fetch(url.startsWith("blob:") ? url : key).then((res) => {
-      if (!res.ok) throw new Error(`Could not load environment image: ${res.status}`);
+      if (!res.ok) throw new Error(`Could not load background image: ${res.status}`);
       return res.blob();
     });
     const { dataUrl } = await compressBlobForIframeCss(blob);
@@ -108,14 +108,14 @@ export async function resolveIframeEnvironmentImage(url: string) {
   }
 }
 
-export function revokeEnvironmentImageUrl(url: string | null | undefined) {
+export function revokeBackgroundImageUrl(url: string | null | undefined) {
   if (url?.startsWith("blob:")) {
     dataUrlCache.delete(url);
     URL.revokeObjectURL(url);
   }
 }
 
-export async function prepareCustomEnvironmentImage(file: File): Promise<string> {
+export async function prepareCustomBackgroundImage(file: File): Promise<string> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error(`Image must be under ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB`);
   }

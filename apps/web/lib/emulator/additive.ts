@@ -1,9 +1,9 @@
 import {
-  additiveEnvBg,
-  additiveEnvFilter,
-  ENV_BACKDROP_SCALE,
-  type EnvironmentPreset,
-} from "@/lib/emulator/environment";
+  additiveBackgroundBg,
+  additiveBackgroundFilter,
+  BACKDROP_SCALE,
+  type BackgroundPreset,
+} from "@/lib/emulator/background";
 
 const STYLE_ID = "hud-additive-style";
 const ACTIVE_CLASS = "hud-additive";
@@ -22,32 +22,32 @@ const SHEET = `
 html.${ACTIVE_CLASS} {
   height: 100%;
   overflow: hidden;
-  background: var(--env-fill, #1e293b);
+  background: var(--bg-fill, #1e293b);
 }
 
 html.${ACTIVE_CLASS}::before {
   content: "";
   position: fixed;
-  left: var(--hud-env-left, 0px);
-  top: var(--hud-env-top, 0px);
-  width: var(--hud-env-width, 100vw);
-  height: var(--hud-env-height, 100vh);
+  left: var(--hud-bg-left, 0px);
+  top: var(--hud-bg-top, 0px);
+  width: var(--hud-bg-width, 100vw);
+  height: var(--hud-bg-height, 100vh);
   z-index: 0;
   pointer-events: none;
-  background-color: var(--env-fill, #1e293b);
-  background-image: var(--env-bg, none);
-  background-size: var(--env-bg-size, cover);
+  background-color: var(--bg-fill, #1e293b);
+  background-image: var(--bg-image, none);
+  background-size: var(--bg-image-size, cover);
   background-position: center;
-  filter: var(--env-filter, none);
+  filter: var(--bg-filter, none);
 }
 
 html.${ACTIVE_CLASS}.${LENS_TINT_CLASS}::after {
   content: "";
   position: fixed;
-  left: var(--hud-env-left, 0px);
-  top: var(--hud-env-top, 0px);
-  width: var(--hud-env-width, 100vw);
-  height: var(--hud-env-height, 100vh);
+  left: var(--hud-bg-left, 0px);
+  top: var(--hud-bg-top, 0px);
+  width: var(--hud-bg-width, 100vw);
+  height: var(--hud-bg-height, 100vh);
   z-index: 0;
   pointer-events: none;
   background: var(--lens-tint);
@@ -74,8 +74,8 @@ export function measureAdditiveBackdrop(
     return undefined;
   }
 
-  const width = stageRect.width * ENV_BACKDROP_SCALE;
-  const height = stageRect.height * ENV_BACKDROP_SCALE;
+  const width = stageRect.width * BACKDROP_SCALE;
+  const height = stageRect.height * BACKDROP_SCALE;
   const left = stageRect.left - (width - stageRect.width) / 2;
   const top = stageRect.top - (height - stageRect.height) / 2;
   const displayScale = displayRect.width > 0 ? display.offsetWidth / displayRect.width : 1;
@@ -94,7 +94,7 @@ export function measureAdditiveBackdrop(
 export function syncAdditive(
   iframe: HTMLIFrameElement | null,
   additive: boolean,
-  environment: EnvironmentPreset,
+  background: BackgroundPreset,
   image?: string,
   geometry?: AdditiveBackdropGeometry,
   lensTint = false,
@@ -123,20 +123,20 @@ export function syncAdditive(
 
     root.classList.add(ACTIVE_CLASS);
     root.classList.toggle(LENS_TINT_CLASS, lensTint);
-    root.style.setProperty("--env-fill", host.getPropertyValue("--env-fill").trim() || "#1e293b");
+    root.style.setProperty("--bg-fill", host.getPropertyValue("--bg-fill").trim() || "#1e293b");
     root.style.setProperty("--lens-tint", host.getPropertyValue("--lens-tint").trim());
-    root.style.setProperty("--env-bg", additiveEnvBg(environment, image));
-    root.style.setProperty("--env-bg-size", environment.image ? "cover" : "auto");
-    const canvasBlurScale = environment.image ? ENV_BACKDROP_SCALE : 1;
+    root.style.setProperty("--bg-image", additiveBackgroundBg(background, image));
+    root.style.setProperty("--bg-image-size", background.image ? "cover" : "auto");
+    const canvasBlurScale = background.image ? BACKDROP_SCALE : 1;
     const blurScale = canvasBlurScale * (geometry?.displayScale ?? 1);
     root.style.setProperty(
-      "--env-filter",
-      additiveEnvFilter(environment, backgroundBrightness, backgroundBlur, blurScale),
+      "--bg-filter",
+      additiveBackgroundFilter(background, backgroundBrightness, backgroundBlur, blurScale),
     );
-    root.style.setProperty("--hud-env-left", `${geometry?.left ?? 0}px`);
-    root.style.setProperty("--hud-env-top", `${geometry?.top ?? 0}px`);
-    root.style.setProperty("--hud-env-width", `${geometry?.width ?? 600}px`);
-    root.style.setProperty("--hud-env-height", `${geometry?.height ?? 600}px`);
+    root.style.setProperty("--hud-bg-left", `${geometry?.left ?? 0}px`);
+    root.style.setProperty("--hud-bg-top", `${geometry?.top ?? 0}px`);
+    root.style.setProperty("--hud-bg-width", `${geometry?.width ?? 600}px`);
+    root.style.setProperty("--hud-bg-height", `${geometry?.height ?? 600}px`);
   } catch {
     // The frame can briefly expose a cross-origin WindowProxy while Scramjet navigates.
   }

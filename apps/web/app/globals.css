@@ -52,7 +52,7 @@
 
   /* custom colors */
   --color-volt: var(--volt);
-  --color-env-fill: var(--env-fill);
+  --color-bg-fill: var(--bg-fill);
   --color-lens-tint: var(--lens-tint);
   --color-frame: var(--frame);
   --color-frame-temple: var(--frame-temple);
@@ -99,12 +99,12 @@
 
   --volt: #ceff00;
 
-  /* emulator environments */
-  --env-fill: #1e293b;
-  --env-day-from: #225b96;
-  --env-day-to: #e1ca9b;
-  --env-night-from: color-mix(in oklch, var(--env-day-from) 12%, #121823);
-  --env-night-to: color-mix(in oklch, var(--env-day-from) 38%, #25344b);
+  /* emulator backgrounds */
+  --bg-fill: #1e293b;
+  --bg-day-from: #225b96;
+  --bg-day-to: #e1ca9b;
+  --bg-night-from: color-mix(in oklch, var(--bg-day-from) 12%, #121823);
+  --bg-night-to: color-mix(in oklch, var(--bg-day-from) 38%, #25344b);
 
   /* glasses frame */
   --lens-tint: oklch(0.18 0.02 155 / 0.5);

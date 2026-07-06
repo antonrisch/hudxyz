@@ -1,9 +1,9 @@
 import { createStore } from "zustand/vanilla";
 import {
-  DEFAULT_ENVIRONMENT,
-  type CustomEnvironmentImage,
-  type EnvironmentKey,
-} from "@/lib/emulator/environment";
+  DEFAULT_BACKGROUND,
+  type CustomBackgroundImage,
+  type BackgroundKey,
+} from "@/lib/emulator/background";
 
 const DISPLAY_PANEL_OPEN_KEY = "emulator.displayPanelOpen";
 
@@ -49,9 +49,9 @@ export interface EmulatorState {
   status: Status;
   loadToken: number; // bump to (re)trigger a navigation; lets reload re-fire on the same url
   additive: boolean; // off = flat dev preview, on = full waveguide (black reads transparent)
-  environment: EnvironmentKey; // world behind the waveguide (decoupled from canvas chrome)
-  customEnvironmentImages: CustomEnvironmentImage[]; // session uploads (cleared on refresh)
-  activeCustomEnvironmentId: string | null;
+  background: BackgroundKey; // world behind the waveguide (decoupled from canvas chrome)
+  customBackgroundImages: CustomBackgroundImage[]; // session uploads (cleared on refresh)
+  activeCustomBackgroundId: string | null;
   lensTint: boolean; // cosmetic G-15 tint on svg lenses + additive env layer
   backgroundBrightness: number; // 0–100, 100 = full (absolute brightness filter)
   backgroundBlur: number; // 0–100 gaussian blur on the stage backdrop
@@ -62,9 +62,9 @@ export interface EmulatorState {
   setView: (view: View) => void;
   setUrl: (url: string) => void;
   setAdditive: (additive: boolean) => void;
-  setEnvironment: (environment: EnvironmentKey) => void;
-  addCustomEnvironment: (url: string) => void;
-  selectCustomEnvironment: (id: string) => void;
+  setBackground: (background: BackgroundKey) => void;
+  addCustomBackground: (url: string) => void;
+  selectCustomBackground: (id: string) => void;
   setLensTint: (lensTint: boolean) => void;
   setBackgroundBrightness: (value: number) => void;
   setBackgroundBlur: (value: number) => void;
@@ -89,9 +89,9 @@ export type Seed = Partial<
     | "status"
     | "loadToken"
     | "additive"
-    | "environment"
-    | "customEnvironmentImages"
-    | "activeCustomEnvironmentId"
+    | "background"
+    | "customBackgroundImages"
+    | "activeCustomBackgroundId"
     | "lensTint"
     | "backgroundBrightness"
     | "backgroundBlur"
@@ -108,9 +108,9 @@ export function createEmulatorStore(seed?: Seed) {
     status: seed?.status ?? "idle",
     loadToken: seed?.loadToken ?? 0,
     additive: seed?.additive ?? true,
-    environment: seed?.environment ?? DEFAULT_ENVIRONMENT,
-    customEnvironmentImages: seed?.customEnvironmentImages ?? [],
-    activeCustomEnvironmentId: seed?.activeCustomEnvironmentId ?? null,
+    background: seed?.background ?? DEFAULT_BACKGROUND,
+    customBackgroundImages: seed?.customBackgroundImages ?? [],
+    activeCustomBackgroundId: seed?.activeCustomBackgroundId ?? null,
     lensTint: seed?.lensTint ?? false,
     backgroundBrightness: seed?.backgroundBrightness ?? 80,
     backgroundBlur: seed?.backgroundBlur ?? 0,
@@ -121,20 +121,20 @@ export function createEmulatorStore(seed?: Seed) {
     setView: (view) => set({ view }),
     setUrl: (url) => set({ url }),
     setAdditive: (additive) => set({ additive }),
-    setEnvironment: (environment) => set({ environment }),
-    addCustomEnvironment: (url) =>
+    setBackground: (background) => set({ background }),
+    addCustomBackground: (url) =>
       set((s) => {
         const id = crypto.randomUUID();
         return {
-          customEnvironmentImages: [...s.customEnvironmentImages, { id, url }],
-          activeCustomEnvironmentId: id,
-          environment: "custom",
+          customBackgroundImages: [...s.customBackgroundImages, { id, url }],
+          activeCustomBackgroundId: id,
+          background: "custom",
         };
       }),
-    selectCustomEnvironment: (id) =>
+    selectCustomBackground: (id) =>
       set((s) =>
-        s.customEnvironmentImages.some((img) => img.id === id)
-          ? { activeCustomEnvironmentId: id, environment: "custom" as const }
+        s.customBackgroundImages.some((img) => img.id === id)
+          ? { activeCustomBackgroundId: id, background: "custom" as const }
           : {},
       ),
     setLensTint: (lensTint) => set({ lensTint }),

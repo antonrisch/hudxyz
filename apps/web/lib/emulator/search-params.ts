@@ -6,7 +6,7 @@ import {
   parseAsStringLiteral,
 } from "nuqs/server";
 import { VIEWS } from "@/lib/emulator/config";
-import { DEFAULT_ENVIRONMENT, ENVIRONMENTS } from "@/lib/emulator/environment";
+import { DEFAULT_BACKGROUND, BACKGROUNDS } from "@/lib/emulator/background";
 import type { Seed, View } from "@/lib/emulator/store";
 
 export const EMULATOR_SHARE_PATH = "https://hud.xyz/emulator";
@@ -17,7 +17,7 @@ export function buildEmulatorShareUrl(appUrl?: string): string {
 }
 
 const VIEW_KEYS = VIEWS.map((v) => v.key);
-const ENVIRONMENT_KEYS = ENVIRONMENTS.map((e) => e.key);
+const BACKGROUND_KEYS = BACKGROUNDS.map((bg) => bg.key);
 
 // url <-> emulator state contract. these parsers are the single source of truth for both
 // the initial (server-parsed) seed and the client-side writes, so ssr and hydration agree.
@@ -26,7 +26,7 @@ export const emulatorParsers = {
   mode: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
   url: parseAsString.withDefault(""),
   additive: parseAsBoolean.withDefault(true),
-  environment: parseAsStringLiteral(ENVIRONMENT_KEYS).withDefault(DEFAULT_ENVIRONMENT),
+  bg: parseAsStringLiteral(BACKGROUND_KEYS).withDefault(DEFAULT_BACKGROUND),
   lensTint: parseAsBoolean.withDefault(false),
   bgBrightness: parseAsInteger.withDefault(80),
   bgBlur: parseAsInteger.withDefault(0),
@@ -41,7 +41,7 @@ export function seedFromParams(params: {
   mode: View;
   url: string;
   additive: boolean;
-  environment: (typeof ENVIRONMENT_KEYS)[number];
+  bg: (typeof BACKGROUND_KEYS)[number];
   lensTint: boolean;
   bgBrightness: number;
   bgBlur: number;
@@ -50,8 +50,8 @@ export function seedFromParams(params: {
   const seed: Seed = {
     view: params.mode,
     additive: params.additive,
-    // custom uploads are session-only; a refreshed ?environment=custom has no image to show.
-    environment: params.environment === "custom" ? DEFAULT_ENVIRONMENT : params.environment,
+    // custom uploads are session-only; a refreshed ?bg=custom has no image to show.
+    background: params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg,
     lensTint: params.lensTint,
     backgroundBrightness: params.bgBrightness,
     backgroundBlur: params.bgBlur,

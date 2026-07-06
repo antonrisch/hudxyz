@@ -68,6 +68,9 @@ export type SuggestedApp = {
 
 // icons are same-origin (/public) — /emulator sets COEP require-corp, which blocks
 // cross-origin images without CORP.
+export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz emulator feedback")}`;
+export const DIRECTORY_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz app directory request")}`;
+
 export const SUGGESTED_APPS = [
   {
     name: "Snake game",
