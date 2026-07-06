@@ -16,6 +16,9 @@ const ENV_GRADIENT = {
 
 export const DEFAULT_ENVIRONMENT: EnvironmentKey = "alps";
 
+// photo environments are slightly overscaled so blur never exposes the stage edge.
+export const ENV_BACKDROP_SCALE = 1.1;
+
 // preset photos ship as JPEG in /public/environments/ (longest edge ≤3200px, ~300–800KB).
 export const ENVIRONMENTS = [
   {

@@ -1,13 +1,13 @@
 import {
   additiveEnvBg,
   additiveEnvFilter,
+  ENV_BACKDROP_SCALE,
   type EnvironmentPreset,
 } from "@/lib/emulator/environment";
 
 const STYLE_ID = "hud-additive-style";
 const ACTIVE_CLASS = "hud-additive";
 const LENS_TINT_CLASS = "hud-lens-tint";
-const BACKDROP_SCALE = 1.1;
 
 type AdditiveBackdropGeometry = {
   left: number;
@@ -74,8 +74,8 @@ export function measureAdditiveBackdrop(
     return undefined;
   }
 
-  const width = stageRect.width * BACKDROP_SCALE;
-  const height = stageRect.height * BACKDROP_SCALE;
+  const width = stageRect.width * ENV_BACKDROP_SCALE;
+  const height = stageRect.height * ENV_BACKDROP_SCALE;
   const left = stageRect.left - (width - stageRect.width) / 2;
   const top = stageRect.top - (height - stageRect.height) / 2;
   const displayScale = displayRect.width > 0 ? display.offsetWidth / displayRect.width : 1;
@@ -127,7 +127,7 @@ export function syncAdditive(
     root.style.setProperty("--lens-tint", host.getPropertyValue("--lens-tint").trim());
     root.style.setProperty("--env-bg", additiveEnvBg(environment, image));
     root.style.setProperty("--env-bg-size", environment.image ? "cover" : "auto");
-    const canvasBlurScale = environment.image ? BACKDROP_SCALE : 1;
+    const canvasBlurScale = environment.image ? ENV_BACKDROP_SCALE : 1;
     const blurScale = canvasBlurScale * (geometry?.displayScale ?? 1);
     root.style.setProperty(
       "--env-filter",
