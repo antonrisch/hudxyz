@@ -13,8 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { useEmulator } from "@/components/emulator";
-import { dropFocus } from "@/lib/emulator/input";
+import { useSimulator } from "@/components/simulator";
+import { dropFocus } from "@/lib/simulator/input";
 
 function ZoomMenuItem({
   label,
@@ -35,7 +35,7 @@ function ZoomMenuItem({
 
 // zoom dropdown: editable percentage, presets, and keyboard shortcuts.
 export function ZoomControls() {
-  const { panZoom } = useEmulator();
+  const { panZoom } = useSimulator();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [editing, setEditing] = useState(false);

@@ -9,8 +9,8 @@ import {
   useState,
 } from "react";
 import { useGesture } from "@use-gesture/react";
-import { DEFAULT_DEVICE_SCALE } from "@/lib/emulator/config";
-import type { View } from "@/lib/emulator/store";
+import { DEFAULT_DEVICE_SCALE } from "@/lib/simulator/config";
+import type { View } from "@/lib/simulator/store";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
 const SCALE_MIN = 0.3;

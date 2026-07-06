@@ -2,7 +2,7 @@
 // canvas. the proxied iframe cannot load blob:/same-origin urls (scramjet aborts them), so
 // we read the blob in the parent and inject a compressed data: url into iframe css instead.
 
-import { BACKGROUNDS } from "@/lib/emulator/background";
+import { BACKGROUNDS } from "@/lib/simulator/background";
 
 export const CSS_DATA_URL_BUDGET = 900_000;
 const START_EDGE = 2400;

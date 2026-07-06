@@ -4,31 +4,31 @@ Guidance for AI agents when working in this repo.
 
 ## What this is
 
-A browser-based **emulator for the Meta Ray-Ban Display** (MRBD) — a monocular waveguide smart-glasses screen. The emulator loads real MRBD web apps in a faithful **600×600** surface on an ordinary desktop browser and drives them with the glasses' D-pad input model, so MRBD apps can be built and previewed without the hardware.
+A browser-based **simulator for the Meta Ray-Ban Display** (MRBD) — a monocular waveguide smart-glasses screen. The simulator loads real MRBD web apps in a faithful **600×600** surface on an ordinary desktop browser and drives them with the glasses' D-pad input model, so MRBD apps can be built and previewed without the hardware.
 
 Single Next.js app in **`apps/web`**. pnpm monorepo, Next.js 16 (App Router) + React 19 + Tailwind v4, shadcn/ui on Base UI primitives. Node >= 22.12.
 
 ## The MRBD target
 
-The emulator reproduces the two things that make the device different from a normal web page:
+The simulator reproduces the two things that make the device different from a normal web page:
 
 - **600×600 fixed viewport** — the waveguide surface.
 - **D-pad input** — the device emits `ArrowUp` / `ArrowDown` / `ArrowLeft` / `ArrowRight` + `Enter`, with no pointer. Every action is reached by moving focus to a control and pressing Enter.
 
 (The physical display is additive — white reads opaque, black reads transparent — so MRBD apps are designed white-on-black.)
 
-## The emulator
+## The simulator
 
-A single route, **`/`**, renders the `Emulator` component (`components/emulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
+A single route, **`/`**, renders the `Simulator` component (`components/simulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
 
-- **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`components/emulator/frames.tsx`).
+- **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`components/simulator/frames.tsx`).
 - **1:1** — the surface at its exact 600×600 size, no scaling (`pixel` in `?mode=`).
 
 Cosmetic chrome is `?mode=glasses|pixel` (url-only name; store field is `view`). Set client-side via nuqs, so switching never navigates. `?url=` deep-links a target.
 
-**Structure.** A UI-agnostic core — `lib/emulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `components/emulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, controls, view-switcher, zoom-controls), `header/` (app-header, url-bar, share, feedback), `input/` (dpad, screenshot), plus root `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
+**Structure.** A UI-agnostic core — `lib/simulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `components/simulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, controls, view-switcher, zoom-controls), `header/` (app-header, url-bar, share, feedback), `input/` (dpad, screenshot), plus root `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
 
-**Same-origin proxy.** Third-party sites set `frame-ancestors` / `X-Frame-Options` that scope framing to themselves. The emulator re-serves the target **from our own origin** through a **Scramjet v2** service-worker proxy, so the browser treats it as same-origin and renders it. Same-origin also lets the D-pad inject keystrokes straight into the frame.
+**Same-origin proxy.** Third-party sites set `frame-ancestors` / `X-Frame-Options` that scope framing to themselves. The simulator re-serves the target **from our own origin** through a **Scramjet v2** service-worker proxy, so the browser treats it as same-origin and renders it. Same-origin also lets the D-pad inject keystrokes straight into the frame.
 
 Request path: `frame.go(url)` points the iframe at a same-origin proxied URL → the service worker (`public/sw.js`) routes it through Scramjet → the engine fetches the real site through a **Wisp** egress server → the response (and every URL/script inside it) is rewritten back through the proxy and rendered.
 
@@ -46,9 +46,9 @@ Key files:
 
 ## Layout (`apps/web`)
 
-- `app/` — App Router routes: `page.tsx` (emulator), `layout.tsx` (fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
-- `components/` — `emulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `input/` + `device`), `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
-- `lib/` — `proxy.ts` (Scramjet proxy), `emulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
+- `app/` — App Router routes: `page.tsx` (simulator), `layout.tsx` (fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
+- `components/` — `simulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `input/` + `device`), `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
+- `lib/` — `proxy.ts` (Scramjet proxy), `simulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
 - `public/` — `sw.js` plus the generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`.
 
@@ -77,7 +77,7 @@ Per-app: `pnpm --filter @hudxyz/web <script>`. Type-check with `pnpm --filter @h
 
 - pnpm workspaces throughout. Lint is **oxlint**; format is **oxfmt**.
 - `pnpm-workspace.yaml` scopes the workspace to `apps/*` and lists `allowBuilds` (esbuild / sharp / scramjet / bufferutil ship prebuilt, so they stay unbuilt).
-- **File naming:** kebab-case / lowercase for every `.ts` / `.tsx` file, components included (`emulator.tsx`, `theme-provider.tsx`, `proxy.ts`); lowercase for App Router route files (`page.tsx`). Keeps imports stable on case-sensitive build hosts (Vercel/Linux) even though macOS is case-insensitive.
+- **File naming:** kebab-case / lowercase for every `.ts` / `.tsx` file, components included (`simulator.tsx`, `theme-provider.tsx`, `proxy.ts`); lowercase for App Router route files (`page.tsx`). Keeps imports stable on case-sensitive build hosts (Vercel/Linux) even though macOS is case-insensitive.
 
 ## Existing `apps/web/AGENTS.md`
 

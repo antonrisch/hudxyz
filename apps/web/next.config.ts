@@ -2,13 +2,13 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 // cross-origin isolation for the scramjet wasm rewriter (SharedArrayBuffer).
-// scoped to the emulator pages so marketing routes keep loading cross-origin assets.
+// scoped to the simulator pages so marketing routes keep loading cross-origin assets.
 const isolation = [
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
 ];
 
-// first-party MRBD apps load in the emulator iframe (same-origin, el.src — not scramjet).
+// first-party MRBD apps load in the simulator iframe (same-origin, el.src — not scramjet).
 const appHeaders = [
   { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
         headers: [...baseSecurity, ...appHeaders],
       },
       {
-        // deny external framing everywhere except /apps/* (embedded by the emulator).
+        // deny external framing everywhere except /apps/* (embedded by the simulator).
         source: "/((?!apps).*)",
         headers: [...baseSecurity, { key: "X-Frame-Options", value: "DENY" }],
       },

@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
-import { EMULATOR_TAGLINE } from "@/lib/emulator/config";
+import { SIMULATOR_TAGLINE } from "@/lib/simulator/config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "hud.xyz",
     short_name: "hud.xyz",
-    description: EMULATOR_TAGLINE,
+    description: SIMULATOR_TAGLINE,
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
