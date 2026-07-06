@@ -18,6 +18,16 @@ import { useQueryState } from "nuqs";
 import { useEmulator, useEmulatorState } from "@/components/emulator";
 import { emulatorParsers } from "@/lib/emulator/search-params";
 
+function syncEmulatorParam<T>(
+  apply: (next: T) => void,
+  setParam: (value: T | null | ((old: T) => T | null)) => void | Promise<unknown>,
+) {
+  return (next: T) => {
+    apply(next);
+    void setParam(next);
+  };
+}
+
 // display preview controls: view, zoom, and additive blend (shared by the rhs panel + mobile sheet).
 export function DisplayPanel() {
   const { store } = useEmulator();
@@ -35,10 +45,26 @@ export function DisplayPanel() {
     emulatorParsers.displayBrightness,
   );
 
-  const setAdditive = (next: boolean) => {
-    store.getState().setAdditive(next);
-    void setAdditiveParam(next);
-  };
+  const setAdditive = syncEmulatorParam(
+    (next) => store.getState().setAdditive(next),
+    setAdditiveParam,
+  );
+  const setBgBrightness = syncEmulatorParam(
+    (next) => store.getState().setBackgroundBrightness(next),
+    setBgBrightnessParam,
+  );
+  const setBgBlur = syncEmulatorParam(
+    (next) => store.getState().setBackgroundBlur(next),
+    setBgBlurParam,
+  );
+  const setDisplayBrightness = syncEmulatorParam(
+    (next) => store.getState().setDisplayBrightness(next),
+    setDisplayBrightnessParam,
+  );
+  const setLensTint = syncEmulatorParam(
+    (next) => store.getState().setLensTint(next),
+    setLensTintParam,
+  );
 
   return (
     <>
@@ -51,20 +77,14 @@ export function DisplayPanel() {
           id="bg-brightness"
           label="Background brightness"
           value={backgroundBrightness}
-          onChange={(next) => {
-            store.getState().setBackgroundBrightness(next);
-            void setBgBrightnessParam(next);
-          }}
+          onChange={setBgBrightness}
         />
 
         <PanelSlider
           id="bg-blur"
           label="Background blur"
           value={backgroundBlur}
-          onChange={(next) => {
-            store.getState().setBackgroundBlur(next);
-            void setBgBlurParam(next);
-          }}
+          onChange={setBgBlur}
         />
       </PanelSection>
 
@@ -107,10 +127,7 @@ export function DisplayPanel() {
             <Switch
               id="lens-tint"
               checked={lensTint}
-              onCheckedChange={(checked) => {
-                store.getState().setLensTint(checked);
-                void setLensTintParam(checked);
-              }}
+              onCheckedChange={setLensTint}
               aria-label="Lens tint"
             />
           </PanelRow>
@@ -120,10 +137,7 @@ export function DisplayPanel() {
           id="display-brightness"
           label="Display brightness"
           value={displayBrightness}
-          onChange={(next) => {
-            store.getState().setDisplayBrightness(next);
-            void setDisplayBrightnessParam(next);
-          }}
+          onChange={setDisplayBrightness}
         />
       </PanelSection>
 
