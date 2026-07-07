@@ -88,7 +88,7 @@ export function DisplaySidebarColumn() {
 
   return (
     <div className="hidden min-h-0 w-72 overflow-hidden rounded-2xl border bg-background sm:col-start-2 sm:row-start-1 sm:flex sm:flex-col">
-      <p className="shrink-0 p-3 pb-2 text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</p>
+      <p className="shrink-0 p-3 pb-2 text-md leading-snug font-semibold">{SIMULATOR_TITLE}</p>
       <aside className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <DisplayPanelControlsShell />
       </aside>
