@@ -242,12 +242,12 @@ export function prewarmPresetBackgroundImages(activeKey: BackgroundKey) {
     ? activeKey
     : PHOTO_BACKGROUND_KEYS[0];
 
-  void resolvePresetIframeBackgroundImage(backgroundByKey(active));
+  void resolvePresetIframeBackgroundImage(backgroundByKey(active)).catch(() => {});
 
   scheduleIdle(() => {
     for (const key of PHOTO_BACKGROUND_KEYS) {
       if (key === active) continue;
-      void resolvePresetIframeBackgroundImage(backgroundByKey(key));
+      void resolvePresetIframeBackgroundImage(backgroundByKey(key)).catch(() => {});
     }
   });
 }
