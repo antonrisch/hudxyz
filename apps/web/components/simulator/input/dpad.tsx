@@ -28,11 +28,36 @@ const dpadCrossPath =
 const dpadCrossClip = `path("${dpadCrossPath}")`;
 
 const DPAD_CELLS = [
-  { intent: "up" as const, Icon: ArrowBigUp, label: "Swipe up", placement: "col-start-2 row-start-1" },
-  { intent: "left" as const, Icon: ArrowBigLeft, label: "Swipe left", placement: "col-start-1 row-start-2" },
-  { intent: "select" as const, Icon: Pointer, label: "Enter", placement: "col-start-2 row-start-2" },
-  { intent: "right" as const, Icon: ArrowBigRight, label: "Swipe right", placement: "col-start-3 row-start-2" },
-  { intent: "down" as const, Icon: ArrowBigDown, label: "Swipe down", placement: "col-start-2 row-start-3" },
+  {
+    intent: "up" as const,
+    Icon: ArrowBigUp,
+    label: "Swipe up",
+    placement: "col-start-2 row-start-1",
+  },
+  {
+    intent: "left" as const,
+    Icon: ArrowBigLeft,
+    label: "Swipe left",
+    placement: "col-start-1 row-start-2",
+  },
+  {
+    intent: "select" as const,
+    Icon: Pointer,
+    label: "Enter",
+    placement: "col-start-2 row-start-2",
+  },
+  {
+    intent: "right" as const,
+    Icon: ArrowBigRight,
+    label: "Swipe right",
+    placement: "col-start-3 row-start-2",
+  },
+  {
+    intent: "down" as const,
+    Icon: ArrowBigDown,
+    label: "Swipe down",
+    placement: "col-start-2 row-start-3",
+  },
 ] as const;
 
 function useIntentPress(intent: Intent) {

@@ -21,9 +21,9 @@ export function PrivacyContent() {
 
       <h2>What hud.xyz does</h2>
       <p>
-        You can enter a URL to load a public website in the simulator. Requests may be routed through
-        proxy infrastructure we operate so the page can be displayed. We do not operate or control
-        third-party sites you choose to load.
+        You can enter a URL to load a public website in the simulator. Requests may be routed
+        through proxy infrastructure we operate so the page can be displayed. We do not operate or
+        control third-party sites you choose to load.
       </p>
       <p>hud.xyz does not offer user accounts. You can use the service without registering.</p>
 

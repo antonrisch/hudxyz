@@ -2,9 +2,18 @@
 // canvas. the proxied iframe cannot load blob:/same-origin urls (scramjet aborts them), so
 // we read the blob in the parent and inject a compressed data: url into iframe css instead.
 
-import { BACKGROUNDS, type BackgroundKey, type BackgroundPreset, backgroundByKey } from "@/lib/simulator/background";
+import {
+  BACKGROUNDS,
+  type BackgroundKey,
+  type BackgroundPreset,
+  backgroundByKey,
+} from "@/lib/simulator/background";
 
-const PHOTO_BACKGROUND_KEYS = ["alps", "alps2", "beach"] as const satisfies readonly BackgroundKey[];
+const PHOTO_BACKGROUND_KEYS = [
+  "alps",
+  "alps2",
+  "beach",
+] as const satisfies readonly BackgroundKey[];
 
 export const CSS_DATA_URL_BUDGET = 900_000;
 const START_EDGE = 2400;
@@ -233,12 +242,12 @@ export function prewarmPresetBackgroundImages(activeKey: BackgroundKey) {
     ? activeKey
     : PHOTO_BACKGROUND_KEYS[0];
 
-  void resolvePresetIframeBackgroundImage(backgroundByKey(active));
+  void resolvePresetIframeBackgroundImage(backgroundByKey(active)).catch(() => {});
 
   scheduleIdle(() => {
     for (const key of PHOTO_BACKGROUND_KEYS) {
       if (key === active) continue;
-      void resolvePresetIframeBackgroundImage(backgroundByKey(key));
+      void resolvePresetIframeBackgroundImage(backgroundByKey(key)).catch(() => {});
     }
   });
 }

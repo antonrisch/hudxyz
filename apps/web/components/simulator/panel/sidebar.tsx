@@ -23,10 +23,7 @@ import { cn } from "@/lib/utils";
 function LegalLinks() {
   return (
     <>
-      <a
-        href={FEEDBACK_MAILTO}
-        className="text-foreground hover:underline underline-offset-4"
-      >
+      <a href={FEEDBACK_MAILTO} className="text-foreground hover:underline underline-offset-4">
         Contact
       </a>
       {" · "}
