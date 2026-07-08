@@ -32,7 +32,9 @@ function PlaceholderLayers({
   poster?: string;
   overscale: boolean;
 }) {
-  const layerStyle = overscale ? mediaLayerBase : { backgroundSize: "cover" as const, backgroundPosition: "center" as const };
+  const layerStyle = overscale
+    ? mediaLayerBase
+    : { backgroundSize: "cover" as const, backgroundPosition: "center" as const };
 
   return (
     <>

@@ -2,7 +2,11 @@
 
 import { forwardRef } from "react";
 import { BackdropMedia } from "@/components/simulator/background/backdrop-media";
-import { backgroundBackdropStyle, type BackdropPlaceholder, type BackgroundPreset } from "@/lib/simulator/background";
+import {
+  backgroundBackdropStyle,
+  type BackdropPlaceholder,
+  type BackgroundPreset,
+} from "@/lib/simulator/background";
 
 export const BackgroundBackdrop = forwardRef<
   HTMLDivElement,

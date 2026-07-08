@@ -128,9 +128,7 @@ export function Device() {
                 style={additiveSliceStyle()}
               >
                 {background.video ? (
-                  <BackdropVideoMirror
-                    style={{ filter: "var(--hud-bg-filter, none)" }}
-                  />
+                  <BackdropVideoMirror style={{ filter: "var(--hud-bg-filter, none)" }} />
                 ) : (
                   <div
                     className="absolute inset-0 origin-center"

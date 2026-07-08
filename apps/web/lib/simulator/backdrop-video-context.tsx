@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useRef,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useMemo, useRef, type ReactNode } from "react";
 
 type BackdropVideoLeaderContextValue = {
   /** Read the current leader element (may be null). */
@@ -43,7 +37,9 @@ export function BackdropVideoLeaderProvider({ children }: { children: ReactNode 
   );
 
   return (
-    <BackdropVideoLeaderContext.Provider value={value}>{children}</BackdropVideoLeaderContext.Provider>
+    <BackdropVideoLeaderContext.Provider value={value}>
+      {children}
+    </BackdropVideoLeaderContext.Provider>
   );
 }
 

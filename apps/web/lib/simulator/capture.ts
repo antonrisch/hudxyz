@@ -154,11 +154,7 @@ async function captureVideoBackdrop(
   if (filter) ctx.filter = filter;
 
   const video = backdrop.querySelector("video");
-  if (
-    video &&
-    video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
-    video.videoWidth > 0
-  ) {
+  if (video && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0) {
     drawImageCover(ctx, video, 0, 0, width, height);
   } else if (preset.poster) {
     try {
@@ -286,11 +282,7 @@ function resolveVideoCaptureSource(display: HTMLElement): CanvasImageSource | nu
   const video = display.ownerDocument.querySelector<HTMLVideoElement>(
     '[data-capture="backdrop"] video',
   );
-  if (
-    video &&
-    video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
-    video.videoWidth > 0
-  ) {
+  if (video && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0) {
     return video;
   }
 

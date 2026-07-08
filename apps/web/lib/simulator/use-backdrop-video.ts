@@ -4,10 +4,7 @@ import { useEffect, useState, type RefObject } from "react";
 import { useBackdropVideoLeaderContext } from "@/lib/simulator/backdrop-video-context";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 
-export function useBackdropVideoLeader(
-  ref: RefObject<HTMLVideoElement | null>,
-  active: boolean,
-) {
+export function useBackdropVideoLeader(ref: RefObject<HTMLVideoElement | null>, active: boolean) {
   const ctx = useBackdropVideoLeaderContext();
   const reducedMotion = useReducedMotion();
 
