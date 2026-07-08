@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
@@ -10,6 +11,17 @@ import { cn } from "@/lib/utils";
 export function ScreenshotButton({ className }: { className?: string }) {
   const { captureDisplay } = useSimulator();
   const canCapture = useSimulatorState((s) => s.screen === "app" && s.status === "ready");
+  const showWelcome = useSimulatorState((s) => s.screen === "app" && s.status === "idle");
+
+  const onClick = () => {
+    if (canCapture) {
+      void captureDisplay();
+      return;
+    }
+    if (showWelcome) {
+      toast.message("Enter a URL to screenshot your web app");
+    }
+  };
 
   return (
     <Tooltip>
@@ -22,7 +34,7 @@ export function ScreenshotButton({ className }: { className?: string }) {
             aria-label="Screenshot"
             className={cn(className)}
             onMouseDown={dropFocus}
-            onClick={() => canCapture && void captureDisplay()}
+            onClick={onClick}
           >
             <Camera />
           </Button>
