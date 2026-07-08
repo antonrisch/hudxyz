@@ -16,6 +16,7 @@ import { DisplayPanel } from "@/components/simulator/panel/controls";
 import { ViewSwitcher } from "@/components/simulator/panel/view-switcher";
 import { ZoomControls } from "@/components/simulator/panel/zoom-controls";
 import { SIMULATOR_SUMMARY, SIMULATOR_TITLE, FEEDBACK_MAILTO } from "@/lib/simulator/config";
+import { legal } from "@/lib/legal/config";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
 import { cn } from "@/lib/utils";
@@ -23,8 +24,15 @@ import { cn } from "@/lib/utils";
 function LegalLinks() {
   return (
     <>
-      <a href={FEEDBACK_MAILTO} className="text-foreground hover:underline underline-offset-4">
+      <a
+        href={`mailto:${legal.contactEmail}`}
+        className="text-foreground hover:underline underline-offset-4"
+      >
         Contact
+      </a>
+      {" · "}
+      <a href={FEEDBACK_MAILTO} className="text-foreground hover:underline underline-offset-4">
+        Feedback
       </a>
       {" · "}
       <Link href="/privacy" className="text-foreground hover:underline underline-offset-4">
