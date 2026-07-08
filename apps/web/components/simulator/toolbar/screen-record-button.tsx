@@ -1,21 +1,31 @@
 "use client";
 
-import { RecordIcon } from "@/components/icons/record";
+import { RecordIcon, RecordingIcon } from "@/components/icons/record";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, type buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
 import { cn } from "@/lib/utils";
+import type { VariantProps } from "class-variance-authority";
 
-export function ScreenRecordButton({ className }: { className?: string }) {
-  const { recordScreen, isRecording, recordCountdown } = useSimulator();
+type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>["size"]>;
+
+export function ScreenRecordButton({
+  className,
+  size = "icon",
+  showLabel = false,
+}: {
+  className?: string;
+  size?: ButtonSize;
+  showLabel?: boolean;
+}) {
+  const { recordScreen, isRecording } = useSimulator();
   const canCapture = useSimulatorState((s) => s.screen === "app" && s.status === "ready");
   const showWelcome = useSimulatorState((s) => s.screen === "app" && s.status === "idle");
-  const countingDown = recordCountdown !== null;
 
   const onClick = () => {
-    if (isRecording || (canCapture && !countingDown)) {
+    if (isRecording || canCapture) {
       recordScreen();
       return;
     }
@@ -31,29 +41,46 @@ export function ScreenRecordButton({ className }: { className?: string }) {
           <Button
             type="button"
             variant="outline"
-            size="icon"
-            aria-label={
-              isRecording
-                ? "Stop recording"
-                : countingDown
-                  ? "Recording countdown"
-                  : "Start recording"
-            }
+            size={size}
+            aria-label={isRecording ? "Stop recording" : "Start recording"}
             aria-pressed={isRecording}
-            className={cn(isRecording && "border-destructive text-destructive", className)}
+            className={cn(
+              isRecording &&
+                "border-destructive bg-destructive text-white hover:bg-destructive/90 hover:text-white",
+                showLabel && "w-28",
+              className,
+            )}
             onMouseDown={dropFocus}
             onClick={onClick}
           >
-            <RecordIcon className={cn(isRecording && "animate-pulse")} />
+            {isRecording ? (
+              <RecordingIcon
+                data-icon={showLabel ? "inline-start" : undefined}
+                className="animate-pulse"
+              />
+            ) : (
+              <RecordIcon
+                data-icon={showLabel ? "inline-start" : undefined}
+                className="text-destructive"
+              />
+            )}
+            {showLabel ? (
+              <span className="hidden sm:inline">
+                {isRecording ? (
+                  <>
+                    <span className="group-hover/button:hidden">Recording</span>
+                    <span className="hidden group-hover/button:inline">Finish</span>
+                  </>
+                ) : (
+                  "Record"
+                )}
+              </span>
+            ) : null}
           </Button>
         }
       />
       <TooltipContent>
-        {isRecording
-          ? "Stop recording"
-          : countingDown
-            ? `Recording in ${recordCountdown}…`
-            : "Record stage"}
+        {isRecording ? "Stop recording" : "Record canvas"}
       </TooltipContent>
     </Tooltip>
   );
