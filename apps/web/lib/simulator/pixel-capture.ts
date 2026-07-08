@@ -20,7 +20,7 @@ export type PixelCaptureSession = {
   stop: () => void;
 };
 
-export function canUsePixelCapture(): boolean {
+function canUsePixelCapture(): boolean {
   return (
     typeof navigator.mediaDevices?.getDisplayMedia === "function" &&
     typeof window.CropTarget?.fromElement === "function"

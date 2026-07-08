@@ -33,32 +33,14 @@ function scaledDimensions(bitmap: ImageBitmap, edge: number) {
   };
 }
 
-export async function compressBitmapForDisplay(bitmap: ImageBitmap, maxEdge = DISPLAY_EDGE) {
+async function compressBitmapForDisplay(bitmap: ImageBitmap, maxEdge = DISPLAY_EDGE) {
   const { width, height } = scaledDimensions(bitmap, maxEdge);
   return encodeJpeg(bitmap, width, height, DISPLAY_QUALITY);
 }
 
-export async function compressBlobForDisplay(blob: Blob, maxEdge = DISPLAY_EDGE) {
-  const bitmap = await createImageBitmap(blob);
-  try {
-    return compressBitmapForDisplay(bitmap, maxEdge);
-  } finally {
-    bitmap.close();
-  }
-}
-
-export async function compressBitmapForPickerThumb(bitmap: ImageBitmap, maxEdge = THUMB_EDGE) {
+async function compressBitmapForPickerThumb(bitmap: ImageBitmap, maxEdge = THUMB_EDGE) {
   const { width, height } = scaledDimensions(bitmap, maxEdge);
   return encodeJpeg(bitmap, width, height, THUMB_QUALITY);
-}
-
-export async function compressBlobForPickerThumb(blob: Blob, maxEdge = THUMB_EDGE) {
-  const bitmap = await createImageBitmap(blob);
-  try {
-    return compressBitmapForPickerThumb(bitmap, maxEdge);
-  } finally {
-    bitmap.close();
-  }
 }
 
 export function revokeBackgroundImageUrl(url: string | null | undefined) {
