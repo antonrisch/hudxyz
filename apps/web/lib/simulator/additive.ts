@@ -1,15 +1,12 @@
+import type { CSSProperties } from "react";
 import {
-  additiveBackgroundBg,
-  additiveBackgroundFilter,
   BACKDROP_SCALE,
+  backgroundBackdropFilter,
+  backgroundBackdropStyle,
   type BackgroundPreset,
 } from "@/lib/simulator/background";
 
-const STYLE_ID = "hud-additive-style";
-const ACTIVE_CLASS = "hud-additive";
-const LENS_TINT_CLASS = "hud-lens-tint";
-
-type AdditiveBackdropGeometry = {
+export type AdditiveBackdropGeometry = {
   left: number;
   top: number;
   width: number;
@@ -18,49 +15,13 @@ type AdditiveBackdropGeometry = {
   displayScale: number;
 };
 
-const SHEET = `
-html.${ACTIVE_CLASS} {
-  height: 100%;
-  overflow: hidden;
-  background: var(--stage-fill, #1e293b);
-}
-
-html.${ACTIVE_CLASS}::before {
-  content: "";
-  position: fixed;
-  left: var(--hud-bg-left, 0px);
-  top: var(--hud-bg-top, 0px);
-  width: var(--hud-bg-width, 100vw);
-  height: var(--hud-bg-height, 100vh);
-  z-index: 0;
-  pointer-events: none;
-  background-color: var(--stage-fill, #1e293b);
-  background-image: var(--bg-image, none);
-  background-size: var(--bg-image-size, cover);
-  background-position: center;
-  filter: var(--bg-filter, none);
-}
-
-html.${ACTIVE_CLASS}.${LENS_TINT_CLASS}::after {
-  content: "";
-  position: fixed;
-  left: var(--hud-bg-left, 0px);
-  top: var(--hud-bg-top, 0px);
-  width: var(--hud-bg-width, 100vw);
-  height: var(--hud-bg-height, 100vh);
-  z-index: 0;
-  pointer-events: none;
-  background: var(--lens-tint);
-}
-
-html.${ACTIVE_CLASS} body {
-  position: relative;
-  z-index: 1;
-  min-height: 100%;
-  overflow: hidden;
-  mix-blend-mode: screen !important;
-}
-`;
+const GEOMETRY_PROPS = [
+  "--hud-bg-left",
+  "--hud-bg-top",
+  "--hud-bg-width",
+  "--hud-bg-height",
+  "--hud-bg-filter",
+] as const;
 
 export function measureAdditiveBackdrop(
   stage: HTMLElement | null,
@@ -91,58 +52,55 @@ export function measureAdditiveBackdrop(
   };
 }
 
-export function syncAdditive(
-  iframe: HTMLIFrameElement | null,
+export function additiveSliceStyle(): CSSProperties {
+  return {
+    position: "absolute",
+    left: "var(--hud-bg-left, 0px)",
+    top: "var(--hud-bg-top, 0px)",
+    width: "var(--hud-bg-width, 100%)",
+    height: "var(--hud-bg-height, 100%)",
+    pointerEvents: "none",
+    zIndex: 0,
+  };
+}
+
+export function additiveBackdropContentStyle(preset: BackgroundPreset): CSSProperties {
+  const style = backgroundBackdropStyle(preset);
+  return {
+    ...style,
+    filter: "var(--hud-bg-filter, none)",
+  };
+}
+
+export function syncHostAdditive(
+  display: HTMLElement | null,
   additive: boolean,
-  background: BackgroundPreset,
-  image?: string,
-  geometry?: AdditiveBackdropGeometry,
-  lensTint = false,
-  backgroundBrightness = 80,
-  backgroundBlur = 0,
+  preset: BackgroundPreset,
+  geometry: AdditiveBackdropGeometry | undefined,
+  backgroundBrightness: number,
+  backgroundBlur: number,
 ) {
-  const doc = iframe?.contentDocument;
-  if (!doc?.documentElement) return;
+  if (!display) return;
 
-  try {
-    const root = doc.documentElement;
-
-    if (!additive) {
-      root.classList.remove(ACTIVE_CLASS);
-      root.classList.remove(LENS_TINT_CLASS);
-      doc.getElementById(STYLE_ID)?.remove();
-      return;
-    }
-
-    const style = doc.getElementById(STYLE_ID) ?? doc.createElement("style");
-    style.id = STYLE_ID;
-    style.textContent = SHEET;
-    doc.head.append(style);
-
-    const host = getComputedStyle(document.documentElement);
-
-    root.classList.add(ACTIVE_CLASS);
-    root.classList.toggle(LENS_TINT_CLASS, lensTint);
-    root.style.setProperty(
-      "--stage-fill",
-      host.getPropertyValue("--stage-fill").trim() || "#1e293b",
-    );
-    root.style.setProperty("--lens-tint", host.getPropertyValue("--lens-tint").trim());
-    root.style.setProperty("--bg-image", additiveBackgroundBg(background, image));
-    root.style.setProperty("--bg-image-size", background.image ? "cover" : "auto");
-    const canvasBlurScale = background.image ? BACKDROP_SCALE : 1;
-    const blurScale = canvasBlurScale * (geometry?.displayScale ?? 1);
-    root.style.setProperty(
-      "--bg-filter",
-      additiveBackgroundFilter(background, backgroundBrightness, backgroundBlur, blurScale),
-    );
-    root.style.setProperty("--hud-bg-left", `${geometry?.left ?? 0}px`);
-    root.style.setProperty("--hud-bg-top", `${geometry?.top ?? 0}px`);
-    root.style.setProperty("--hud-bg-width", `${geometry?.width ?? 600}px`);
-    root.style.setProperty("--hud-bg-height", `${geometry?.height ?? 600}px`);
-  } catch {
-    // The frame can briefly expose a cross-origin WindowProxy while Scramjet navigates.
+  if (!additive) {
+    for (const prop of GEOMETRY_PROPS) display.style.removeProperty(prop);
+    return;
   }
+
+  display.style.setProperty("--hud-bg-left", `${geometry?.left ?? 0}px`);
+  display.style.setProperty("--hud-bg-top", `${geometry?.top ?? 0}px`);
+  display.style.setProperty("--hud-bg-width", `${geometry?.width ?? 600}px`);
+  display.style.setProperty("--hud-bg-height", `${geometry?.height ?? 600}px`);
+
+  const blurScale = (preset.image ? BACKDROP_SCALE : 1) * (geometry?.displayScale ?? 1);
+  const filter = backgroundBackdropFilter(
+    preset,
+    backgroundBrightness,
+    backgroundBlur,
+    blurScale,
+  );
+  if (filter) display.style.setProperty("--hud-bg-filter", filter);
+  else display.style.removeProperty("--hud-bg-filter");
 }
 
 // matches the Meta chrome extension: filter on the app body, not a host overlay.

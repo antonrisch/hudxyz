@@ -161,37 +161,3 @@ export function backgroundBackdropStyle(
   return { backgroundColor: "var(--stage-fill)", ...(filter && { filter }) };
 }
 
-export function additiveBackgroundBg(preset: BackgroundPreset, image?: string): string {
-  if (preset.image) {
-    // iframe css resolves urls against the proxied app origin — never inject host-relative
-    // /backgrounds/* paths; wait for the parent to supply a compressed data: url instead.
-    const src =
-      image ??
-      (preset.image.startsWith("blob:") || preset.image.startsWith("/") ? undefined : preset.image);
-    if (!src) return "none";
-    return `url("${src}")`;
-  }
-
-  const gradient = BACKGROUND_GRADIENT[preset.key as keyof typeof BACKGROUND_GRADIENT];
-  return gradient ? resolveHostBackgroundImage(gradient) : "none";
-}
-
-export function additiveBackgroundFilter(
-  preset: BackgroundPreset,
-  backgroundBrightness = 80,
-  backgroundBlur = 0,
-  blurScale = 1,
-): string {
-  return (
-    backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale) ?? "none"
-  );
-}
-
-function resolveHostBackgroundImage(source: string): string {
-  const probe = document.createElement("div");
-  probe.style.backgroundImage = source;
-  document.documentElement.append(probe);
-  const resolved = getComputedStyle(probe).backgroundImage;
-  probe.remove();
-  return resolved !== "none" ? resolved : source;
-}

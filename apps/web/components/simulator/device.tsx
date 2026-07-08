@@ -12,6 +12,11 @@ import {
 import type { Status } from "@/lib/simulator/store";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { releaseChromeFocus } from "@/lib/simulator/input";
+import {
+  additiveBackdropContentStyle,
+  additiveSliceStyle,
+} from "@/lib/simulator/additive";
+import { resolveBackground } from "@/lib/simulator/background";
 import { cn } from "@/lib/utils";
 
 const STATUS_MSG: Partial<Record<Status, string>> = {
@@ -34,6 +39,14 @@ export function Device() {
   const status = useSimulatorState((s) => s.status);
   const additive = useSimulatorState((s) => s.additive);
   const lensTint = useSimulatorState((s) => s.lensTint);
+  const backgroundKey = useSimulatorState((s) => s.background);
+  const customBackgroundImages = useSimulatorState((s) => s.customBackgroundImages);
+  const activeCustomBackgroundId = useSimulatorState((s) => s.activeCustomBackgroundId);
+  const background = resolveBackground(
+    backgroundKey,
+    customBackgroundImages,
+    activeCustomBackgroundId,
+  );
   const isGlasses = view === "glasses";
   const { onPointerDown, ...panGesture } = panZoom.bind();
   const [appRevealed, setAppRevealed] = useState(false);
@@ -82,8 +95,28 @@ export function Device() {
         <div
           ref={displayRef}
           id="hud-display"
-          className={cn("relative z-10 size-full", DEVICE_SURFACE, additive && "bg-transparent")}
+          className={cn("relative z-10 size-full overflow-hidden", DEVICE_SURFACE, additive && "bg-transparent")}
         >
+          {additive && (
+            <>
+              <div
+                aria-hidden
+                style={{
+                  ...additiveSliceStyle(),
+                  ...additiveBackdropContentStyle(background),
+                }}
+              />
+              {lensTint && (
+                <div
+                  aria-hidden
+                  style={{
+                    ...additiveSliceStyle(),
+                    background: "var(--lens-tint)",
+                  }}
+                />
+              )}
+            </>
+          )}
           <iframe
             ref={iframeRef}
             title="Glasses display"
@@ -91,6 +124,7 @@ export function Device() {
             allow="clipboard-read; clipboard-write"
             className={cn(
               "relative size-full border-0 transition-opacity ease-out",
+              additive && "mix-blend-screen",
               appVisible && appRevealed ? "opacity-100" : "opacity-0",
             )}
             style={{ transitionDuration: `${APP_REVEAL_MS}ms` }}

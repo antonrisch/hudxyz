@@ -27,17 +27,11 @@ import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
 import {
   resolveBackground,
   resolveBackdropPlaceholder,
-  backgroundByKey,
 } from "@/lib/simulator/background";
 import {
-  getCachedIframeBackgroundImage,
-  prewarmPresetBackgroundImages,
-  resolveIframeBackgroundImage,
-} from "@/lib/simulator/background-image";
-import {
   measureAdditiveBackdrop,
-  syncAdditive,
   syncDisplayBrightness,
+  syncHostAdditive,
 } from "@/lib/simulator/additive";
 import { simulatorParsers } from "@/lib/simulator/search-params";
 import { normalizeWebUrl } from "@/lib/simulator/search-params";
@@ -341,23 +335,14 @@ export default function Simulator({ seed }: { seed: Seed }) {
     };
   });
 
-  // additive preview lives inside the proxied document so black pixels blend with the
-  // background before the iframe crosses transformed simulator chrome.
+  // additive preview is composited on the host inside #hud-display so black waveguide
+  // pixels blend with the aligned backdrop slice before device chrome transforms.
   useMountEffect(() => {
-    const { additive, background } = store.getState();
-    if (additive && background !== "custom") {
-      prewarmPresetBackgroundImages(background);
-    }
-
-    let applyToken = 0;
-    let resolvedImage: string | undefined;
-    let resolvedImageSource: string | undefined;
     let animationFrame = 0;
 
-    const syncCurrentAdditive = () => {
+    const syncHost = () => {
       const {
         additive,
-        lensTint,
         background: backgroundKey,
         customBackgroundImages,
         activeCustomBackgroundId,
@@ -371,95 +356,15 @@ export default function Simulator({ seed }: { seed: Seed }) {
         activeCustomBackgroundId,
       );
       const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
-      syncAdditive(
-        iframeRef.current,
+      syncHostAdditive(
+        displayRef.current,
         additive,
         preset,
-        resolvedImage,
         geometry,
-        lensTint,
         backgroundBrightness,
         backgroundBlur,
       );
       syncDisplayBrightness(iframeRef.current, displayBrightness);
-    };
-
-    const applyAdditive = () => {
-      const {
-        additive,
-        background: backgroundKey,
-        customBackgroundImages,
-        activeCustomBackgroundId,
-      } = store.getState();
-      const token = ++applyToken;
-      const preset = resolveBackground(
-        backgroundKey,
-        customBackgroundImages,
-        activeCustomBackgroundId,
-      );
-      const source =
-        backgroundKey === "custom"
-          ? preset.image
-          : (backgroundByKey(backgroundKey).iframeImage ?? preset.image);
-      const customIframeDataUrl =
-        backgroundKey === "custom"
-          ? (
-              customBackgroundImages.find((img) => img.id === activeCustomBackgroundId) ??
-              customBackgroundImages[0]
-            )?.iframeDataUrl
-          : undefined;
-
-      if (!additive) {
-        resolvedImage = undefined;
-        resolvedImageSource = undefined;
-        syncCurrentAdditive();
-        return;
-      }
-
-      if (!source) {
-        resolvedImage = undefined;
-        resolvedImageSource = undefined;
-        syncCurrentAdditive();
-        return;
-      }
-
-      const cached = customIframeDataUrl ?? getCachedIframeBackgroundImage(source);
-      if (cached) {
-        resolvedImage = cached;
-        resolvedImageSource = source;
-        syncCurrentAdditive();
-        return;
-      }
-
-      if (source === resolvedImageSource && resolvedImage) {
-        syncCurrentAdditive();
-        return;
-      }
-
-      if (source.startsWith("data:")) {
-        resolvedImage = source;
-        resolvedImageSource = source;
-        syncCurrentAdditive();
-        return;
-      }
-
-      resolvedImage = undefined;
-      resolvedImageSource = source;
-      syncCurrentAdditive();
-
-      void resolveIframeBackgroundImage(source)
-        .then((nextImage) => {
-          if (token !== applyToken) return;
-          resolvedImage = nextImage;
-          resolvedImageSource = source;
-          syncCurrentAdditive();
-        })
-        .catch(() => {
-          if (token !== applyToken) return;
-          resolvedImage = undefined;
-          resolvedImageSource = undefined;
-          syncCurrentAdditive();
-        });
     };
 
     const tickGeometry = () => {
@@ -467,7 +372,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
         animationFrame = 0;
         return;
       }
-      syncCurrentAdditive();
+      syncHost();
       animationFrame = requestAnimationFrame(tickGeometry);
     };
 
@@ -482,12 +387,9 @@ export default function Simulator({ seed }: { seed: Seed }) {
       animationFrame = 0;
     };
 
-    const iframe = iframeRef.current;
-    iframe?.addEventListener("load", applyAdditive);
     const unsub = store.subscribe((state, prev) => {
       if (
         state.additive !== prev.additive ||
-        state.lensTint !== prev.lensTint ||
         state.background !== prev.background ||
         state.customBackgroundImages !== prev.customBackgroundImages ||
         state.activeCustomBackgroundId !== prev.activeCustomBackgroundId ||
@@ -495,27 +397,20 @@ export default function Simulator({ seed }: { seed: Seed }) {
         state.backgroundBlur !== prev.backgroundBlur ||
         state.displayBrightness !== prev.displayBrightness
       ) {
-        applyAdditive();
+        syncHost();
       }
       if (state.additive !== prev.additive) {
-        if (state.additive) {
-          startGeometryLoop();
-          if (state.background !== "custom") {
-            prewarmPresetBackgroundImages(state.background);
-          }
-        } else {
-          stopGeometryLoop();
-        }
+        if (state.additive) startGeometryLoop();
+        else stopGeometryLoop();
       }
     });
 
-    applyAdditive();
-    startGeometryLoop();
-    applyAdditiveRef.current = applyAdditive;
+    syncHost();
+    if (store.getState().additive) startGeometryLoop();
+    applyAdditiveRef.current = syncHost;
     return () => {
       applyAdditiveRef.current = () => {};
       stopGeometryLoop();
-      iframe?.removeEventListener("load", applyAdditive);
       unsub();
     };
   });

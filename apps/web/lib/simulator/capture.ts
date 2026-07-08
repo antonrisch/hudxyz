@@ -46,12 +46,17 @@ function waveguideRoot(doc: Document): HTMLElement {
   return doc.body?.childNodes.length ? doc.body : doc.documentElement;
 }
 
-async function snapWaveguideBody(doc: Document): Promise<HTMLCanvasElement> {
-  return snapdom.toCanvas(waveguideRoot(doc), {
-    ...WAVEGUIDE,
-    fast: true,
-    backgroundColor: "#000",
-  });
+async function captureDisplaySurface(display: HTMLElement): Promise<HTMLCanvasElement | null> {
+  try {
+    return await snapdom.toCanvas(display, {
+      ...WAVEGUIDE,
+      fast: true,
+      backgroundColor: "transparent",
+    });
+  } catch (e) {
+    console.error("SnapDOM display capture failed", e);
+    return null;
+  }
 }
 
 async function captureWaveguide(
@@ -61,7 +66,11 @@ async function captureWaveguide(
   if (!doc?.body) return null;
 
   try {
-    return await snapWaveguideBody(doc);
+    return await snapdom.toCanvas(waveguideRoot(doc), {
+      ...WAVEGUIDE,
+      fast: true,
+      backgroundColor: "#000",
+    });
   } catch (e) {
     console.error("SnapDOM waveguide capture failed", e);
     return null;
@@ -160,13 +169,15 @@ export async function captureStageSnapdom(
 
   ctx.drawImage(chrome, 0, 0);
 
-  if (iframe && display) {
-    const waveguide = await captureWaveguide(iframe);
-    if (waveguide) {
+  if (display) {
+    const surface = additive
+      ? await captureDisplaySurface(display)
+      : iframe
+        ? await captureWaveguide(iframe)
+        : null;
+    if (surface) {
       const { x, y, w, h } = displayRectOnStage(stage, display, width, height);
-      if (additive) ctx.globalCompositeOperation = "screen";
-      ctx.drawImage(waveguide, x, y, w, h);
-      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(surface, x, y, w, h);
     }
   }
 
