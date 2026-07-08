@@ -124,9 +124,9 @@ export interface SimulatorState {
   setBackgroundBrightness: (value: number) => void;
   setBackgroundBlur: (value: number) => void;
   setDisplayBrightness: (value: number) => void;
-  setDisplayPanelOpen: (open: boolean) => void;
+  setDisplayPanelOpen: (open: boolean, persist?: boolean) => void;
   toggleDisplayPanel: () => void;
-  setToolbarPlacement: (placement: ToolbarPlacement) => void;
+  setToolbarPlacement: (placement: ToolbarPlacement, persist?: boolean) => void;
   requestLoad: (url: string) => void; // navigate the app surface; the proxy hook reacts
   reload: () => void; // re-navigate the current url
   appReveal: () => void;
@@ -215,8 +215,8 @@ export function createSimulatorStore(seed?: Seed) {
     setBackgroundBrightness: (backgroundBrightness) => set({ backgroundBrightness }),
     setBackgroundBlur: (backgroundBlur) => set({ backgroundBlur }),
     setDisplayBrightness: (displayBrightness) => set({ displayBrightness }),
-    setDisplayPanelOpen: (open) => {
-      writeDisplayPanelOpen(open);
+    setDisplayPanelOpen: (open, persist = true) => {
+      if (persist) writeDisplayPanelOpen(open);
       set({ displayPanelOpen: open });
     },
     toggleDisplayPanel: () =>
@@ -225,8 +225,8 @@ export function createSimulatorStore(seed?: Seed) {
         writeDisplayPanelOpen(open);
         return { displayPanelOpen: open };
       }),
-    setToolbarPlacement: (toolbarPlacement) => {
-      writeToolbarPlacement(toolbarPlacement);
+    setToolbarPlacement: (toolbarPlacement, persist = true) => {
+      if (persist) writeToolbarPlacement(toolbarPlacement);
       set({ toolbarPlacement });
     },
     requestLoad: (url) => set((s) => ({ url, status: "loading", loadToken: s.loadToken + 1 })),

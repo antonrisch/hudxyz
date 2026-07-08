@@ -85,7 +85,7 @@ export function DisplayPanel() {
 
       <Separator />
 
-      <PanelSection title="Appearance">
+      <PanelSection title="Display">
         <PanelRowGroup compact>
           <PanelRow
             label="Display Transparency"

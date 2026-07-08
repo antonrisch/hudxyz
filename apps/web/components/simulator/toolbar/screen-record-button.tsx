@@ -41,7 +41,7 @@ export function ScreenRecordButton({
           <Button
             type="button"
             variant="outline"
-            size={size}
+            size={showLabel ? size : "icon"}
             aria-label={isRecording ? "Stop recording" : "Start recording"}
             aria-pressed={isRecording}
             className={cn(
@@ -65,7 +65,7 @@ export function ScreenRecordButton({
               />
             )}
             {showLabel ? (
-              <span className="hidden sm:inline">
+              <span>
                 {isRecording ? (
                   <>
                     <span className="group-hover/button:hidden">Recording</span>

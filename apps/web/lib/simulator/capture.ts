@@ -20,6 +20,8 @@ export type StageCaptureTarget = {
   backdrop: HTMLElement | null;
   display: HTMLElement | null;
   iframe: HTMLIFrameElement | null;
+  frames: SVGSVGElement | null;
+  lensTint: boolean;
   additive: boolean;
   additiveContext?: {
     preset: BackgroundPreset;
@@ -35,6 +37,13 @@ type CaptureStageOptions = {
   preferPixel?: boolean;
 };
 
+type StageChromeOptions = {
+  backdrop: HTMLElement | null;
+  frames: SVGSVGElement | null;
+  display: HTMLElement | null;
+  hideDisplay: boolean;
+};
+
 function captureFilename() {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   return `mrbd-${stamp}.png`;
@@ -43,6 +52,11 @@ function captureFilename() {
 function stageFillColor(): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue("--stage-fill").trim();
   return value || "#1e293b";
+}
+
+function lensTintColor(): string {
+  const value = getComputedStyle(document.documentElement).getPropertyValue("--lens-tint").trim();
+  return value || "oklch(0.18 0.02 155 / 0.5)";
 }
 
 function iframeDocument(iframe: HTMLIFrameElement): Document | null {
@@ -88,6 +102,26 @@ async function captureBackdrop(
     });
   } catch (e) {
     console.error("SnapDOM backdrop capture failed", e);
+    return null;
+  }
+}
+
+// Root the snap on the SVG itself — avoids nested-svg + overflow clipping in the stage chrome pass.
+async function captureGlassesFrames(svg: SVGSVGElement): Promise<HTMLCanvasElement | null> {
+  const rect = svg.getBoundingClientRect();
+  const width = Math.max(1, Math.round(rect.width));
+  const height = Math.max(1, Math.round(rect.height));
+
+  try {
+    return await snapdom.toCanvas(svg, {
+      width,
+      height,
+      dpr: 1,
+      fast: true,
+      backgroundColor: "transparent",
+    });
+  } catch (e) {
+    console.error("SnapDOM glasses frames capture failed", e);
     return null;
   }
 }
@@ -174,6 +208,7 @@ async function captureAdditiveDisplay(
   geometry: AdditiveBackdropGeometry,
   backgroundBrightness: number,
   backgroundBlur: number,
+  lensTint: boolean,
 ): Promise<HTMLCanvasElement | null> {
   const canvas = document.createElement("canvas");
   canvas.width = VIEWPORT;
@@ -186,6 +221,11 @@ async function captureAdditiveDisplay(
   ctx.rect(0, 0, VIEWPORT, VIEWPORT);
   ctx.clip();
   await paintAdditiveBackdropSlice(ctx, preset, geometry, backgroundBrightness, backgroundBlur);
+  if (lensTint) {
+    const { left, top, width, height } = geometry;
+    ctx.fillStyle = lensTintColor();
+    ctx.fillRect(left, top, width, height);
+  }
   ctx.restore();
 
   const waveguide = await captureWaveguide(iframe);
@@ -205,13 +245,26 @@ function setVisibility(nodes: Iterable<Element>, visible: boolean) {
   }
 }
 
+function stageChromeFilter(options: StageChromeOptions) {
+  const { backdrop, frames } = options;
+  return (node: Element) => {
+    if (backdrop && node === backdrop) return false;
+    if (frames && node === frames) return false;
+    return true;
+  };
+}
+
 async function captureStageChrome(
   stage: HTMLElement,
-  backdrop: HTMLElement | null,
   width: number,
   height: number,
+  options: StageChromeOptions,
 ): Promise<HTMLCanvasElement> {
+  const { display, hideDisplay } = options;
   stage.classList.remove("bg-stage-fill");
+  const displayWas = hideDisplay && display ? display.style.visibility : null;
+  if (hideDisplay && display) display.style.visibility = "hidden";
+
   try {
     return await snapdom.toCanvas(stage, {
       width,
@@ -220,30 +273,56 @@ async function captureStageChrome(
       fast: true,
       exclude: ["iframe"],
       excludeMode: "remove",
-      filter: backdrop ? (node) => node !== backdrop : undefined,
+      filter: stageChromeFilter(options),
       backgroundColor: "transparent",
     });
   } finally {
+    if (hideDisplay && display) display.style.visibility = displayWas ?? "";
     stage.classList.add("bg-stage-fill");
   }
 }
 
-function displayRectOnStage(
+function elementRectOnStage(
   stage: HTMLElement,
-  display: HTMLElement,
+  element: Element,
   canvasWidth: number,
   canvasHeight: number,
 ) {
   const stageRect = stage.getBoundingClientRect();
-  const displayRect = display.getBoundingClientRect();
+  const elementRect = element.getBoundingClientRect();
   const scaleX = canvasWidth / stageRect.width;
   const scaleY = canvasHeight / stageRect.height;
   return {
-    x: (displayRect.left - stageRect.left) * scaleX,
-    y: (displayRect.top - stageRect.top) * scaleY,
-    w: displayRect.width * scaleX,
-    h: displayRect.height * scaleY,
+    x: (elementRect.left - stageRect.left) * scaleX,
+    y: (elementRect.top - stageRect.top) * scaleY,
+    w: elementRect.width * scaleX,
+    h: elementRect.height * scaleY,
   };
+}
+
+function drawCanvasOnStage(
+  ctx: CanvasRenderingContext2D,
+  stage: HTMLElement,
+  element: Element,
+  source: CanvasImageSource,
+  canvasWidth: number,
+  canvasHeight: number,
+) {
+  const { x, y, w, h } = elementRectOnStage(stage, element, canvasWidth, canvasHeight);
+  ctx.drawImage(source, x, y, w, h);
+}
+
+function paintStageBackground(
+  ctx: CanvasRenderingContext2D,
+  bg: HTMLCanvasElement | null,
+  width: number,
+  height: number,
+) {
+  if (bg) ctx.drawImage(bg, 0, 0, width, height);
+  else {
+    ctx.fillStyle = stageFillColor();
+    ctx.fillRect(0, 0, width, height);
+  }
 }
 
 // Snapdom fallback when tab capture is unavailable or denied.
@@ -251,7 +330,7 @@ export async function captureStageSnapdom(
   target: StageCaptureTarget,
   options: CaptureStageOptions = {},
 ): Promise<HTMLCanvasElement | null> {
-  const { stage, backdrop, display, iframe, additive } = target;
+  const { stage, backdrop, display, iframe, frames, lensTint, additive } = target;
   const stageRect = stage.getBoundingClientRect();
   const width = options.width ?? Math.max(1, Math.round(stageRect.width));
   const height = options.height ?? Math.max(1, Math.round(stageRect.height));
@@ -264,6 +343,15 @@ export async function captureStageSnapdom(
   const ctx = frame.getContext("2d");
   if (!ctx) return null;
 
+  const chromeOptions: StageChromeOptions = {
+    backdrop,
+    frames,
+    display,
+    hideDisplay: Boolean(display && iframe),
+  };
+
+  const glassesFrames = frames ? await captureGlassesFrames(frames) : null;
+
   if (additive && display && iframe && target.additiveContext) {
     const { preset, backgroundBrightness, backgroundBlur, onBeforeCapture } =
       target.additiveContext;
@@ -271,13 +359,13 @@ export async function captureStageSnapdom(
     const geometry = measureAdditiveBackdrop(stage, display);
     if (!geometry) return null;
 
-    let bg = backdrop ? await captureBackdrop(backdrop, width, height) : null;
+    const bg = backdrop ? await captureBackdrop(backdrop, width, height) : null;
 
     const slices = display.querySelectorAll("[data-additive-slice]");
     setVisibility(slices, false);
     const iframeWas = iframe.style.visibility;
     iframe.style.visibility = "hidden";
-    const chrome = await captureStageChrome(stage, backdrop, width, height);
+    const chrome = await captureStageChrome(stage, width, height, chromeOptions);
     setVisibility(slices, true);
     iframe.style.visibility = iframeWas;
 
@@ -287,42 +375,28 @@ export async function captureStageSnapdom(
       geometry,
       backgroundBrightness,
       backgroundBlur,
+      lensTint,
     );
 
-    if (bg) ctx.drawImage(bg, 0, 0, width, height);
-    else {
-      ctx.fillStyle = stageFillColor();
-      ctx.fillRect(0, 0, width, height);
+    paintStageBackground(ctx, bg, width, height);
+    if (glassesFrames && frames) {
+      drawCanvasOnStage(ctx, stage, frames, glassesFrames, width, height);
     }
-
+    if (surface) drawCanvasOnStage(ctx, stage, display, surface, width, height);
     ctx.drawImage(chrome, 0, 0);
-
-    if (surface) {
-      const { x, y, w, h } = displayRectOnStage(stage, display, width, height);
-      ctx.drawImage(surface, x, y, w, h);
-    }
     return frame;
   }
 
   const bg = backdrop ? await captureBackdrop(backdrop, width, height) : null;
+  const chrome = await captureStageChrome(stage, width, height, chromeOptions);
+  const surface = iframe ? await captureWaveguide(iframe) : null;
 
-  const chrome = await captureStageChrome(stage, backdrop, width, height);
-
-  if (bg) ctx.drawImage(bg, 0, 0, width, height);
-  else {
-    ctx.fillStyle = stageFillColor();
-    ctx.fillRect(0, 0, width, height);
+  paintStageBackground(ctx, bg, width, height);
+  if (glassesFrames && frames) {
+    drawCanvasOnStage(ctx, stage, frames, glassesFrames, width, height);
   }
-
+  if (surface && display) drawCanvasOnStage(ctx, stage, display, surface, width, height);
   ctx.drawImage(chrome, 0, 0);
-
-  if (display) {
-    const surface = iframe ? await captureWaveguide(iframe) : null;
-    if (surface) {
-      const { x, y, w, h } = displayRectOnStage(stage, display, width, height);
-      ctx.drawImage(surface, x, y, w, h);
-    }
-  }
 
   return frame;
 }

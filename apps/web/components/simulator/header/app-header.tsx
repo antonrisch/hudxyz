@@ -15,7 +15,9 @@ export function AppHeader() {
         <Logo className="justify-self-start" />
         <UrlBar className="min-w-0 w-full max-w-full sm:max-w-96 sm:justify-self-center" />
         <div className="flex items-center gap-2 justify-self-end">
-          <ScreenRecordButton size="lg" showLabel className="shrink-0 max-sm:size-10 max-sm:px-0" />
+          <DesktopOnly>
+            <ScreenRecordButton size="lg" showLabel className="shrink-0" />
+          </DesktopOnly>
           <ShareMenu />
           <DesktopOnly>
             <DisplayPanelTrigger />

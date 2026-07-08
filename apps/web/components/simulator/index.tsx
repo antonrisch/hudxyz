@@ -19,6 +19,7 @@ import {
   type SimulatorStore,
   type Intent,
   type Seed,
+  type ToolbarPlacement,
   type View,
 } from "@/lib/simulator/store";
 import { INTENT_BY_KEY, SIMULATOR_TITLE } from "@/lib/simulator/config";
@@ -42,10 +43,8 @@ import { AppHeader } from "@/components/simulator/header/app-header";
 import { Toolbar } from "@/components/simulator/toolbar";
 import { Device } from "@/components/simulator/device";
 import {
-  DisplayPanelMobileTrigger,
   DisplaySidebarColumn,
 } from "@/components/simulator/panel/sidebar";
-import { MobileOnly } from "@/components/simulator/mobile-only";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadStage, type StageCaptureTarget } from "@/lib/simulator/capture";
@@ -67,7 +66,7 @@ interface SimulatorContextValue {
   pressUp: (intent: Intent) => void;
   pressedIntents: ReadonlySet<Intent>;
   captureDisplay: () => Promise<void>;
-  recordScreen: () => void;
+  recordScreen: () => void | Promise<void>;
   isRecording: boolean;
   setView: (view: View) => void;
   panZoom: PanZoom;
@@ -226,6 +225,8 @@ export default function Simulator({ seed }: { seed: Seed }) {
       backdrop: backdropRef.current,
       display: displayRef.current,
       iframe: iframeRef.current,
+      frames: stage.querySelector<SVGSVGElement>('[data-capture="frames"]'),
+      lensTint: store.getState().lensTint,
       additive,
       additiveContext: additive
         ? {
@@ -244,43 +245,81 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const stageRecorderRef = useRef<ReturnType<typeof createStageRecorder> | null>(null);
   const [isRecording, setIsRecording] = useState(false);
 
+  type RecordChromeSnapshot = {
+    toolbarPlacement: ToolbarPlacement;
+    displayPanelOpen: boolean;
+  };
+  const recordChromeRestoreRef = useRef<RecordChromeSnapshot | null>(null);
+
+  const restoreRecordChrome = useCallback(() => {
+    const saved = recordChromeRestoreRef.current;
+    if (!saved) return;
+    recordChromeRestoreRef.current = null;
+    const { setToolbarPlacement, setDisplayPanelOpen } = store.getState();
+    setToolbarPlacement(saved.toolbarPlacement, false);
+    setDisplayPanelOpen(saved.displayPanelOpen, false);
+  }, [store]);
+
+  const prepareRecordChrome = useCallback(async () => {
+    const { toolbarPlacement, displayPanelOpen } = store.getState();
+    if (toolbarPlacement === "sidebar") return;
+
+    recordChromeRestoreRef.current = { toolbarPlacement, displayPanelOpen };
+    store.getState().setToolbarPlacement("sidebar", false);
+    if (!displayPanelOpen) store.getState().setDisplayPanelOpen(true, false);
+
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
+  }, [store]);
+
   useMountEffect(() => {
     stageRecorderRef.current = createStageRecorder({
       getStage: () => stageRef.current,
       getBackdrop: () => backdropRef.current,
       getDisplay: () => displayRef.current,
       getIframe: () => iframeRef.current,
+      getFrames: () =>
+        stageRef.current?.querySelector<SVGSVGElement>('[data-capture="frames"]') ?? null,
+      getLensTint: () => store.getState().lensTint,
       getAdditive: () => store.getState().additive,
       getAdditiveContext: () => getAdditiveCaptureContextRef.current(),
       onAutoStop: (blob) => {
         if (blob) downloadStageRecording(blob);
         setIsRecording(false);
+        restoreRecordChrome();
       },
     });
     return () => {
       void stageRecorderRef.current?.stop();
       stageRecorderRef.current = null;
+      restoreRecordChrome();
     };
   });
 
-  const recordScreen = useCallback(() => {
+  const recordScreen = useCallback(async () => {
     const recorder = stageRecorderRef.current;
     if (!recorder) return;
 
     if (recorder.isRecording) {
-      void recorder.stop().then((blob) => {
-        if (blob) downloadStageRecording(blob);
-        setIsRecording(false);
-      });
+      const blob = await recorder.stop();
+      if (blob) downloadStageRecording(blob);
+      setIsRecording(false);
+      restoreRecordChrome();
       return;
     }
 
     const { screen, status } = store.getState();
-    if (screen !== "app" || status !== "ready") return;
+    if (screen !== "app" || status !== "ready" || !stageRef.current) return;
 
+    await prepareRecordChrome();
     recorder.start();
+    if (!recorder.isRecording) {
+      restoreRecordChrome();
+      return;
+    }
     setIsRecording(true);
-  }, [store]);
+  }, [prepareRecordChrome, restoreRecordChrome, store]);
 
   // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
   // reset in usePanZoom once the new chrome has laid out).
@@ -629,14 +668,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
                   dockToolbarOnDesktop && "sm:hidden",
                 )}
               >
-                <Toolbar
-                  variant="floaty"
-                  endAction={
-                    <MobileOnly>
-                      <DisplayPanelMobileTrigger />
-                    </MobileOnly>
-                  }
-                />
+                <Toolbar variant="floaty" />
               </div>
             </div>
           </div>

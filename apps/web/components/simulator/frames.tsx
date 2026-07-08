@@ -17,6 +17,7 @@ export function Frames({
 }: ComponentProps<"svg"> & { lensClassName?: string }) {
   return (
     <svg
+      data-capture="frames"
       viewBox="0 0 6476 2959"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
