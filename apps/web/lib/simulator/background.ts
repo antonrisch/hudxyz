@@ -9,7 +9,6 @@ export type BackgroundPreset = {
   label: string;
   image?: string;
   thumb?: string;
-  iframeImage?: string;
   placeholderColor?: string;
   lqip?: string;
 };
@@ -38,7 +37,6 @@ export const BACKGROUNDS = [
     label: "Alps",
     image: "/backgrounds/alps.webp",
     thumb: "/backgrounds/alps-thumb.webp",
-    iframeImage: "/backgrounds/alps-iframe.webp",
     placeholderColor: "#355677",
     lqip: BACKGROUND_LQIP.alps,
   },
@@ -47,7 +45,6 @@ export const BACKGROUNDS = [
     label: "Alps 2",
     image: "/backgrounds/alps2.webp",
     thumb: "/backgrounds/alps2-thumb.webp",
-    iframeImage: "/backgrounds/alps2-iframe.webp",
     placeholderColor: "#4f597d",
     lqip: BACKGROUND_LQIP.alps2,
   },
@@ -56,7 +53,6 @@ export const BACKGROUNDS = [
     label: "Beach",
     image: "/backgrounds/beach.webp",
     thumb: "/backgrounds/beach-thumb.webp",
-    iframeImage: "/backgrounds/beach-iframe.webp",
     placeholderColor: "#bdbbac",
     lqip: BACKGROUND_LQIP.beach,
   },
@@ -80,7 +76,6 @@ export type CustomBackgroundImage = {
   id: string;
   url: string;
   thumbUrl: string;
-  iframeDataUrl: string;
 };
 
 export function resolveBackground(
@@ -160,4 +155,3 @@ export function backgroundBackdropStyle(
 
   return { backgroundColor: "var(--stage-fill)", ...(filter && { filter }) };
 }
-

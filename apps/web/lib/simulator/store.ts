@@ -63,7 +63,7 @@ export interface SimulatorState {
   setUrl: (url: string) => void;
   setAdditive: (additive: boolean) => void;
   setBackground: (background: BackgroundKey) => void;
-  addCustomBackground: (url: string, thumbUrl: string, iframeDataUrl: string) => void;
+  addCustomBackground: (url: string, thumbUrl: string) => void;
   selectCustomBackground: (id: string) => void;
   removeCustomBackground: (id: string) => void;
   setLensTint: (lensTint: boolean) => void;
@@ -124,13 +124,13 @@ export function createSimulatorStore(seed?: Seed) {
     setUrl: (url) => set({ url }),
     setAdditive: (additive) => set({ additive }),
     setBackground: (background) => set({ background }),
-    addCustomBackground: (url, thumbUrl, iframeDataUrl) =>
+    addCustomBackground: (url, thumbUrl) =>
       set((s) => {
         const id = crypto.randomUUID();
         return {
           customBackgroundImages: [
             ...s.customBackgroundImages,
-            { id, url, thumbUrl, iframeDataUrl },
+            { id, url, thumbUrl },
           ],
           activeCustomBackgroundId: id,
           background: "custom",
