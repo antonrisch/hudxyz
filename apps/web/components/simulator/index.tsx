@@ -44,6 +44,7 @@ import { Toolbar } from "@/components/simulator/toolbar";
 import { Device } from "@/components/simulator/device";
 import { Panel } from "@/components/simulator/panel";
 import { PanelSidebar } from "@/components/simulator/panel/sidebar";
+import { MobileAppFooter } from "@/components/simulator/app-footer";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadStage, type StageCaptureTarget } from "@/lib/simulator/capture";
@@ -673,6 +674,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
               </div>
             </div>
           </div>
+          <MobileAppFooter />
         </div>
       </TooltipProvider>
     </SimulatorContext.Provider>

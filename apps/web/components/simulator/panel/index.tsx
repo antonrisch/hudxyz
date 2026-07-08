@@ -9,10 +9,12 @@ export function Panel({
   footer,
   showSummary = false,
   headerClassName,
+  hideFooter = false,
 }: {
   footer?: ReactNode;
   showSummary?: boolean;
   headerClassName?: string;
+  hideFooter?: boolean;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -20,7 +22,9 @@ export function Panel({
       <div className="min-h-0 flex-1 overflow-y-auto">
         <PanelContent />
       </div>
-      <PanelFooter showSummary={showSummary} footer={footer} dockToolbar />
+      {!hideFooter ? (
+        <PanelFooter showSummary={showSummary} footer={footer} dockToolbar />
+      ) : null}
     </div>
   );
 }

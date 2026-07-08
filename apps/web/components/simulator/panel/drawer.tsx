@@ -5,8 +5,10 @@ import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
+  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -14,16 +16,9 @@ import {
 import { SIMULATOR_SUMMARY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { dropFocus } from "@/lib/simulator/input";
 
-/** Tall peek so most settings are visible; swipe up for full height. */
-const PANEL_DRAWER_SNAP_POINTS = [0.8, 1] as const;
-
 export function PanelDrawer({ children }: { children: ReactNode }) {
   return (
-    <Drawer
-      snapPoints={[...PANEL_DRAWER_SNAP_POINTS]}
-      showSwipeHandle
-      swipeDirection="down"
-    >
+    <Drawer showSwipeHandle>
       <DrawerTrigger
         render={
           <Button
@@ -38,14 +33,26 @@ export function PanelDrawer({ children }: { children: ReactNode }) {
           </Button>
         }
       />
-      <DrawerContent className="flex w-full flex-col gap-0 overflow-hidden p-0">
-        <DrawerHeader className="shrink-0 space-y-0 border-b p-3 pb-2">
-          <DrawerTitle className="text-sm leading-snug font-semibold">
-            {SIMULATOR_TITLE}
-          </DrawerTitle>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>{SIMULATOR_TITLE}</DrawerTitle>
           <DrawerDescription className="sr-only">{SIMULATOR_SUMMARY}</DrawerDescription>
         </DrawerHeader>
-        {children}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
+        <DrawerFooter className="pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+          <DrawerClose
+            render={
+              <Button
+                type="button"
+                size="lg"
+                className="w-full rounded-full"
+                onMouseDown={dropFocus}
+              />
+            }
+          >
+            Close
+          </DrawerClose>
+        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );
