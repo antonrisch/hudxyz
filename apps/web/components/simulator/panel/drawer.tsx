@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Settings2 } from "lucide-react";
+import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -29,7 +29,7 @@ export function PanelDrawer({ children }: { children: ReactNode }) {
             onMouseDown={dropFocus}
             className="shrink-0"
           >
-            <Settings2 />
+            <Settings />
           </Button>
         }
       />

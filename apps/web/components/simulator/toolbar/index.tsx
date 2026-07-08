@@ -10,6 +10,7 @@ import { ToolbarPlacementButton } from "@/components/simulator/toolbar/toolbar-p
 import { DesktopOnly, MobileOnly } from "@/components/simulator/mobile-only";
 import { Panel } from "@/components/simulator/panel";
 import { PanelDrawer } from "@/components/simulator/panel/drawer";
+import { ViewToggleButton } from "@/components/simulator/panel/view-switcher";
 import { useSimulator } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
 import { useMobileLayout } from "@/lib/use-mobile-layout";
@@ -45,6 +46,7 @@ export function Toolbar({ variant = "floaty" }: { variant?: ToolbarVariant }) {
           <ScreenshotButton />
         </DesktopOnly>
         <MobileOnly>
+          <ViewToggleButton />
           <PanelDrawer>
             <Panel headerClassName="pt-2" hideFooter showDesktopOnlyCallout />
           </PanelDrawer>

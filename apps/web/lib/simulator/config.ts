@@ -42,7 +42,7 @@ export const DEFAULT_DEVICE_SCALE = { glasses: 0.6, pixel: 1 } as const satisfie
   number
 >;
 
-export const MOBILE_DEFAULT_DEVICE_SCALE = { glasses: 0.3 } as const satisfies Pick<
+export const MOBILE_DEFAULT_DEVICE_SCALE = { glasses: 0.35 } as const satisfies Pick<
   Record<View, number>,
   "glasses"
 >;
