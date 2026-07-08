@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Share } from "lucide-react";
+import { Check, Copy, Glasses } from "lucide-react";
 import QRCode from "react-qr-code";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,13 +65,14 @@ export function ShareMenu({ className }: { className?: string }) {
         render={
           <Button
             type="button"
+            variant="brand"
             size="lg"
             aria-label="Share"
             onMouseDown={dropFocus}
             className={cn("shrink-0 max-sm:size-10 max-sm:px-0", className)}
           >
-            <Share />
-            <span className="hidden sm:inline">Share</span>
+            <Glasses data-icon="inline-start" />
+            <span className="hidden sm:inline">Open on Glasses</span>
           </Button>
         }
       />
