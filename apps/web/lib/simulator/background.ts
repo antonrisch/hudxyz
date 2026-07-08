@@ -2,12 +2,25 @@ import type { CSSProperties } from "react";
 import { BACKGROUND_LQIP } from "@/lib/simulator/background-lqip";
 
 // backgrounds drive the canvas stage and the additive preview behind the waveguide.
-export type BackgroundKey = "alps" | "alps2" | "beach" | "day" | "night" | "custom";
+export type BackgroundKey =
+  | "alps"
+  | "alps2"
+  | "beach"
+  | "city-day"
+  | "city-night"
+  | "bike-trail"
+  | "day"
+  | "night"
+  | "custom";
+
+export type BackgroundMediaKind = "gradient" | "photo" | "video";
 
 export type BackgroundPreset = {
   key: BackgroundKey;
   label: string;
   image?: string;
+  video?: string;
+  poster?: string;
   thumb?: string;
   placeholderColor?: string;
   lqip?: string;
@@ -56,6 +69,44 @@ export const BACKGROUNDS = [
     placeholderColor: "#bdbbac",
     lqip: BACKGROUND_LQIP.beach,
   },
+  {
+    key: "city-day",
+    label: "City (Day)",
+    video: "/backgrounds/city-day.mp4",
+    poster: "/backgrounds/city-day-poster.webp",
+    thumb: "/backgrounds/city-day-thumb.webp",
+    placeholderColor: "#8e9eab",
+    lqip: BACKGROUND_LQIP["city-day"],
+  },
+  {
+    key: "city-night",
+    label: "City (Night)",
+    video: "/backgrounds/city-night.mp4",
+    poster: "/backgrounds/city-night-poster.webp",
+    thumb: "/backgrounds/city-night-thumb.webp",
+    placeholderColor: "#2c3e50",
+    lqip: BACKGROUND_LQIP["city-night"],
+  },
+  {
+    key: "bike-trail",
+    label: "Bike (Trail)",
+    video: "/backgrounds/bike-trail.mp4",
+    poster: "/backgrounds/bike-trail-poster.webp",
+    thumb: "/backgrounds/bike-trail-thumb.webp",
+    placeholderColor: "#3d4a38",
+    lqip: BACKGROUND_LQIP["bike-trail"],
+  },
+  /*
+  {
+    key: "bike-city",
+    label: "Bike (City)",
+    video: "/backgrounds/bike-city.mp4",
+    poster: "/backgrounds/bike-city-poster.webp",
+    thumb: "/backgrounds/bike-city-thumb.webp",
+    placeholderColor: "#4a4a4a",
+    lqip: BACKGROUND_LQIP["bike-city"],
+  },
+  */
   { key: "day", label: "Day" },
   { key: "night", label: "Night" },
   {
@@ -70,6 +121,16 @@ export function isBackgroundKey(value: string): value is BackgroundKey {
 
 export function backgroundByKey(key: BackgroundKey): BackgroundPreset {
   return BACKGROUNDS.find((bg) => bg.key === key) ?? BACKGROUNDS[0];
+}
+
+export function backgroundMediaKind(preset: BackgroundPreset): BackgroundMediaKind {
+  if (preset.video) return "video";
+  if (preset.image) return "photo";
+  return "gradient";
+}
+
+export function backdropUsesOverscale(preset: BackgroundPreset): boolean {
+  return backgroundMediaKind(preset) === "photo" || backgroundMediaKind(preset) === "video";
 }
 
 export type CustomBackgroundImage = {
@@ -111,6 +172,13 @@ export function resolveBackdropPlaceholder(
 export function backgroundImageHref(key: BackgroundKey): string | undefined {
   if (key === "custom") return undefined;
   return backgroundByKey(key).image;
+}
+
+export function backgroundPreloadHref(key: BackgroundKey): string | undefined {
+  if (key === "custom") return undefined;
+  const preset = backgroundByKey(key);
+  if (preset.poster) return preset.poster;
+  return preset.image;
 }
 
 const MAX_BACKGROUND_BLUR_PX = 24;

@@ -12,7 +12,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "postinstall": "node scripts/copy-proxy-assets.mjs",
-    "optimize-backgrounds": "node scripts/optimize-backgrounds.mjs"
+    "optimize-backgrounds": "node scripts/optimize-backgrounds.mjs",
+    "optimize-background-video": "node scripts/optimize-background-video.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

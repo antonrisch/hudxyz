@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import Simulator from "@/components/simulator";
 import { legal } from "@/lib/legal/config";
 import { SIMULATOR_TAGLINE, SIMULATOR_TITLE } from "@/lib/simulator/config";
-import { backgroundImageHref, DEFAULT_BACKGROUND } from "@/lib/simulator/background";
+import { backgroundPreloadHref, DEFAULT_BACKGROUND } from "@/lib/simulator/background";
 import { loadSimulatorSearchParams, seedFromParams } from "@/lib/simulator/search-params";
 import {
   DISPLAY_PANEL_OPEN_COOKIE,
@@ -56,7 +56,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sea
   const params = await loadSimulatorSearchParams(searchParams);
   const cookieStore = await cookies();
   const preloadBackground =
-    backgroundImageHref(params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg) ?? null;
+    backgroundPreloadHref(params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg) ?? null;
   return (
     <main className="flex h-svh flex-col overflow-hidden">
       {preloadBackground ? (
