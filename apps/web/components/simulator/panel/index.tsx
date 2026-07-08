@@ -26,9 +26,7 @@ export function Panel({
         <PanelContent />
         {showDesktopOnlyCallout ? <DesktopOnlyCallout /> : null}
       </div>
-      {!hideFooter ? (
-        <PanelFooter showSummary={showSummary} footer={footer} dockToolbar />
-      ) : null}
+      {!hideFooter ? <PanelFooter showSummary={showSummary} footer={footer} dockToolbar /> : null}
     </div>
   );
 }
