@@ -96,10 +96,7 @@ export const BackgroundBackdrop = forwardRef<
     backgroundBrightness: number;
     backgroundBlur: number;
   }
->(function BackgroundBackdrop(
-  { preset, placeholder, backgroundBrightness, backgroundBlur },
-  ref,
-) {
+>(function BackgroundBackdrop({ preset, placeholder, backgroundBrightness, backgroundBlur }, ref) {
   if (preset.image) {
     return (
       <div

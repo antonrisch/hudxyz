@@ -94,12 +94,7 @@ export function syncHostAdditive(
   }
 
   const blurScale = (preset.image ? BACKDROP_SCALE : 1) * (geometry?.displayScale ?? 1);
-  const filter = backgroundBackdropFilter(
-    preset,
-    backgroundBrightness,
-    backgroundBlur,
-    blurScale,
-  );
+  const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale);
   if (!geometry) return lastKey;
 
   const key = `${additiveGeometryKey(geometry)}|${filter ?? ""}`;

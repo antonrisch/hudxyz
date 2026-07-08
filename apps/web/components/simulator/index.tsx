@@ -25,10 +25,7 @@ import { INTENT_BY_KEY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
 import { releaseChromeFocus } from "@/lib/simulator/input";
 import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
-import {
-  resolveBackground,
-  resolveBackdropPlaceholder,
-} from "@/lib/simulator/background";
+import { resolveBackground, resolveBackdropPlaceholder } from "@/lib/simulator/background";
 import {
   measureAdditiveBackdrop,
   settleAdditiveSync,

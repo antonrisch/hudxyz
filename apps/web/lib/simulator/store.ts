@@ -128,10 +128,7 @@ export function createSimulatorStore(seed?: Seed) {
       set((s) => {
         const id = crypto.randomUUID();
         return {
-          customBackgroundImages: [
-            ...s.customBackgroundImages,
-            { id, url, thumbUrl },
-          ],
+          customBackgroundImages: [...s.customBackgroundImages, { id, url, thumbUrl }],
           activeCustomBackgroundId: id,
           background: "custom",
         };

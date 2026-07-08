@@ -1,9 +1,6 @@
 import { snapdom } from "@zumer/snapdom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
-import {
-  measureAdditiveBackdrop,
-  type AdditiveBackdropGeometry,
-} from "@/lib/simulator/additive";
+import { measureAdditiveBackdrop, type AdditiveBackdropGeometry } from "@/lib/simulator/additive";
 import {
   BACKDROP_SCALE,
   backgroundBackdropFilter,
@@ -61,9 +58,7 @@ function waveguideRoot(doc: Document): HTMLElement {
   return doc.body?.childNodes.length ? doc.body : doc.documentElement;
 }
 
-async function captureWaveguide(
-  iframe: HTMLIFrameElement,
-): Promise<HTMLCanvasElement | null> {
+async function captureWaveguide(iframe: HTMLIFrameElement): Promise<HTMLCanvasElement | null> {
   const doc = iframeDocument(iframe);
   if (!doc?.body) return null;
 
@@ -156,12 +151,7 @@ async function paintAdditiveBackdropSlice(
   backgroundBlur: number,
 ) {
   const blurScale = (preset.image ? BACKDROP_SCALE : 1) * geometry.displayScale;
-  const filter = backgroundBackdropFilter(
-    preset,
-    backgroundBrightness,
-    backgroundBlur,
-    blurScale,
-  );
+  const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale);
   if (filter) ctx.filter = filter;
 
   const { left, top, width, height } = geometry;

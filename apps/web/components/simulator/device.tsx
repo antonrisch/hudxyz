@@ -12,10 +12,7 @@ import {
 import type { Status } from "@/lib/simulator/store";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { releaseChromeFocus } from "@/lib/simulator/input";
-import {
-  additiveBackdropContentStyle,
-  additiveSliceStyle,
-} from "@/lib/simulator/additive";
+import { additiveBackdropContentStyle, additiveSliceStyle } from "@/lib/simulator/additive";
 import { resolveBackground } from "@/lib/simulator/background";
 import { cn } from "@/lib/utils";
 import { useMountEffect } from "@/lib/use-mount-effect";
@@ -115,7 +112,11 @@ export function Device() {
         <div
           ref={setDisplayNode}
           id="hud-display"
-          className={cn("relative z-10 size-full overflow-hidden", DEVICE_SURFACE, additive && "bg-transparent")}
+          className={cn(
+            "relative z-10 size-full overflow-hidden",
+            DEVICE_SURFACE,
+            additive && "bg-transparent",
+          )}
         >
           {additive && (
             <>

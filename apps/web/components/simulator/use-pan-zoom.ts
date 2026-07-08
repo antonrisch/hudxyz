@@ -174,35 +174,41 @@ export function usePanZoom(view: View): PanZoom {
   }, [computeDefault, mobile, resolveDeviceScale, setTransform, view]);
 
   // zoom about a viewport point, keeping the content point under it fixed
-  const setDeviceScaleAt = useCallback((clientX: number, clientY: number, nextDevice: number) => {
-    const vp = viewportRef.current;
-    if (!vp) return;
-    const r = vp.getBoundingClientRect();
-    const px = clientX - r.left;
-    const py = clientY - r.top;
-    setTransform((cur) => {
-      const scale = clamp(nextDevice, SCALE_MIN, SCALE_MAX);
-      deviceScaleRef.current = scale;
-      setDeviceScale(scale);
-      const k = scale / cur.scale;
-      return { scale, x: px - (px - cur.x) * k, y: py - (py - cur.y) * k };
-    });
-  }, [setTransform]);
+  const setDeviceScaleAt = useCallback(
+    (clientX: number, clientY: number, nextDevice: number) => {
+      const vp = viewportRef.current;
+      if (!vp) return;
+      const r = vp.getBoundingClientRect();
+      const px = clientX - r.left;
+      const py = clientY - r.top;
+      setTransform((cur) => {
+        const scale = clamp(nextDevice, SCALE_MIN, SCALE_MAX);
+        deviceScaleRef.current = scale;
+        setDeviceScale(scale);
+        const k = scale / cur.scale;
+        return { scale, x: px - (px - cur.x) * k, y: py - (py - cur.y) * k };
+      });
+    },
+    [setTransform],
+  );
 
-  const zoomAt = useCallback((clientX: number, clientY: number, factor: number) => {
-    const vp = viewportRef.current;
-    if (!vp) return;
-    const r = vp.getBoundingClientRect();
-    const px = clientX - r.left;
-    const py = clientY - r.top;
-    setTransform((cur) => {
-      const scale = clamp(cur.scale * factor, SCALE_MIN, SCALE_MAX);
-      deviceScaleRef.current = scale;
-      setDeviceScale(scale);
-      const k = scale / cur.scale;
-      return { scale, x: px - (px - cur.x) * k, y: py - (py - cur.y) * k };
-    });
-  }, [setTransform]);
+  const zoomAt = useCallback(
+    (clientX: number, clientY: number, factor: number) => {
+      const vp = viewportRef.current;
+      if (!vp) return;
+      const r = vp.getBoundingClientRect();
+      const px = clientX - r.left;
+      const py = clientY - r.top;
+      setTransform((cur) => {
+        const scale = clamp(cur.scale * factor, SCALE_MIN, SCALE_MAX);
+        deviceScaleRef.current = scale;
+        setDeviceScale(scale);
+        const k = scale / cur.scale;
+        return { scale, x: px - (px - cur.x) * k, y: py - (py - cur.y) * k };
+      });
+    },
+    [setTransform],
+  );
 
   const zoomAtRef = useRef(zoomAt);
   zoomAtRef.current = zoomAt;

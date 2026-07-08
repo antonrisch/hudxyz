@@ -22,7 +22,11 @@ export function ScreenRecordButton({ className }: { className?: string }) {
             variant="outline"
             size="icon"
             aria-label={
-              isRecording ? "Stop recording" : countingDown ? "Recording countdown" : "Start recording"
+              isRecording
+                ? "Stop recording"
+                : countingDown
+                  ? "Recording countdown"
+                  : "Start recording"
             }
             aria-pressed={isRecording}
             disabled={!active && !isRecording}
