@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { PanelRight, SlidersHorizontal } from "lucide-react";
+import { PanelRight, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -129,12 +129,12 @@ export function DisplayPanelMobileTrigger() {
           <Button
             type="button"
             variant="outline"
-            size="icon"
+            size="icon-lg"
             aria-label="Display settings"
             onMouseDown={dropFocus}
-            className="size-10 shrink-0"
+            className="shrink-0"
           >
-            <SlidersHorizontal />
+            <Settings2 />
           </Button>
         }
       />

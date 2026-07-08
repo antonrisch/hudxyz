@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
+import { useMobileLayout } from "@/lib/use-mobile-layout";
 import { cn } from "@/lib/utils";
 
 export function ScreenshotButton({ className }: { className?: string }) {
   const { captureDisplay } = useSimulator();
+  const isMobile = useMobileLayout();
   const canCapture = useSimulatorState((s) => s.screen === "app" && s.status === "ready");
   const showWelcome = useSimulatorState((s) => s.screen === "app" && s.status === "idle");
 
@@ -30,7 +32,7 @@ export function ScreenshotButton({ className }: { className?: string }) {
           <Button
             type="button"
             variant="outline"
-            size="icon"
+            size={isMobile ? "icon-lg" : "icon"}
             aria-label="Screenshot"
             className={cn(className)}
             onMouseDown={dropFocus}

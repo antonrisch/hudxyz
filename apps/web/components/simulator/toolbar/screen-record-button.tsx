@@ -6,7 +6,6 @@ import { Button, type buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
-import { useMobileLayout } from "@/lib/use-mobile-layout";
 import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 
@@ -22,10 +21,8 @@ export function ScreenRecordButton({
   showLabel?: boolean;
 }) {
   const { recordScreen, isRecording } = useSimulator();
-  const isMobile = useMobileLayout();
   const canCapture = useSimulatorState((s) => s.screen === "app" && s.status === "ready");
   const showWelcome = useSimulatorState((s) => s.screen === "app" && s.status === "idle");
-  const labeled = showLabel && !isMobile;
 
   const onClick = () => {
     if (isRecording || canCapture) {
@@ -44,13 +41,13 @@ export function ScreenRecordButton({
           <Button
             type="button"
             variant="outline"
-            size={labeled ? size : "icon-lg"}
+            size={showLabel ? size : "icon"}
             aria-label={isRecording ? "Stop recording" : "Start recording"}
             aria-pressed={isRecording}
             className={cn(
               isRecording &&
                 "border-destructive bg-destructive text-white hover:bg-destructive/90 hover:text-white",
-              labeled && "w-28",
+              showLabel && "w-28",
               className,
             )}
             onMouseDown={dropFocus}
@@ -58,16 +55,16 @@ export function ScreenRecordButton({
           >
             {isRecording ? (
               <RecordingIcon
-                data-icon={labeled ? "inline-start" : undefined}
+                data-icon={showLabel ? "inline-start" : undefined}
                 className="animate-pulse"
               />
             ) : (
               <RecordIcon
-                data-icon={labeled ? "inline-start" : undefined}
+                data-icon={showLabel ? "inline-start" : undefined}
                 className="text-destructive"
               />
             )}
-            {labeled ? (
+            {showLabel ? (
               <span>
                 {isRecording ? (
                   <>

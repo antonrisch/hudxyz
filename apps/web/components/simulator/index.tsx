@@ -43,10 +43,8 @@ import { AppHeader } from "@/components/simulator/header/app-header";
 import { Toolbar } from "@/components/simulator/toolbar";
 import { Device } from "@/components/simulator/device";
 import {
-  DisplayPanelMobileTrigger,
   DisplaySidebarColumn,
 } from "@/components/simulator/panel/sidebar";
-import { MobileOnly } from "@/components/simulator/mobile-only";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadStage, type StageCaptureTarget } from "@/lib/simulator/capture";
@@ -670,14 +668,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
                   dockToolbarOnDesktop && "sm:hidden",
                 )}
               >
-                <Toolbar
-                  variant="floaty"
-                  endAction={
-                    <MobileOnly>
-                      <DisplayPanelMobileTrigger />
-                    </MobileOnly>
-                  }
-                />
+                <Toolbar variant="floaty" />
               </div>
             </div>
           </div>
