@@ -39,9 +39,6 @@ export default function RootLayout({
         <NuqsAdapter>{children}</NuqsAdapter>
         <Toaster />
         {process.env.NODE_ENV === "production" && <Analytics />}
-        {process.env.NODE_ENV === "development" && (
-          <Script src="https://unpkg.com/react-grab/dist/index.global.js" crossOrigin="anonymous" />
-        )}
       </body>
     </html>
   );
