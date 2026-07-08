@@ -45,7 +45,7 @@ import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
 import { AppHeader } from "@/components/simulator/header/app-header";
-import { Dpad } from "@/components/simulator/input/dpad";
+import { Toolbar } from "@/components/simulator/toolbar";
 import { Device } from "@/components/simulator/device";
 import {
   DisplayPanelMobileTrigger,
@@ -619,7 +619,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
                 <Device />
               </div>
               <div className="flex w-full shrink-0 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-2.5 sm:z-20 sm:w-auto sm:row-start-1 sm:justify-center sm:px-4 sm:py-0">
-                <Dpad
+                <Toolbar
                   endAction={
                     <MobileOnly>
                       <DisplayPanelMobileTrigger />

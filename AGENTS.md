@@ -26,7 +26,7 @@ A single route, **`/`**, renders the `Simulator` component (`components/simulato
 
 Cosmetic chrome is `?mode=glasses|pixel` (url-only name; store field is `view`). Set client-side via nuqs, so switching never navigates. `?url=` deep-links a target.
 
-**Structure.** A UI-agnostic core — `lib/simulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `components/simulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, controls, view-switcher, zoom-controls), `header/` (app-header, url-bar, share, feedback), `input/` (dpad, screenshot), plus root `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
+**Structure.** A UI-agnostic core — `lib/simulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `components/simulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, controls, view-switcher, zoom-controls), `header/` (app-header, url-bar, share, feedback), `toolbar/` (index, dpad, screenshot), plus root `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
 
 **Same-origin proxy.** Third-party sites set `frame-ancestors` / `X-Frame-Options` that scope framing to themselves. The simulator re-serves the target **from our own origin** through a **Scramjet v2** service-worker proxy, so the browser treats it as same-origin and renders it. Same-origin also lets the D-pad inject keystrokes straight into the frame.
 
@@ -47,7 +47,7 @@ Key files:
 ## Layout (`apps/web`)
 
 - `app/` — App Router routes: `page.tsx` (simulator), `layout.tsx` (fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
-- `components/` — `simulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `input/` + `device`), `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
+- `components/` — `simulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `toolbar/` + `device`), `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
 - `lib/` — `proxy.ts` (Scramjet proxy), `simulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
 - `public/` — `sw.js` plus the generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`.

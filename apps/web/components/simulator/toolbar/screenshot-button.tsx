@@ -17,10 +17,12 @@ export function ScreenshotButton({ className }: { className?: string }) {
         render={
           <Button
             type="button"
-            variant="default"
+            variant="outline"
             size="icon"
             aria-label="Screenshot"
-            className={cn(className)}
+            className={cn(
+              className,
+            )}
             onMouseDown={dropFocus}
             onClick={() => canCapture && void captureDisplay()}
           >
