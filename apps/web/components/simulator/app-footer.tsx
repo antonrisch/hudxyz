@@ -33,11 +33,11 @@ export function AppLegalLinks() {
 export function MobileAppFooter() {
   return (
     <MobileOnly>
-      <footer className="shrink-0 p-3 m-2 rounded-2xl bg-muted border">
-        <p className="text-sm text-pretty leading-snug text-muted-foreground">
+      <footer className="shrink-0 p-3">
+        <p className="text-xs text-pretty leading-snug text-muted-foreground">
           {SIMULATOR_SUMMARY}
         </p>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           <AppLegalLinks />
         </p>
       </footer>
