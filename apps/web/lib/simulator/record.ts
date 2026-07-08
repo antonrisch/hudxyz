@@ -1,6 +1,5 @@
 import { captureStageSnapdom, type StageCaptureTarget } from "@/lib/simulator/capture";
 import {
-  drawStagePixelFrame,
   openStagePixelCapture,
   type PixelCaptureSession,
 } from "@/lib/simulator/pixel-capture";
