@@ -47,7 +47,7 @@ export function ScreenRecordButton({
             className={cn(
               isRecording &&
                 "border-destructive bg-destructive text-white hover:bg-destructive/90 hover:text-white",
-                showLabel && "w-28",
+              showLabel && "w-28",
               className,
             )}
             onMouseDown={dropFocus}
@@ -79,9 +79,7 @@ export function ScreenRecordButton({
           </Button>
         }
       />
-      <TooltipContent>
-        {isRecording ? "Stop recording" : "Record canvas"}
-      </TooltipContent>
+      <TooltipContent>{isRecording ? "Stop recording" : "Record canvas"}</TooltipContent>
     </Tooltip>
   );
 }

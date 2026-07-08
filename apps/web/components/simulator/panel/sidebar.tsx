@@ -60,9 +60,7 @@ function DisplayPanelFooter({
   const docked = dockToolbar && toolbarPlacement === "sidebar" && sidebarToolbar;
 
   if (docked) {
-    return (
-      <footer className="mt-auto w-full shrink-0 border-t">{sidebarToolbar}</footer>
-    );
+    return <footer className="mt-auto w-full shrink-0 border-t">{sidebarToolbar}</footer>;
   }
 
   if (summary) {

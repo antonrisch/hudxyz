@@ -119,11 +119,15 @@
   --brand-hover: color-mix(in oklch, var(--brand) 88%, var(--brand-foreground) 12%);
   --brand-active: color-mix(in oklch, var(--brand) 80%, var(--brand-foreground) 20%);
   --brand-pressed: color-mix(in oklch, var(--brand) 72%, var(--brand-foreground) 28%);
-  --brand-dark: #012CFF;
+  --brand-dark: #012cff;
   --brand-dark-foreground: #ffffff;
   --brand-dark-hover: color-mix(in oklch, var(--brand-dark) 88%, var(--brand-dark-foreground) 12%);
   --brand-dark-active: color-mix(in oklch, var(--brand-dark) 80%, var(--brand-dark-foreground) 20%);
-  --brand-dark-pressed: color-mix(in oklch, var(--brand-dark) 72%, var(--brand-dark-foreground) 28%);
+  --brand-dark-pressed: color-mix(
+    in oklch,
+    var(--brand-dark) 72%,
+    var(--brand-dark-foreground) 28%
+  );
 
   /* emulator backgrounds */
   --stage-fill: #1e293b;
