@@ -152,6 +152,7 @@ export function Device() {
               "relative z-10 size-full border-0 transition-opacity ease-out",
               additive && "mix-blend-screen",
               appVisible && appRevealed ? "opacity-100" : "opacity-0",
+              showWelcome && "pointer-events-none",
             )}
             style={{ transitionDuration: `${APP_REVEAL_MS}ms` }}
           />
