@@ -169,7 +169,7 @@ export function additiveBackgroundBg(preset: BackgroundPreset, image?: string): 
       image ??
       (preset.image.startsWith("blob:") || preset.image.startsWith("/") ? undefined : preset.image);
     if (!src) return "none";
-    return src.startsWith("data:") ? `url(${src})` : `url("${src}")`;
+    return `url("${src}")`;
   }
 
   const gradient = BACKGROUND_GRADIENT[preset.key as keyof typeof BACKGROUND_GRADIENT];
