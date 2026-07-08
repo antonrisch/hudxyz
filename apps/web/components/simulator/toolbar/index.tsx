@@ -10,6 +10,7 @@ import { ToolbarPlacementButton } from "@/components/simulator/toolbar/toolbar-p
 import { DesktopOnly, MobileOnly } from "@/components/simulator/mobile-only";
 import { Panel } from "@/components/simulator/panel";
 import { PanelDrawer } from "@/components/simulator/panel/drawer";
+import { ViewToggleButton } from "@/components/simulator/panel/view-switcher";
 import { useSimulator } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
 import { useMobileLayout } from "@/lib/use-mobile-layout";
@@ -42,11 +43,12 @@ export function Toolbar({ variant = "floaty" }: { variant?: ToolbarVariant }) {
       <div className="flex flex-col items-center justify-center gap-0.5 border bg-muted max-sm:rounded-[calc(min(var(--radius-xl),16px)+0.125rem)] max-sm:p-0.5 sm:rounded-xl sm:p-0.5">
         <DesktopOnly>
           <ScreenRecordButton />
+          <ScreenshotButton />
         </DesktopOnly>
-        <ScreenshotButton />
         <MobileOnly>
+          <ViewToggleButton />
           <PanelDrawer>
-            <Panel headerClassName="pt-2" hideFooter />
+            <Panel headerClassName="pt-2" hideFooter showDesktopOnlyCallout />
           </PanelDrawer>
         </MobileOnly>
         <DesktopOnly>
@@ -63,6 +65,7 @@ export function Toolbar({ variant = "floaty" }: { variant?: ToolbarVariant }) {
         aria-pressed={pressedIntents.has("back")}
         onMouseDown={dropFocus}
         {...press}
+        className="mr-1"
       >
         <Undo2 />
       </Button>

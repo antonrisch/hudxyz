@@ -57,64 +57,62 @@ export default async function OpenGraphImage() {
   const iconSrc = `data:image/svg+xml;base64,${icon.toString("base64")}`;
 
   return new ImageResponse(
-    (
+    <div
+      style={{
+        background: `linear-gradient(to bottom, ${ICON_BANDED_BACKGROUND})`,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 64,
+        fontFamily: "Archivo",
+      }}
+    >
       <div
         style={{
-          background: `linear-gradient(to bottom, ${ICON_BANDED_BACKGROUND})`,
-          width: "100%",
-          height: "100%",
+          background: "#ffffff",
+          borderRadius: 16,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 64,
-          fontFamily: "Archivo",
+          flexDirection: "column",
+          padding: "56px 64px",
+          width: 1040,
         }}
       >
         <div
           style={{
-            background: "#ffffff",
-            borderRadius: 16,
             display: "flex",
-            flexDirection: "column",
-            padding: "56px 64px",
-            width: 1040,
+            alignItems: "center",
+            gap: 24,
+            marginBottom: 36,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 24,
-              marginBottom: 36,
-            }}
-          >
-            <img src={iconSrc} width={72} height={72} alt="" />
-            <div style={{ color: "#0a0a0a", fontSize: 32, fontWeight: 600 }}>hud.xyz</div>
-          </div>
-          <div
-            style={{
-              color: "#0a0a0a",
-              fontSize: 56,
-              fontWeight: 700,
-              lineHeight: 1.05,
-            }}
-          >
-            {SIMULATOR_TITLE}
-          </div>
-          <div
-            style={{
-              color: "#525252",
-              fontSize: 28,
-              fontWeight: 400,
-              marginTop: 28,
-              lineHeight: 1.45,
-            }}
-          >
-            {SIMULATOR_TAGLINE}
-          </div>
+          <img src={iconSrc} width={72} height={72} alt="" />
+          <div style={{ color: "#0a0a0a", fontSize: 32, fontWeight: 600 }}>hud.xyz</div>
+        </div>
+        <div
+          style={{
+            color: "#0a0a0a",
+            fontSize: 56,
+            fontWeight: 700,
+            lineHeight: 1.05,
+          }}
+        >
+          {SIMULATOR_TITLE}
+        </div>
+        <div
+          style={{
+            color: "#525252",
+            fontSize: 28,
+            fontWeight: 400,
+            marginTop: 28,
+            lineHeight: 1.45,
+          }}
+        >
+          {SIMULATOR_TAGLINE}
         </div>
       </div>
-    ),
+    </div>,
     {
       ...size,
       fonts: [
