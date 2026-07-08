@@ -6,6 +6,12 @@ import {
 } from "@/lib/simulator/background";
 
 const DISPLAY_PANEL_OPEN_KEY = "simulator.displayPanelOpen";
+export const DISPLAY_PANEL_OPEN_COOKIE = "simulator.displayPanelOpen";
+
+const TOOLBAR_PLACEMENT_KEY = "simulator.toolbarPlacement";
+export const TOOLBAR_PLACEMENT_COOKIE = "simulator.toolbarPlacement";
+
+const PREFERENCE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 function readDisplayPanelOpen(): boolean {
   try {
@@ -22,7 +28,19 @@ export function getPersistedDisplayPanelOpen(): boolean {
   return readDisplayPanelOpen();
 }
 
+export function parseDisplayPanelOpenCookie(value: string | undefined): boolean {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return true;
+}
+
+function writeDisplayPanelOpenCookie(open: boolean) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${DISPLAY_PANEL_OPEN_COOKIE}=${open}; path=/; max-age=${PREFERENCE_COOKIE_MAX_AGE}; SameSite=Lax`;
+}
+
 function writeDisplayPanelOpen(open: boolean) {
+  writeDisplayPanelOpenCookie(open);
   try {
     localStorage.setItem(DISPLAY_PANEL_OPEN_KEY, String(open));
   } catch {
@@ -43,8 +61,6 @@ export type View = "glasses" | "pixel"; // host chrome around the device (?mode=
 export type ToolbarPlacement = "floaty" | "sidebar"; // d-pad bar: over stage or panel footer
 export type Intent = "up" | "down" | "left" | "right" | "select" | "back"; // d-pad gestures
 
-const TOOLBAR_PLACEMENT_KEY = "simulator.toolbarPlacement";
-
 function readToolbarPlacement(): ToolbarPlacement {
   try {
     const stored = localStorage.getItem(TOOLBAR_PLACEMENT_KEY);
@@ -60,7 +76,18 @@ export function getPersistedToolbarPlacement(): ToolbarPlacement {
   return readToolbarPlacement();
 }
 
+export function parseToolbarPlacementCookie(value: string | undefined): ToolbarPlacement {
+  if (value === "floaty" || value === "sidebar") return value;
+  return "floaty";
+}
+
+function writeToolbarPlacementCookie(placement: ToolbarPlacement) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${TOOLBAR_PLACEMENT_COOKIE}=${placement}; path=/; max-age=${PREFERENCE_COOKIE_MAX_AGE}; SameSite=Lax`;
+}
+
 function writeToolbarPlacement(placement: ToolbarPlacement) {
+  writeToolbarPlacementCookie(placement);
   try {
     localStorage.setItem(TOOLBAR_PLACEMENT_KEY, placement);
   } catch {
@@ -210,4 +237,27 @@ export function createSimulatorStore(seed?: Seed) {
     launchApp: (url) =>
       set((s) => ({ screen: "app", url, status: "loading", loadToken: s.loadToken + 1 })),
   }));
+}
+
+function hasPreferenceCookie(name: string) {
+  return typeof document !== "undefined" && document.cookie.includes(`${name}=`);
+}
+
+// one-time localStorage -> cookie migration for prefs that predate SSR seeding.
+export function migrateLegacySimulatorPreferences(store: SimulatorStore) {
+  if (typeof document === "undefined") return;
+
+  if (!hasPreferenceCookie(TOOLBAR_PLACEMENT_COOKIE)) {
+    const legacy = readToolbarPlacement();
+    if (legacy !== store.getState().toolbarPlacement) {
+      store.getState().setToolbarPlacement(legacy);
+    }
+  }
+
+  if (!hasPreferenceCookie(DISPLAY_PANEL_OPEN_COOKIE)) {
+    const legacyOpen = readDisplayPanelOpen();
+    if (legacyOpen !== store.getState().displayPanelOpen) {
+      store.getState().setDisplayPanelOpen(legacyOpen);
+    }
+  }
 }

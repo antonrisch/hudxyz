@@ -14,8 +14,7 @@ import { useQueryState } from "nuqs";
 import { useStore } from "zustand";
 import {
   createSimulatorStore,
-  getPersistedDisplayPanelOpen,
-  getPersistedToolbarPlacement,
+  migrateLegacySimulatorPreferences,
   type SimulatorState,
   type SimulatorStore,
   type Intent,
@@ -295,16 +294,9 @@ export default function Simulator({ seed }: { seed: Seed }) {
     [store, setModeParam],
   );
 
-  // persisted panel + toolbar placement live in localStorage — hydrate after mount so SSR matches.
+  // prefs are cookie-seeded on the server; migrate any legacy localStorage values once.
   useMountEffect(() => {
-    const open = getPersistedDisplayPanelOpen();
-    if (open !== store.getState().displayPanelOpen) {
-      store.setState({ displayPanelOpen: open });
-    }
-    const toolbarPlacement = getPersistedToolbarPlacement();
-    if (toolbarPlacement !== store.getState().toolbarPlacement) {
-      store.setState({ toolbarPlacement });
-    }
+    migrateLegacySimulatorPreferences(store);
   });
 
   // proxy navigation: react to loadToken (bumped by requestLoad/launchApp/reload).
