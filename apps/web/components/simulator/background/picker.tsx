@@ -120,7 +120,7 @@ function CustomSwatch({
           onRemove();
         }}
       >
-        <X className="size-3" />
+        <X />
       </Button>
     </div>
   );
