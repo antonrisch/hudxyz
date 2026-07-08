@@ -33,7 +33,9 @@ export function PanelDrawer({ children }: { children: ReactNode }) {
       />
       <DrawerContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-sm">
         <DrawerHeader className="shrink-0 space-y-0 border-b p-3 pb-2">
-          <DrawerTitle className="text-sm leading-snug font-semibold">{SIMULATOR_TITLE}</DrawerTitle>
+          <DrawerTitle className="text-sm leading-snug font-semibold">
+            {SIMULATOR_TITLE}
+          </DrawerTitle>
           <DrawerDescription className="sr-only">{SIMULATOR_SUMMARY}</DrawerDescription>
         </DrawerHeader>
         {children}
