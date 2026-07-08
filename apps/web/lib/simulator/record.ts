@@ -13,6 +13,8 @@ export type StageRecordDeps = {
   getBackdrop: () => HTMLElement | null;
   getDisplay: () => HTMLElement | null;
   getIframe: () => HTMLIFrameElement | null;
+  getFrames: () => SVGSVGElement | null;
+  getLensTint?: () => boolean;
   getAdditive?: () => boolean;
   getAdditiveContext?: () => StageCaptureTarget["additiveContext"];
   onAutoStop?: (blob: Blob | null) => void;
@@ -87,6 +89,8 @@ export function createStageRecorder(deps: StageRecordDeps): StageRecorder {
         backdrop: deps.getBackdrop(),
         display: deps.getDisplay(),
         iframe: deps.getIframe(),
+        frames: deps.getFrames(),
+        lensTint: deps.getLensTint?.() ?? false,
         additive: deps.getAdditive?.() ?? false,
         additiveContext: deps.getAdditiveContext?.(),
       },
