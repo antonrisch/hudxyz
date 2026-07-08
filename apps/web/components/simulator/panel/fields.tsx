@@ -163,7 +163,7 @@ export function PanelSlider({
           onChange={(e) => setDraft(e.target.value)}
           onBlur={(e) => commitValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="h-7 w-10 shrink-0 rounded-xl border border-border/50 bg-muted text-center text-sm font-medium tabular-nums text-muted-foreground outline-none hover:text-foreground focus-visible:border-ring focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+          className="h-6 w-11 shrink-0 rounded-lg border border-border/50 bg-muted text-center text-sm font-medium tabular-nums text-muted-foreground outline-none hover:text-foreground focus-visible:border-ring focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
         />
       </div>
     </PanelField>
