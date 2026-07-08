@@ -15,6 +15,11 @@ export type AdditiveBackdropGeometry = {
   displayScale: number;
 };
 
+export function additiveGeometryKey(geometry: AdditiveBackdropGeometry | undefined): string {
+  if (!geometry) return "";
+  return `${geometry.left}|${geometry.top}|${geometry.width}|${geometry.height}|${geometry.displayScale}`;
+}
+
 const GEOMETRY_PROPS = [
   "--hud-bg-left",
   "--hud-bg-top",
@@ -79,18 +84,14 @@ export function syncHostAdditive(
   geometry: AdditiveBackdropGeometry | undefined,
   backgroundBrightness: number,
   backgroundBlur: number,
-) {
-  if (!display) return;
+  lastKey?: string,
+): string | undefined {
+  if (!display) return undefined;
 
   if (!additive) {
     for (const prop of GEOMETRY_PROPS) display.style.removeProperty(prop);
-    return;
+    return "";
   }
-
-  display.style.setProperty("--hud-bg-left", `${geometry?.left ?? 0}px`);
-  display.style.setProperty("--hud-bg-top", `${geometry?.top ?? 0}px`);
-  display.style.setProperty("--hud-bg-width", `${geometry?.width ?? 600}px`);
-  display.style.setProperty("--hud-bg-height", `${geometry?.height ?? 600}px`);
 
   const blurScale = (preset.image ? BACKDROP_SCALE : 1) * (geometry?.displayScale ?? 1);
   const filter = backgroundBackdropFilter(
@@ -99,8 +100,18 @@ export function syncHostAdditive(
     backgroundBlur,
     blurScale,
   );
+  const key = `${additiveGeometryKey(geometry)}|${filter ?? ""}`;
+  if (key === lastKey) return key;
+
+  display.style.setProperty("--hud-bg-left", `${geometry?.left ?? 0}px`);
+  display.style.setProperty("--hud-bg-top", `${geometry?.top ?? 0}px`);
+  display.style.setProperty("--hud-bg-width", `${geometry?.width ?? 600}px`);
+  display.style.setProperty("--hud-bg-height", `${geometry?.height ?? 600}px`);
+
   if (filter) display.style.setProperty("--hud-bg-filter", filter);
   else display.style.removeProperty("--hud-bg-filter");
+
+  return key;
 }
 
 // matches the Meta chrome extension: filter on the app body, not a host overlay.
