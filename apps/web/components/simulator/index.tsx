@@ -15,6 +15,7 @@ import { useStore } from "zustand";
 import {
   createSimulatorStore,
   getPersistedDisplayPanelOpen,
+  getPersistedToolbarPlacement,
   type SimulatorState,
   type SimulatorStore,
   type Intent,
@@ -53,8 +54,6 @@ import { createStageRecorder, downloadStageRecording } from "@/lib/simulator/rec
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const RECORD_COUNTDOWN_SEC = 3;
-
 // -- context ------------------------------------------------
 // stable handles for the leaf components: the store (read via useSimulatorState),
 // the shared iframe ref, and the two behavior entry points (load / press).
@@ -71,7 +70,6 @@ interface SimulatorContextValue {
   captureDisplay: () => Promise<void>;
   recordScreen: () => void;
   isRecording: boolean;
-  recordCountdown: number | null;
   setView: (view: View) => void;
   panZoom: PanZoom;
   syncAdditive: () => void;
@@ -119,6 +117,8 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const backgroundBrightness = useStore(store, (s) => s.backgroundBrightness);
   const backgroundBlur = useStore(store, (s) => s.backgroundBlur);
   const displayPanelOpen = useStore(store, (s) => s.displayPanelOpen);
+  const toolbarPlacement = useStore(store, (s) => s.toolbarPlacement);
+  const dockToolbarOnDesktop = toolbarPlacement === "sidebar";
   const panZoom = usePanZoom(view);
   const panZoomRef = useRef(panZoom);
   panZoomRef.current = panZoom;
@@ -244,8 +244,6 @@ export default function Simulator({ seed }: { seed: Seed }) {
 
   const stageRecorderRef = useRef<ReturnType<typeof createStageRecorder> | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordCountdown, setRecordCountdown] = useState<number | null>(null);
-  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useMountEffect(() => {
     stageRecorderRef.current = createStageRecorder({
@@ -278,27 +276,12 @@ export default function Simulator({ seed }: { seed: Seed }) {
       return;
     }
 
-    if (recordCountdown !== null) return;
-
     const { screen, status } = store.getState();
     if (screen !== "app" || status !== "ready") return;
 
-    setRecordCountdown(RECORD_COUNTDOWN_SEC);
-    let remaining = RECORD_COUNTDOWN_SEC;
-    countdownTimerRef.current = setInterval(() => {
-      remaining -= 1;
-      if (remaining > 0) {
-        setRecordCountdown(remaining);
-        return;
-      }
-
-      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-      setRecordCountdown(null);
-      recorder.start();
-      setIsRecording(true);
-    }, 1000);
-  }, [recordCountdown, store]);
+    recorder.start();
+    setIsRecording(true);
+  }, [store]);
 
   // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
   // reset in usePanZoom once the new chrome has laid out).
@@ -312,11 +295,15 @@ export default function Simulator({ seed }: { seed: Seed }) {
     [store, setModeParam],
   );
 
-  // persisted panel open state lives in localStorage — hydrate after mount so SSR matches.
+  // persisted panel + toolbar placement live in localStorage — hydrate after mount so SSR matches.
   useMountEffect(() => {
     const open = getPersistedDisplayPanelOpen();
     if (open !== store.getState().displayPanelOpen) {
       store.setState({ displayPanelOpen: open });
+    }
+    const toolbarPlacement = getPersistedToolbarPlacement();
+    if (toolbarPlacement !== store.getState().toolbarPlacement) {
+      store.setState({ toolbarPlacement });
     }
   });
 
@@ -479,12 +466,6 @@ export default function Simulator({ seed }: { seed: Seed }) {
     return () => ro.disconnect();
   });
 
-  useMountEffect(() => {
-    return () => {
-      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-    };
-  });
-
   // physical keyboard mirrors the on-screen d-pad: host listeners drive inject + visuals.
   // if the iframe steals host focus, keys never reach window — blur it back, and mirror
   // trusted frame keys for visuals only (injection already happened natively there).
@@ -602,7 +583,6 @@ export default function Simulator({ seed }: { seed: Seed }) {
       captureDisplay,
       recordScreen,
       isRecording,
-      recordCountdown,
       setView,
       panZoom,
       syncAdditive,
@@ -617,7 +597,6 @@ export default function Simulator({ seed }: { seed: Seed }) {
       captureDisplay,
       recordScreen,
       isRecording,
-      recordCountdown,
       setView,
       panZoom,
       syncAdditive,
@@ -637,7 +616,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
               displayPanelOpen ? "gap-2 sm:grid-cols-[1fr_auto]" : "sm:grid-cols-1",
             )}
           >
-            <DisplaySidebarColumn />
+            <DisplaySidebarColumn sidebarToolbar={<Toolbar variant="sidebar" />} />
             <div className="relative grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:col-start-1 sm:row-start-1 sm:grid-rows-1 sm:gap-0">
               <div
                 ref={stageRef}
@@ -650,18 +629,16 @@ export default function Simulator({ seed }: { seed: Seed }) {
                   backgroundBrightness={backgroundBrightness}
                   backgroundBlur={backgroundBlur}
                 />
-                {recordCountdown !== null && (
-                  <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-background/80 text-foreground">
-                    <span className="text-5xl font-semibold tabular-nums">{recordCountdown}</span>
-                    <span className="text-sm text-muted-foreground">
-                      Share this tab when prompted
-                    </span>
-                  </div>
-                )}
                 <Device />
               </div>
-              <div className="flex w-full shrink-0 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-2.5 sm:z-20 sm:w-auto sm:row-start-1 sm:justify-center sm:px-4 sm:py-0">
+              <div
+                className={cn(
+                  "flex w-full shrink-0 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-2.5 sm:z-20 sm:w-auto sm:row-start-1 sm:justify-center sm:px-4 sm:py-0",
+                  dockToolbarOnDesktop && "sm:hidden",
+                )}
+              >
                 <Toolbar
+                  variant="floaty"
                   endAction={
                     <MobileOnly>
                       <DisplayPanelMobileTrigger />

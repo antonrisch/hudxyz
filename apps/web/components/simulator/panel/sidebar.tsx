@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { PanelRight, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,24 @@ function LegalLinks() {
   );
 }
 
-function DisplayPanelFooter({ summary }: { summary?: boolean }) {
+function DisplayPanelFooter({
+  summary,
+  sidebarToolbar,
+  dockToolbar = false,
+}: {
+  summary?: boolean;
+  sidebarToolbar?: ReactNode;
+  dockToolbar?: boolean;
+}) {
+  const toolbarPlacement = useSimulatorState((s) => s.toolbarPlacement);
+  const docked = dockToolbar && toolbarPlacement === "sidebar" && sidebarToolbar;
+
+  if (docked) {
+    return (
+      <footer className="mt-auto w-full shrink-0 border-t">{sidebarToolbar}</footer>
+    );
+  }
+
   if (summary) {
     return (
       <footer className="mt-auto shrink-0">
@@ -90,17 +108,17 @@ function DisplayPanelControlsShell({ toolbarClassName }: { toolbarClassName?: st
 }
 
 // desktop rhs panel — hidden when closed (no width animation; avoids overflow scrollbars).
-export function DisplaySidebarColumn() {
+export function DisplaySidebarColumn({ sidebarToolbar }: { sidebarToolbar?: ReactNode }) {
   const open = useSimulatorState((s) => s.displayPanelOpen);
   if (!open) return null;
 
   return (
-    <div className="hidden min-h-0 w-72 overflow-hidden rounded-2xl border bg-background sm:col-start-2 sm:row-start-1 sm:flex sm:flex-col">
+    <div className="hidden min-h-0 w-66 overflow-hidden rounded-2xl border bg-background sm:col-start-2 sm:row-start-1 sm:flex sm:flex-col">
       <p className="shrink-0 p-3 pb-2 text-md leading-snug font-semibold">{SIMULATOR_TITLE}</p>
       <aside className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <DisplayPanelControlsShell />
       </aside>
-      <DisplayPanelFooter summary />
+      <DisplayPanelFooter summary sidebarToolbar={sidebarToolbar} dockToolbar />
     </div>
   );
 }

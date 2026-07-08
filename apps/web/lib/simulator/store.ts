@@ -40,7 +40,33 @@ function writeDisplayPanelOpen(open: boolean) {
 export type Screen = "app" | "settings" | "home" | "apps";
 export type Status = "idle" | "loading" | "revealing" | "ready" | "error"; // app load lifecycle
 export type View = "glasses" | "pixel"; // host chrome around the device (?mode= in url)
+export type ToolbarPlacement = "floaty" | "sidebar"; // d-pad bar: over stage or panel footer
 export type Intent = "up" | "down" | "left" | "right" | "select" | "back"; // d-pad gestures
+
+const TOOLBAR_PLACEMENT_KEY = "simulator.toolbarPlacement";
+
+function readToolbarPlacement(): ToolbarPlacement {
+  try {
+    const stored = localStorage.getItem(TOOLBAR_PLACEMENT_KEY);
+    if (stored === "floaty" || stored === "sidebar") return stored;
+    return "floaty";
+  } catch {
+    return "floaty";
+  }
+}
+
+// client-only; call after hydration to sync persisted toolbar placement.
+export function getPersistedToolbarPlacement(): ToolbarPlacement {
+  return readToolbarPlacement();
+}
+
+function writeToolbarPlacement(placement: ToolbarPlacement) {
+  try {
+    localStorage.setItem(TOOLBAR_PLACEMENT_KEY, placement);
+  } catch {
+    // storage unavailable (private browsing, etc.)
+  }
+}
 
 export interface SimulatorState {
   screen: Screen;
@@ -57,6 +83,7 @@ export interface SimulatorState {
   backgroundBlur: number; // 0–100 gaussian blur on the stage backdrop
   displayBrightness: number; // 0–100, 100 = full visibility (extension semantics)
   displayPanelOpen: boolean; // rhs display panel (persisted in localStorage on sm+)
+  toolbarPlacement: ToolbarPlacement; // floaty over stage vs docked in panel footer
 
   setScreen: (screen: Screen) => void;
   setView: (view: View) => void;
@@ -72,6 +99,7 @@ export interface SimulatorState {
   setDisplayBrightness: (value: number) => void;
   setDisplayPanelOpen: (open: boolean) => void;
   toggleDisplayPanel: () => void;
+  setToolbarPlacement: (placement: ToolbarPlacement) => void;
   requestLoad: (url: string) => void; // navigate the app surface; the proxy hook reacts
   reload: () => void; // re-navigate the current url
   appReveal: () => void;
@@ -99,6 +127,7 @@ export type Seed = Partial<
     | "backgroundBlur"
     | "displayBrightness"
     | "displayPanelOpen"
+    | "toolbarPlacement"
   >
 >;
 
@@ -118,6 +147,7 @@ export function createSimulatorStore(seed?: Seed) {
     backgroundBlur: seed?.backgroundBlur ?? 0,
     displayBrightness: seed?.displayBrightness ?? 100,
     displayPanelOpen: seed?.displayPanelOpen ?? true,
+    toolbarPlacement: seed?.toolbarPlacement ?? "floaty",
 
     setScreen: (screen) => set({ screen }),
     setView: (view) => set({ view }),
@@ -168,6 +198,10 @@ export function createSimulatorStore(seed?: Seed) {
         writeDisplayPanelOpen(open);
         return { displayPanelOpen: open };
       }),
+    setToolbarPlacement: (toolbarPlacement) => {
+      writeToolbarPlacement(toolbarPlacement);
+      set({ toolbarPlacement });
+    },
     requestLoad: (url) => set((s) => ({ url, status: "loading", loadToken: s.loadToken + 1 })),
     reload: () => set((s) => ({ screen: "app", status: "loading", loadToken: s.loadToken + 1 })),
     appReveal: () => set({ status: "revealing" }),
