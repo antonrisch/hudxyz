@@ -12,6 +12,7 @@ import {
 import type { Status } from "@/lib/simulator/store";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { releaseChromeFocus } from "@/lib/simulator/input";
+import { BackdropVideoMirror } from "@/components/simulator/background/backdrop-media";
 import { additiveBackdropContentStyle, additiveSliceStyle } from "@/lib/simulator/additive";
 import { resolveBackground } from "@/lib/simulator/background";
 import { cn } from "@/lib/utils";
@@ -123,13 +124,19 @@ export function Device() {
               <div
                 aria-hidden
                 data-additive-slice
-                className="overflow-hidden"
+                className="relative overflow-hidden"
                 style={additiveSliceStyle()}
               >
-                <div
-                  className="absolute inset-0 origin-center"
-                  style={additiveBackdropContentStyle(background)}
-                />
+                {background.video ? (
+                  <BackdropVideoMirror
+                    style={{ filter: "var(--hud-bg-filter, none)" }}
+                  />
+                ) : (
+                  <div
+                    className="absolute inset-0 origin-center"
+                    style={additiveBackdropContentStyle(background)}
+                  />
+                )}
               </div>
               {lensTint && (
                 <div

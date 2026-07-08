@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import {
   BACKDROP_SCALE,
+  backdropUsesOverscale,
   backgroundBackdropFilter,
   backgroundBackdropStyle,
   type BackgroundPreset,
@@ -93,7 +94,7 @@ export function syncHostAdditive(
     return "";
   }
 
-  const blurScale = (preset.image ? BACKDROP_SCALE : 1) * (geometry?.displayScale ?? 1);
+  const blurScale = (backdropUsesOverscale(preset) ? BACKDROP_SCALE : 1) * (geometry?.displayScale ?? 1);
   const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale);
   if (!geometry) return lastKey;
 

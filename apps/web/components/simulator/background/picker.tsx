@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ChangeEvent, type ReactNode } from "react";
-import { ImagePlus, Moon, Sun, X } from "lucide-react";
+import { ImagePlus, Moon, Play, Sun, X } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { cn } from "@/lib/utils";
@@ -205,6 +205,24 @@ export function BackgroundPicker() {
           return (
             <Swatch key={bg.key} label={bg.label} selected={isSelected} onSelect={onSelect}>
               <SwatchThumb src={preset.thumb ?? preset.image!} />
+            </Swatch>
+          );
+        }
+
+        if ("video" in bg && bg.video) {
+          const preset = bg as BackgroundPreset;
+          return (
+            <Swatch key={bg.key} label={bg.label} selected={isSelected} onSelect={onSelect}>
+              <SwatchThumb src={preset.thumb ?? preset.poster!} />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(circle_at_100%_100%,rgba(0,0,0,0.55)_0%,transparent_65%)]"
+              />
+              <Play
+                aria-hidden
+                className="pointer-events-none absolute bottom-1 right-1 size-4 text-white drop-shadow-sm"
+                fill="currentColor"
+              />
             </Swatch>
           );
         }

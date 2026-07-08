@@ -25,6 +25,7 @@ import {
 import { INTENT_BY_KEY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
 import { releaseChromeFocus } from "@/lib/simulator/input";
+import { BackdropVideoLeaderProvider } from "@/lib/simulator/backdrop-video-context";
 import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
 import { resolveBackground, resolveBackdropPlaceholder } from "@/lib/simulator/background";
 import {
@@ -228,6 +229,11 @@ export default function Simulator({ seed }: { seed: Seed }) {
       frames: stage.querySelector<SVGSVGElement>('[data-capture="frames"]'),
       lensTint: store.getState().lensTint,
       additive,
+      backgroundCapture: {
+        preset,
+        backgroundBrightness,
+        backgroundBlur,
+      },
       additiveContext: additive
         ? {
             preset,
@@ -651,19 +657,21 @@ export default function Simulator({ seed }: { seed: Seed }) {
               <Panel footer={<Toolbar variant="sidebar" />} showSummary />
             </PanelSidebar>
             <div className="relative grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:col-start-1 sm:row-start-1 sm:grid-rows-1 sm:gap-0">
-              <div
-                ref={stageRef}
-                className="relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill"
-              >
-                <BackgroundBackdrop
-                  ref={backdropRef}
-                  preset={background}
-                  placeholder={backdropPlaceholder}
-                  backgroundBrightness={backgroundBrightness}
-                  backgroundBlur={backgroundBlur}
-                />
-                <Device />
-              </div>
+              <BackdropVideoLeaderProvider>
+                <div
+                  ref={stageRef}
+                  className="relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill"
+                >
+                  <BackgroundBackdrop
+                    ref={backdropRef}
+                    preset={background}
+                    placeholder={backdropPlaceholder}
+                    backgroundBrightness={backgroundBrightness}
+                    backgroundBlur={backgroundBlur}
+                  />
+                  <Device />
+                </div>
+              </BackdropVideoLeaderProvider>
               <div
                 className={cn(
                   "flex w-full shrink-0 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-2.5 sm:z-20 sm:w-auto sm:row-start-1 sm:justify-center sm:px-4 sm:py-0",
