@@ -3,6 +3,7 @@ import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { measureAdditiveBackdrop, type AdditiveBackdropGeometry } from "@/lib/simulator/additive";
 import {
   BACKDROP_SCALE,
+  backdropUsesOverscale,
   backgroundBackdropFilter,
   type BackgroundPreset,
 } from "@/lib/simulator/background";
@@ -15,6 +16,22 @@ const WAVEGUIDE = {
   dpr: 1,
 } as const;
 
+const WAVEGUIDE_SNAP_OPTS = {
+  ...WAVEGUIDE,
+  fast: true,
+  backgroundColor: "#000",
+  embedFonts: false,
+  cache: "disabled" as const,
+  exclude: ["script", "link"],
+  excludeMode: "remove" as const,
+};
+
+export type BackgroundCaptureContext = {
+  preset: BackgroundPreset;
+  backgroundBrightness: number;
+  backgroundBlur: number;
+};
+
 export type StageCaptureTarget = {
   stage: HTMLElement;
   backdrop: HTMLElement | null;
@@ -23,6 +40,7 @@ export type StageCaptureTarget = {
   frames: SVGSVGElement | null;
   lensTint: boolean;
   additive: boolean;
+  backgroundCapture?: BackgroundCaptureContext;
   additiveContext?: {
     preset: BackgroundPreset;
     backgroundBrightness: number;
@@ -76,16 +94,21 @@ async function captureWaveguide(iframe: HTMLIFrameElement): Promise<HTMLCanvasEl
   const doc = iframeDocument(iframe);
   if (!doc?.body) return null;
 
-  try {
-    return await snapdom.toCanvas(waveguideRoot(doc), {
-      ...WAVEGUIDE,
-      fast: true,
-      backgroundColor: "#000",
-    });
-  } catch (e) {
-    console.error("SnapDOM waveguide capture failed", e);
-    return null;
+  const roots: HTMLElement[] = [waveguideRoot(doc)];
+  const firstChild = doc.body.firstElementChild;
+  if (firstChild instanceof HTMLElement && !roots.includes(firstChild)) {
+    roots.push(firstChild);
   }
+
+  for (const root of roots) {
+    try {
+      return await snapdom.toCanvas(root, WAVEGUIDE_SNAP_OPTS);
+    } catch (e) {
+      console.error("SnapDOM waveguide capture failed", e);
+    }
+  }
+
+  return null;
 }
 
 async function captureBackdrop(
@@ -99,11 +122,78 @@ async function captureBackdrop(
       height,
       dpr: 1,
       fast: false,
+      embedFonts: false,
+      cache: "disabled",
     });
   } catch (e) {
     console.error("SnapDOM backdrop capture failed", e);
     return null;
   }
+}
+
+async function captureVideoBackdrop(
+  backdrop: HTMLElement,
+  preset: BackgroundPreset,
+  width: number,
+  height: number,
+  backgroundBrightness: number,
+  backgroundBlur: number,
+): Promise<HTMLCanvasElement | null> {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const filter = backgroundBackdropFilter(
+    preset,
+    backgroundBrightness,
+    backgroundBlur,
+    BACKDROP_SCALE,
+  );
+  if (filter) ctx.filter = filter;
+
+  const video = backdrop.querySelector("video");
+  if (
+    video &&
+    video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+    video.videoWidth > 0
+  ) {
+    drawImageCover(ctx, video, 0, 0, width, height);
+  } else if (preset.poster) {
+    try {
+      const img = await loadCaptureImage(preset.poster);
+      drawImageCover(ctx, img, 0, 0, width, height);
+    } catch {
+      ctx.fillStyle = preset.placeholderColor ?? stageFillColor();
+      ctx.fillRect(0, 0, width, height);
+    }
+  } else {
+    ctx.fillStyle = preset.placeholderColor ?? stageFillColor();
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  ctx.filter = "none";
+  return canvas;
+}
+
+async function captureStageBackground(
+  backdrop: HTMLElement,
+  width: number,
+  height: number,
+  capture?: BackgroundCaptureContext,
+): Promise<HTMLCanvasElement | null> {
+  if (capture?.preset.video) {
+    return captureVideoBackdrop(
+      backdrop,
+      capture.preset,
+      width,
+      height,
+      capture.backgroundBrightness,
+      capture.backgroundBlur,
+    );
+  }
+  return captureBackdrop(backdrop, width, height);
 }
 
 // Root the snap on the SVG itself — avoids nested-svg + overflow clipping in the stage chrome pass.
@@ -143,16 +233,28 @@ function loadCaptureImage(src: string) {
   return pending;
 }
 
+function sourcePixelSize(source: CanvasImageSource): { width: number; height: number } {
+  if (source instanceof HTMLImageElement) {
+    return { width: source.naturalWidth, height: source.naturalHeight };
+  }
+  if (source instanceof HTMLVideoElement) {
+    return { width: source.videoWidth, height: source.videoHeight };
+  }
+  if (source instanceof HTMLCanvasElement) {
+    return { width: source.width, height: source.height };
+  }
+  return { width: 0, height: 0 };
+}
+
 function drawImageCover(
   ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
+  source: CanvasImageSource,
   x: number,
   y: number,
   w: number,
   h: number,
 ) {
-  const sw = img.naturalWidth;
-  const sh = img.naturalHeight;
+  const { width: sw, height: sh } = sourcePixelSize(source);
   if (!sw || !sh) return;
 
   const imageRatio = sw / sh;
@@ -174,7 +276,25 @@ function drawImageCover(
     sy = (sh - sHeight) / 2;
   }
 
-  ctx.drawImage(img, sx, sy, sWidth, sHeight, x, y, w, h);
+  ctx.drawImage(source, sx, sy, sWidth, sHeight, x, y, w, h);
+}
+
+function resolveVideoCaptureSource(display: HTMLElement): CanvasImageSource | null {
+  const mirror = display.querySelector("[data-additive-slice] canvas");
+  if (mirror instanceof HTMLCanvasElement && mirror.width > 0) return mirror;
+
+  const video = display.ownerDocument.querySelector<HTMLVideoElement>(
+    '[data-capture="backdrop"] video',
+  );
+  if (
+    video &&
+    video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+    video.videoWidth > 0
+  ) {
+    return video;
+  }
+
+  return null;
 }
 
 async function paintAdditiveBackdropSlice(
@@ -183,8 +303,9 @@ async function paintAdditiveBackdropSlice(
   geometry: AdditiveBackdropGeometry,
   backgroundBrightness: number,
   backgroundBlur: number,
+  videoSource?: CanvasImageSource | null,
 ) {
-  const blurScale = (preset.image ? BACKDROP_SCALE : 1) * geometry.displayScale;
+  const blurScale = (backdropUsesOverscale(preset) ? BACKDROP_SCALE : 1) * geometry.displayScale;
   const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale);
   if (filter) ctx.filter = filter;
 
@@ -192,6 +313,18 @@ async function paintAdditiveBackdropSlice(
   if (preset.image) {
     const img = await loadCaptureImage(preset.image);
     drawImageCover(ctx, img, left, top, width, height);
+  } else if (preset.video) {
+    const live = videoSource ?? null;
+    const { width: liveWidth } = live ? sourcePixelSize(live) : { width: 0 };
+    if (live && liveWidth > 0) {
+      drawImageCover(ctx, live, left, top, width, height);
+    } else if (preset.poster) {
+      const img = await loadCaptureImage(preset.poster);
+      drawImageCover(ctx, img, left, top, width, height);
+    } else {
+      ctx.fillStyle = stageFillColor();
+      ctx.fillRect(left, top, width, height);
+    }
   } else {
     ctx.fillStyle = stageFillColor();
     ctx.fillRect(left, top, width, height);
@@ -203,6 +336,9 @@ async function paintAdditiveBackdropSlice(
 // Canvas composite at layout resolution (600×600) — snapdom can't screen-blend the iframe
 // with the host backdrop slice when the device plane is CSS-scaled.
 async function captureAdditiveDisplay(
+  bg: HTMLCanvasElement | null,
+  stage: HTMLElement,
+  display: HTMLElement,
   iframe: HTMLIFrameElement,
   preset: BackgroundPreset,
   geometry: AdditiveBackdropGeometry,
@@ -220,7 +356,19 @@ async function captureAdditiveDisplay(
   ctx.beginPath();
   ctx.rect(0, 0, VIEWPORT, VIEWPORT);
   ctx.clip();
-  await paintAdditiveBackdropSlice(ctx, preset, geometry, backgroundBrightness, backgroundBlur);
+  if (bg) {
+    const { x, y, w, h } = elementRectOnStage(stage, display, bg.width, bg.height);
+    ctx.drawImage(bg, x, y, w, h, 0, 0, VIEWPORT, VIEWPORT);
+  } else {
+    await paintAdditiveBackdropSlice(
+      ctx,
+      preset,
+      geometry,
+      backgroundBrightness,
+      backgroundBlur,
+      resolveVideoCaptureSource(display),
+    );
+  }
   if (lensTint) {
     const { left, top, width, height } = geometry;
     ctx.fillStyle = lensTintColor();
@@ -330,7 +478,8 @@ export async function captureStageSnapdom(
   target: StageCaptureTarget,
   options: CaptureStageOptions = {},
 ): Promise<HTMLCanvasElement | null> {
-  const { stage, backdrop, display, iframe, frames, lensTint, additive } = target;
+  const { stage, backdrop, display, iframe, frames, lensTint, additive, backgroundCapture } =
+    target;
   const stageRect = stage.getBoundingClientRect();
   const width = options.width ?? Math.max(1, Math.round(stageRect.width));
   const height = options.height ?? Math.max(1, Math.round(stageRect.height));
@@ -359,7 +508,13 @@ export async function captureStageSnapdom(
     const geometry = measureAdditiveBackdrop(stage, display);
     if (!geometry) return null;
 
-    const bg = backdrop ? await captureBackdrop(backdrop, width, height) : null;
+    const bg = backdrop
+      ? await captureStageBackground(backdrop, width, height, {
+          preset,
+          backgroundBrightness,
+          backgroundBlur,
+        })
+      : null;
 
     const slices = display.querySelectorAll("[data-additive-slice]");
     setVisibility(slices, false);
@@ -370,6 +525,9 @@ export async function captureStageSnapdom(
     iframe.style.visibility = iframeWas;
 
     const surface = await captureAdditiveDisplay(
+      bg,
+      stage,
+      display,
       iframe,
       preset,
       geometry,
@@ -387,7 +545,9 @@ export async function captureStageSnapdom(
     return frame;
   }
 
-  const bg = backdrop ? await captureBackdrop(backdrop, width, height) : null;
+  const bg = backdrop
+    ? await captureStageBackground(backdrop, width, height, backgroundCapture)
+    : null;
   const chrome = await captureStageChrome(stage, width, height, chromeOptions);
   const surface = iframe ? await captureWaveguide(iframe) : null;
 
