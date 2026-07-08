@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Home, LayoutGrid, RotateCw } from "lucide-react";
 import { Frames } from "@/components/simulator/frames";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/lib/simulator/additive";
 import { resolveBackground } from "@/lib/simulator/background";
 import { cn } from "@/lib/utils";
+import { useMountEffect } from "@/lib/use-mount-effect";
 
 const STATUS_MSG: Partial<Record<Status, string>> = {
   loading: "Loading app…",
@@ -33,7 +34,7 @@ const APP_REVEAL_MS = 300;
 // the frames svg off it decoratively, so glasses ≡ 1:1 at a smaller default zoom). the
 // iframe stays the same element across views/modes/zoom.
 export function Device() {
-  const { iframeRef, displayRef, panZoom, store, urlInputRef } = useSimulator();
+  const { iframeRef, displayRef, panZoom, store, urlInputRef, syncAdditive } = useSimulator();
   const view = useSimulatorState((s) => s.view);
   const screen = useSimulatorState((s) => s.screen);
   const status = useSimulatorState((s) => s.status);
@@ -50,6 +51,25 @@ export function Device() {
   const isGlasses = view === "glasses";
   const { onPointerDown, ...panGesture } = panZoom.bind();
   const [appRevealed, setAppRevealed] = useState(false);
+
+  const setDisplayNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      displayRef.current = node;
+      if (node) syncAdditive();
+    },
+    [displayRef, syncAdditive],
+  );
+
+  useMountEffect(() => {
+    const display = displayRef.current;
+    if (!display) return;
+
+    const ro = new ResizeObserver(() => {
+      if (store.getState().additive) syncAdditive();
+    });
+    ro.observe(display);
+    return () => ro.disconnect();
+  });
 
   useEffect(() => {
     if (status === "loading") setAppRevealed(false);
@@ -93,7 +113,7 @@ export function Device() {
           />
         )}
         <div
-          ref={displayRef}
+          ref={setDisplayNode}
           id="hud-display"
           className={cn("relative z-10 size-full overflow-hidden", DEVICE_SURFACE, additive && "bg-transparent")}
         >
@@ -101,14 +121,19 @@ export function Device() {
             <>
               <div
                 aria-hidden
-                style={{
-                  ...additiveSliceStyle(),
-                  ...additiveBackdropContentStyle(background),
-                }}
-              />
+                data-additive-slice
+                className="overflow-hidden"
+                style={additiveSliceStyle()}
+              >
+                <div
+                  className="absolute inset-0 origin-center"
+                  style={additiveBackdropContentStyle(background)}
+                />
+              </div>
               {lensTint && (
                 <div
                   aria-hidden
+                  data-additive-slice
                   style={{
                     ...additiveSliceStyle(),
                     background: "var(--lens-tint)",
@@ -123,7 +148,7 @@ export function Device() {
             tabIndex={-1}
             allow="clipboard-read; clipboard-write"
             className={cn(
-              "relative size-full border-0 transition-opacity ease-out",
+              "relative z-10 size-full border-0 transition-opacity ease-out",
               additive && "mix-blend-screen",
               appVisible && appRevealed ? "opacity-100" : "opacity-0",
             )}

@@ -15,7 +15,7 @@ export type AdditiveBackdropGeometry = {
   displayScale: number;
 };
 
-export function additiveGeometryKey(geometry: AdditiveBackdropGeometry | undefined): string {
+function additiveGeometryKey(geometry: AdditiveBackdropGeometry | undefined): string {
   if (!geometry) return "";
   return `${geometry.left}|${geometry.top}|${geometry.width}|${geometry.height}|${geometry.displayScale}`;
 }
@@ -100,18 +100,42 @@ export function syncHostAdditive(
     backgroundBlur,
     blurScale,
   );
+  if (!geometry) return lastKey;
+
   const key = `${additiveGeometryKey(geometry)}|${filter ?? ""}`;
   if (key === lastKey) return key;
 
-  display.style.setProperty("--hud-bg-left", `${geometry?.left ?? 0}px`);
-  display.style.setProperty("--hud-bg-top", `${geometry?.top ?? 0}px`);
-  display.style.setProperty("--hud-bg-width", `${geometry?.width ?? 600}px`);
-  display.style.setProperty("--hud-bg-height", `${geometry?.height ?? 600}px`);
+  display.style.setProperty("--hud-bg-left", `${geometry.left}px`);
+  display.style.setProperty("--hud-bg-top", `${geometry.top}px`);
+  display.style.setProperty("--hud-bg-width", `${geometry.width}px`);
+  display.style.setProperty("--hud-bg-height", `${geometry.height}px`);
 
   if (filter) display.style.setProperty("--hud-bg-filter", filter);
   else display.style.removeProperty("--hud-bg-filter");
 
   return key;
+}
+
+// host backdrop is a sibling behind the iframe — only the iframe element can screen-blend with it.
+export function clearIframeBodyBlend(iframe: HTMLIFrameElement | null) {
+  const doc = iframe?.contentDocument;
+  if (!doc?.body) return;
+
+  try {
+    doc.body.style.removeProperty("mix-blend-mode");
+    doc.body.style.removeProperty("min-height");
+    doc.body.style.removeProperty("overflow");
+  } catch {
+    // cross-origin while scramjet navigates
+  }
+}
+
+export function settleAdditiveSync(sync: () => void) {
+  sync();
+  requestAnimationFrame(() => {
+    sync();
+    requestAnimationFrame(sync);
+  });
 }
 
 // matches the Meta chrome extension: filter on the app body, not a host overlay.
