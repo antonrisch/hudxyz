@@ -31,6 +31,8 @@ import {
 } from "@/lib/simulator/background";
 import {
   measureAdditiveBackdrop,
+  settleAdditiveSync,
+  clearIframeBodyBlend,
   syncDisplayBrightness,
   syncHostAdditive,
 } from "@/lib/simulator/additive";
@@ -49,7 +51,7 @@ import {
 import { MobileOnly } from "@/components/simulator/mobile-only";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
-import { downloadStage } from "@/lib/simulator/capture";
+import { downloadStage, type StageCaptureTarget } from "@/lib/simulator/capture";
 import { createStageRecorder, downloadStageRecording } from "@/lib/simulator/record";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -75,6 +77,7 @@ interface SimulatorContextValue {
   recordCountdown: number | null;
   setView: (view: View) => void;
   panZoom: PanZoom;
+  syncAdditive: () => void;
 }
 
 const SimulatorContext = createContext<SimulatorContextValue | null>(null);
@@ -180,17 +183,62 @@ export default function Simulator({ seed }: { seed: Seed }) {
     [dispatchIntent, setIntentPressed],
   );
 
+  const additiveSyncKeyRef = useRef("");
+  const syncHostAdditiveLayersRef = useRef<() => void>(() => {});
+
+  const getAdditiveCaptureContext = useCallback((): StageCaptureTarget["additiveContext"] => {
+    const {
+      additive,
+      background: backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+      backgroundBrightness,
+      backgroundBlur,
+    } = store.getState();
+    if (!additive) return undefined;
+    return {
+      preset: resolveBackground(backgroundKey, customBackgroundImages, activeCustomBackgroundId),
+      backgroundBrightness,
+      backgroundBlur,
+      onBeforeCapture: () => syncHostAdditiveLayersRef.current(),
+    };
+  }, [store]);
+  const getAdditiveCaptureContextRef = useRef(getAdditiveCaptureContext);
+  getAdditiveCaptureContextRef.current = getAdditiveCaptureContext;
+
   const captureDisplay = useCallback(async () => {
-    const { screen, status, additive } = store.getState();
+    const {
+      screen,
+      status,
+      additive,
+      background: backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+      backgroundBrightness,
+      backgroundBlur,
+    } = store.getState();
     if (screen !== "app" || status !== "ready") return;
     const stage = stageRef.current;
     if (!stage) return;
+    const preset = resolveBackground(
+      backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+    );
     await downloadStage({
       stage,
       backdrop: backdropRef.current,
       display: displayRef.current,
       iframe: iframeRef.current,
       additive,
+      additiveContext: additive
+        ? {
+            preset,
+            backgroundBrightness,
+            backgroundBlur,
+            onBeforeCapture: () => syncHostAdditiveLayersRef.current(),
+          }
+        : undefined,
     });
   }, [store]);
 
@@ -201,7 +249,6 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordCountdown, setRecordCountdown] = useState<number | null>(null);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const additiveSyncKeyRef = useRef("");
 
   useMountEffect(() => {
     stageRecorderRef.current = createStageRecorder({
@@ -210,6 +257,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
       getDisplay: () => displayRef.current,
       getIframe: () => iframeRef.current,
       getAdditive: () => store.getState().additive,
+      getAdditiveContext: () => getAdditiveCaptureContextRef.current(),
       onAutoStop: (blob) => {
         if (blob) downloadStageRecording(blob);
         setIsRecording(false);
@@ -384,9 +432,16 @@ export default function Simulator({ seed }: { seed: Seed }) {
         backgroundBrightness,
         backgroundBlur,
         additiveSyncKeyRef.current,
-      ) ?? "";
+      ) ?? additiveSyncKeyRef.current;
+    clearIframeBodyBlend(iframeRef.current);
     syncDisplayBrightness(iframeRef.current, displayBrightness);
   }, [store]);
+
+  syncHostAdditiveLayersRef.current = syncHostAdditiveLayers;
+
+  const syncAdditive = useCallback(() => {
+    settleAdditiveSync(syncHostAdditiveLayers);
+  }, [syncHostAdditiveLayers]);
 
   useMountEffect(() => {
     const unsub = store.subscribe((state, prev) => {
@@ -399,11 +454,11 @@ export default function Simulator({ seed }: { seed: Seed }) {
         state.backgroundBlur !== prev.backgroundBlur ||
         state.displayBrightness !== prev.displayBrightness
       ) {
-        syncHostAdditiveLayers();
+        syncAdditive();
       }
     });
 
-    syncHostAdditiveLayers();
+    syncAdditive();
     applyAdditiveRef.current = syncHostAdditiveLayers;
     return () => {
       applyAdditiveRef.current = () => {};
@@ -413,18 +468,17 @@ export default function Simulator({ seed }: { seed: Seed }) {
 
   useEffect(() => {
     if (!store.getState().additive) return;
-    syncHostAdditiveLayers();
-  }, [panZoom.transformRevision, store, syncHostAdditiveLayers]);
+    syncAdditive();
+  }, [panZoom.transformRevision, panZoom.revealed, view, store, syncAdditive]);
 
   useMountEffect(() => {
-    const nodes = [stageRef.current, displayRef.current].filter(Boolean) as HTMLElement[];
-    if (nodes.length === 0) return;
+    const stage = stageRef.current;
+    if (!stage) return;
 
-    const onResize = () => {
-      if (store.getState().additive) syncHostAdditiveLayers();
-    };
-    const ro = new ResizeObserver(onResize);
-    for (const node of nodes) ro.observe(node);
+    const ro = new ResizeObserver(() => {
+      if (store.getState().additive) syncAdditive();
+    });
+    ro.observe(stage);
     return () => ro.disconnect();
   });
 
@@ -554,6 +608,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
       recordCountdown,
       setView,
       panZoom,
+      syncAdditive,
     }),
     [
       store,
@@ -568,6 +623,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
       recordCountdown,
       setView,
       panZoom,
+      syncAdditive,
     ],
   );
 
