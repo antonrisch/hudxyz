@@ -17,6 +17,7 @@ type DisplayMediaWithPreferTab = DisplayMediaStreamOptions & {
 
 export type PixelCaptureSession = {
   video: HTMLVideoElement;
+  stream: MediaStream;
   stop: () => void;
 };
 
@@ -62,6 +63,7 @@ export async function openStagePixelCapture(
 
     return {
       video,
+      stream,
       stop: () => {
         stream?.getTracks().forEach((t) => t.stop());
         video.srcObject = null;
@@ -92,9 +94,10 @@ export async function captureStagePixels(stage: HTMLElement): Promise<HTMLCanvas
   try {
     await waitForPaint();
     const { width, height } = stage.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(width));
-    canvas.height = Math.max(1, Math.round(height));
+    canvas.width = Math.max(1, Math.round(width * dpr));
+    canvas.height = Math.max(1, Math.round(height * dpr));
     drawStagePixelFrame(session.video, canvas);
     return canvas;
   } finally {

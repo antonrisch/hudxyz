@@ -65,19 +65,7 @@ export function createStageRecorder(deps: StageRecordDeps): StageRecorder {
     pixelSession = null;
   };
 
-  const drawPixelFrame = (gen: number) => {
-    if (!recording || gen !== generation || !pixelSession || !canvas) return;
-    drawStagePixelFrame(pixelSession.video, canvas);
-  };
-
-  const schedulePixelFrames = (gen: number) => {
-    const tick = () => {
-      if (!recording || gen !== generation) return;
-      frameId = requestAnimationFrame(tick);
-      drawPixelFrame(gen);
-    };
-    frameId = requestAnimationFrame(tick);
-  };
+  // Snapdom fallback frame scheduler
 
   const drawSnapdomFrame = async (gen: number) => {
     const stage = deps.getStage();
@@ -157,21 +145,6 @@ export function createStageRecorder(deps: StageRecordDeps): StageRecorder {
       chunks = [];
       stopPixelSession();
 
-      canvas = document.createElement("canvas");
-      const { width, height } = stage.getBoundingClientRect();
-      canvas.width = Math.max(1, Math.round(width));
-      canvas.height = Math.max(1, Math.round(height));
-      ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("2d canvas context unavailable");
-
-      const mimeType = pickRecorderMimeType();
-      const stream = canvas.captureStream(STAGE_RECORD_FPS);
-      recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunks.push(event.data);
-      };
-
       void (async () => {
         const session = await openStagePixelCapture(stage);
         if (!recording || gen !== generation) {
@@ -179,12 +152,32 @@ export function createStageRecorder(deps: StageRecordDeps): StageRecorder {
           return;
         }
 
+        const mimeType = pickRecorderMimeType();
+        const options: MediaRecorderOptions = { videoBitsPerSecond: 25_000_000 };
+        if (mimeType) options.mimeType = mimeType;
+
         if (session) {
           pixelSession = session;
-          recorder!.start(250);
-          schedulePixelFrames(gen);
+          recorder = new MediaRecorder(session.stream, options);
+          recorder.ondataavailable = (event) => {
+            if (event.data.size > 0) chunks.push(event.data);
+          };
+          recorder.start(250);
         } else {
-          recorder!.start(250);
+          canvas = document.createElement("canvas");
+          const { width, height } = stage.getBoundingClientRect();
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = Math.max(1, Math.round(width * dpr));
+          canvas.height = Math.max(1, Math.round(height * dpr));
+          ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("2d canvas context unavailable");
+
+          const stream = canvas.captureStream(STAGE_RECORD_FPS);
+          recorder = new MediaRecorder(stream, options);
+          recorder.ondataavailable = (event) => {
+            if (event.data.size > 0) chunks.push(event.data);
+          };
+          recorder.start(250);
           scheduleSnapdomFrames(gen);
         }
 
