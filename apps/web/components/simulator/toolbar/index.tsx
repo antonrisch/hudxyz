@@ -42,8 +42,8 @@ export function Toolbar({ variant = "floaty" }: { variant?: ToolbarVariant }) {
       <div className="flex flex-col items-center justify-center gap-0.5 border bg-muted max-sm:rounded-[calc(min(var(--radius-xl),16px)+0.125rem)] max-sm:p-0.5 sm:rounded-xl sm:p-0.5">
         <DesktopOnly>
           <ScreenRecordButton />
+          <ScreenshotButton />
         </DesktopOnly>
-        <ScreenshotButton />
         <MobileOnly>
           <PanelDrawer>
             <Panel headerClassName="pt-2" hideFooter />
