@@ -1,4 +1,4 @@
-import { captureStageSnapdom } from "@/lib/simulator/capture";
+import { captureStageSnapdom, type StageCaptureTarget } from "@/lib/simulator/capture";
 import {
   drawStagePixelFrame,
   openStagePixelCapture,
@@ -14,6 +14,7 @@ export type StageRecordDeps = {
   getDisplay: () => HTMLElement | null;
   getIframe: () => HTMLIFrameElement | null;
   getAdditive?: () => boolean;
+  getAdditiveContext?: () => StageCaptureTarget["additiveContext"];
   onAutoStop?: (blob: Blob | null) => void;
 };
 
@@ -87,6 +88,7 @@ export function createStageRecorder(deps: StageRecordDeps): StageRecorder {
         display: deps.getDisplay(),
         iframe: deps.getIframe(),
         additive: deps.getAdditive?.() ?? false,
+        additiveContext: deps.getAdditiveContext?.(),
       },
       { width: canvas.width, height: canvas.height },
     );
