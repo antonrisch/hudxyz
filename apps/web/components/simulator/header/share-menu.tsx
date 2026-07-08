@@ -18,6 +18,7 @@ import { useSimulatorState } from "@/components/simulator";
 import { SUGGESTED_APPS } from "@/lib/simulator/config";
 import { dropFocus } from "@/lib/simulator/input";
 import { buildDeviceSetupDeepLink, normalizeWebUrl } from "@/lib/simulator/search-params";
+import { useMobileLayout } from "@/lib/use-mobile-layout";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ function suggestedAppNameForUrl(rawUrl: string): string {
 }
 
 export function ShareMenu({ className }: { className?: string }) {
+  const isMobile = useMobileLayout();
   const url = useSimulatorState((s) => s.url);
   const [open, setOpen] = useState(false);
   const [appName, setAppName] = useState("");
@@ -66,13 +68,13 @@ export function ShareMenu({ className }: { className?: string }) {
           <Button
             type="button"
             variant="brand"
-            size="lg"
+            size={isMobile ? "icon-lg" : "lg"}
             aria-label="Share"
             onMouseDown={dropFocus}
-            className={cn("shrink-0 max-sm:size-10 max-sm:px-0", className)}
+            className={cn("shrink-0", className)}
           >
-            <Glasses data-icon="inline-start" />
-            <span className="hidden sm:inline">Open on Glasses</span>
+            <Glasses data-icon={isMobile ? undefined : "inline-start"} />
+            {!isMobile ? <span>Open on Glasses</span> : null}
           </Button>
         }
       />
