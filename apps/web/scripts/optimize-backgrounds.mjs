@@ -12,12 +12,6 @@ const DISPLAY_EDGE = 1920;
 const DISPLAY_QUALITY = 80;
 const THUMB_EDGE = 96;
 const THUMB_QUALITY = 75;
-const IFRAME_START_EDGE = 2400;
-const IFRAME_START_QUALITY = 78;
-const IFRAME_MIN_EDGE = 320;
-const IFRAME_MIN_QUALITY = 35;
-const IFRAME_QUALITY_STEP = 8;
-const CSS_DATA_URL_BUDGET = 900_000;
 const LQIP_EDGE = 16;
 
 const PRESETS = ["alps", "alps2", "beach"];
@@ -31,11 +25,6 @@ function scaledDimensions(width, height, edge) {
   };
 }
 
-function dataUrlBudget(buffer, mime) {
-  const base64 = buffer.toString("base64");
-  return `data:${mime};base64,${base64}`.length;
-}
-
 async function encodeWebp(input, edge, quality) {
   const meta = await input.metadata();
   const { width, height } = scaledDimensions(meta.width, meta.height, edge);
@@ -44,30 +33,6 @@ async function encodeWebp(input, edge, quality) {
     .resize(width, height, { fit: "inside", withoutEnlargement: true })
     .webp({ quality })
     .toBuffer();
-}
-
-async function fitIframeWebp(input) {
-  let edge = IFRAME_START_EDGE;
-  let quality = IFRAME_START_QUALITY;
-
-  while (true) {
-    const buffer = await encodeWebp(input, edge, quality);
-    const budget = dataUrlBudget(buffer, "image/webp");
-    if (budget <= CSS_DATA_URL_BUDGET) return buffer;
-
-    if (quality > IFRAME_MIN_QUALITY) {
-      quality = Math.max(IFRAME_MIN_QUALITY, quality - IFRAME_QUALITY_STEP);
-      continue;
-    }
-
-    if (edge > IFRAME_MIN_EDGE) {
-      edge = Math.max(IFRAME_MIN_EDGE, Math.floor(edge * 0.85));
-      quality = IFRAME_START_QUALITY;
-      continue;
-    }
-
-    throw new Error(`Could not fit iframe asset within ${CSS_DATA_URL_BUDGET} char budget`);
-  }
 }
 
 function findSourcePath(name) {
@@ -97,24 +62,20 @@ function formatKb(bytes) {
 async function optimizePreset(name) {
   const sourcePath = findSourcePath(name);
   const input = sharp(sourcePath);
-  const [display, thumb, iframe] = await Promise.all([
+  const [display, thumb] = await Promise.all([
     encodeWebp(input, DISPLAY_EDGE, DISPLAY_QUALITY),
     encodeWebp(input, THUMB_EDGE, THUMB_QUALITY),
-    fitIframeWebp(input),
   ]);
 
   writeFileSync(join(backgroundsDir, `${name}.webp`), display);
   writeFileSync(join(backgroundsDir, `${name}-thumb.webp`), thumb);
-  writeFileSync(join(backgroundsDir, `${name}-iframe.webp`), iframe);
 
   const lqipBuffer = await sharp(display)
     .resize(LQIP_EDGE, LQIP_EDGE, { fit: "cover" })
     .jpeg({ quality: 60 })
     .toBuffer();
 
-  console.log(
-    `${name}: display ${formatKb(display.length)}, thumb ${formatKb(thumb.length)}, iframe ${formatKb(iframe.length)} (data url ${dataUrlBudget(iframe, "image/webp")} chars)`,
-  );
+  console.log(`${name}: display ${formatKb(display.length)}, thumb ${formatKb(thumb.length)}`);
 
   return { name, lqip: `data:image/jpeg;base64,${lqipBuffer.toString("base64")}` };
 }
@@ -132,7 +93,7 @@ ${lines.join("\n")}
 
 function removeLegacyOutputs() {
   for (const file of readdirSync(backgroundsDir)) {
-    if (file.endsWith(".jpg") || file.endsWith(".jpeg")) {
+    if (file.endsWith(".jpg") || file.endsWith(".jpeg") || file.endsWith("-iframe.webp")) {
       unlinkSync(join(backgroundsDir, file));
     }
   }

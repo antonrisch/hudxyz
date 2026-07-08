@@ -87,7 +87,7 @@ export function ZoomControls({ className }: { className?: string }) {
             className={cn("h-10 gap-1 px-2 tabular-nums", className)}
           >
             {percent}%
-            <ChevronDown className="size-3.5 opacity-50" />
+            <ChevronDown data-icon="inline-end" className="opacity-50" />
           </Button>
         }
       />

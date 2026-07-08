@@ -9,7 +9,6 @@ export type BackgroundPreset = {
   label: string;
   image?: string;
   thumb?: string;
-  iframeImage?: string;
   placeholderColor?: string;
   lqip?: string;
 };
@@ -38,7 +37,6 @@ export const BACKGROUNDS = [
     label: "Alps",
     image: "/backgrounds/alps.webp",
     thumb: "/backgrounds/alps-thumb.webp",
-    iframeImage: "/backgrounds/alps-iframe.webp",
     placeholderColor: "#355677",
     lqip: BACKGROUND_LQIP.alps,
   },
@@ -47,7 +45,6 @@ export const BACKGROUNDS = [
     label: "Alps 2",
     image: "/backgrounds/alps2.webp",
     thumb: "/backgrounds/alps2-thumb.webp",
-    iframeImage: "/backgrounds/alps2-iframe.webp",
     placeholderColor: "#4f597d",
     lqip: BACKGROUND_LQIP.alps2,
   },
@@ -56,7 +53,6 @@ export const BACKGROUNDS = [
     label: "Beach",
     image: "/backgrounds/beach.webp",
     thumb: "/backgrounds/beach-thumb.webp",
-    iframeImage: "/backgrounds/beach-iframe.webp",
     placeholderColor: "#bdbbac",
     lqip: BACKGROUND_LQIP.beach,
   },
@@ -80,7 +76,6 @@ export type CustomBackgroundImage = {
   id: string;
   url: string;
   thumbUrl: string;
-  iframeDataUrl: string;
 };
 
 export function resolveBackground(
@@ -159,39 +154,4 @@ export function backgroundBackdropStyle(
   if (gradient) return { backgroundImage: gradient, ...(filter && { filter }) };
 
   return { backgroundColor: "var(--stage-fill)", ...(filter && { filter }) };
-}
-
-export function additiveBackgroundBg(preset: BackgroundPreset, image?: string): string {
-  if (preset.image) {
-    // iframe css resolves urls against the proxied app origin — never inject host-relative
-    // /backgrounds/* paths; wait for the parent to supply a compressed data: url instead.
-    const src =
-      image ??
-      (preset.image.startsWith("blob:") || preset.image.startsWith("/") ? undefined : preset.image);
-    if (!src) return "none";
-    return src.startsWith("data:") ? `url(${src})` : `url("${src}")`;
-  }
-
-  const gradient = BACKGROUND_GRADIENT[preset.key as keyof typeof BACKGROUND_GRADIENT];
-  return gradient ? resolveHostBackgroundImage(gradient) : "none";
-}
-
-export function additiveBackgroundFilter(
-  preset: BackgroundPreset,
-  backgroundBrightness = 80,
-  backgroundBlur = 0,
-  blurScale = 1,
-): string {
-  return (
-    backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale) ?? "none"
-  );
-}
-
-function resolveHostBackgroundImage(source: string): string {
-  const probe = document.createElement("div");
-  probe.style.backgroundImage = source;
-  document.documentElement.append(probe);
-  const resolved = getComputedStyle(probe).backgroundImage;
-  probe.remove();
-  return resolved !== "none" ? resolved : source;
 }

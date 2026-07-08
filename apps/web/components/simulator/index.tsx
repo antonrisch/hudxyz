@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -13,7 +14,7 @@ import { useQueryState } from "nuqs";
 import { useStore } from "zustand";
 import {
   createSimulatorStore,
-  getPersistedDisplayPanelOpen,
+  migrateLegacySimulatorPreferences,
   type SimulatorState,
   type SimulatorStore,
   type Intent,
@@ -24,20 +25,13 @@ import { INTENT_BY_KEY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
 import { releaseChromeFocus } from "@/lib/simulator/input";
 import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
-import {
-  resolveBackground,
-  resolveBackdropPlaceholder,
-  backgroundByKey,
-} from "@/lib/simulator/background";
-import {
-  getCachedIframeBackgroundImage,
-  prewarmPresetBackgroundImages,
-  resolveIframeBackgroundImage,
-} from "@/lib/simulator/background-image";
+import { resolveBackground, resolveBackdropPlaceholder } from "@/lib/simulator/background";
 import {
   measureAdditiveBackdrop,
-  syncAdditive,
+  settleAdditiveSync,
+  clearIframeBodyBlend,
   syncDisplayBrightness,
+  syncHostAdditive,
 } from "@/lib/simulator/additive";
 import { simulatorParsers } from "@/lib/simulator/search-params";
 import { normalizeWebUrl } from "@/lib/simulator/search-params";
@@ -45,7 +39,7 @@ import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
 import { AppHeader } from "@/components/simulator/header/app-header";
-import { Dpad } from "@/components/simulator/input/dpad";
+import { Toolbar } from "@/components/simulator/toolbar";
 import { Device } from "@/components/simulator/device";
 import {
   DisplayPanelMobileTrigger,
@@ -54,7 +48,8 @@ import {
 import { MobileOnly } from "@/components/simulator/mobile-only";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
-import { downloadDisplay } from "@/lib/simulator/capture";
+import { downloadStage, type StageCaptureTarget } from "@/lib/simulator/capture";
+import { createStageRecorder, downloadStageRecording } from "@/lib/simulator/record";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -72,8 +67,11 @@ interface SimulatorContextValue {
   pressUp: (intent: Intent) => void;
   pressedIntents: ReadonlySet<Intent>;
   captureDisplay: () => Promise<void>;
+  recordScreen: () => void;
+  isRecording: boolean;
   setView: (view: View) => void;
   panZoom: PanZoom;
+  syncAdditive: () => void;
 }
 
 const SimulatorContext = createContext<SimulatorContextValue | null>(null);
@@ -98,6 +96,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const displayRef = useRef<HTMLDivElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
   const applyAdditiveRef = useRef<() => void>(() => {});
   const view = useStore(store, (s) => s.view);
@@ -117,6 +116,8 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const backgroundBrightness = useStore(store, (s) => s.backgroundBrightness);
   const backgroundBlur = useStore(store, (s) => s.backgroundBlur);
   const displayPanelOpen = useStore(store, (s) => s.displayPanelOpen);
+  const toolbarPlacement = useStore(store, (s) => s.toolbarPlacement);
+  const dockToolbarOnDesktop = toolbarPlacement === "sidebar";
   const panZoom = usePanZoom(view);
   const panZoomRef = useRef(panZoom);
   panZoomRef.current = panZoom;
@@ -178,16 +179,108 @@ export default function Simulator({ seed }: { seed: Seed }) {
     [dispatchIntent, setIntentPressed],
   );
 
+  const additiveSyncKeyRef = useRef("");
+  const syncHostAdditiveLayersRef = useRef<() => void>(() => {});
+
+  const getAdditiveCaptureContext = useCallback((): StageCaptureTarget["additiveContext"] => {
+    const {
+      additive,
+      background: backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+      backgroundBrightness,
+      backgroundBlur,
+    } = store.getState();
+    if (!additive) return undefined;
+    return {
+      preset: resolveBackground(backgroundKey, customBackgroundImages, activeCustomBackgroundId),
+      backgroundBrightness,
+      backgroundBlur,
+      onBeforeCapture: () => syncHostAdditiveLayersRef.current(),
+    };
+  }, [store]);
+  const getAdditiveCaptureContextRef = useRef(getAdditiveCaptureContext);
+  getAdditiveCaptureContextRef.current = getAdditiveCaptureContext;
+
   const captureDisplay = useCallback(async () => {
-    const { screen, status } = store.getState();
+    const {
+      screen,
+      status,
+      additive,
+      background: backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+      backgroundBrightness,
+      backgroundBlur,
+    } = store.getState();
     if (screen !== "app" || status !== "ready") return;
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-    await downloadDisplay(iframe);
+    const stage = stageRef.current;
+    if (!stage) return;
+    const preset = resolveBackground(
+      backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+    );
+    await downloadStage({
+      stage,
+      backdrop: backdropRef.current,
+      display: displayRef.current,
+      iframe: iframeRef.current,
+      additive,
+      additiveContext: additive
+        ? {
+            preset,
+            backgroundBrightness,
+            backgroundBlur,
+            onBeforeCapture: () => syncHostAdditiveLayersRef.current(),
+          }
+        : undefined,
+    });
   }, [store]);
 
   const captureRef = useRef(captureDisplay);
   captureRef.current = captureDisplay;
+
+  const stageRecorderRef = useRef<ReturnType<typeof createStageRecorder> | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+
+  useMountEffect(() => {
+    stageRecorderRef.current = createStageRecorder({
+      getStage: () => stageRef.current,
+      getBackdrop: () => backdropRef.current,
+      getDisplay: () => displayRef.current,
+      getIframe: () => iframeRef.current,
+      getAdditive: () => store.getState().additive,
+      getAdditiveContext: () => getAdditiveCaptureContextRef.current(),
+      onAutoStop: (blob) => {
+        if (blob) downloadStageRecording(blob);
+        setIsRecording(false);
+      },
+    });
+    return () => {
+      void stageRecorderRef.current?.stop();
+      stageRecorderRef.current = null;
+    };
+  });
+
+  const recordScreen = useCallback(() => {
+    const recorder = stageRecorderRef.current;
+    if (!recorder) return;
+
+    if (recorder.isRecording) {
+      void recorder.stop().then((blob) => {
+        if (blob) downloadStageRecording(blob);
+        setIsRecording(false);
+      });
+      return;
+    }
+
+    const { screen, status } = store.getState();
+    if (screen !== "app" || status !== "ready") return;
+
+    recorder.start();
+    setIsRecording(true);
+  }, [store]);
 
   // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
   // reset in usePanZoom once the new chrome has laid out).
@@ -201,12 +294,9 @@ export default function Simulator({ seed }: { seed: Seed }) {
     [store, setModeParam],
   );
 
-  // persisted panel open state lives in localStorage — hydrate after mount so SSR matches.
+  // prefs are cookie-seeded on the server; migrate any legacy localStorage values once.
   useMountEffect(() => {
-    const open = getPersistedDisplayPanelOpen();
-    if (open !== store.getState().displayPanelOpen) {
-      store.setState({ displayPanelOpen: open });
-    }
+    migrateLegacySimulatorPreferences(store);
   });
 
   // proxy navigation: react to loadToken (bumped by requestLoad/launchApp/reload).
@@ -291,153 +381,48 @@ export default function Simulator({ seed }: { seed: Seed }) {
     };
   });
 
-  // additive preview lives inside the proxied document so black pixels blend with the
-  // background before the iframe crosses transformed simulator chrome.
-  useMountEffect(() => {
-    const { additive, background } = store.getState();
-    if (additive && background !== "custom") {
-      prewarmPresetBackgroundImages(background);
-    }
-
-    let applyToken = 0;
-    let resolvedImage: string | undefined;
-    let resolvedImageSource: string | undefined;
-    let animationFrame = 0;
-
-    const syncCurrentAdditive = () => {
-      const {
-        additive,
-        lensTint,
-        background: backgroundKey,
-        customBackgroundImages,
-        activeCustomBackgroundId,
-        backgroundBrightness,
-        backgroundBlur,
-        displayBrightness,
-      } = store.getState();
-      const preset = resolveBackground(
-        backgroundKey,
-        customBackgroundImages,
-        activeCustomBackgroundId,
-      );
-      const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
-      syncAdditive(
-        iframeRef.current,
+  // additive preview is composited on the host inside #hud-display so black waveguide
+  // pixels blend with the aligned backdrop slice before device chrome transforms.
+  const syncHostAdditiveLayers = useCallback(() => {
+    const {
+      additive,
+      background: backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+      backgroundBrightness,
+      backgroundBlur,
+      displayBrightness,
+    } = store.getState();
+    const preset = resolveBackground(
+      backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+    );
+    const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
+    additiveSyncKeyRef.current =
+      syncHostAdditive(
+        displayRef.current,
         additive,
         preset,
-        resolvedImage,
         geometry,
-        lensTint,
         backgroundBrightness,
         backgroundBlur,
-      );
-      syncDisplayBrightness(iframeRef.current, displayBrightness);
-    };
+        additiveSyncKeyRef.current,
+      ) ?? additiveSyncKeyRef.current;
+    clearIframeBodyBlend(iframeRef.current);
+    syncDisplayBrightness(iframeRef.current, displayBrightness);
+  }, [store]);
 
-    const applyAdditive = () => {
-      const {
-        additive,
-        background: backgroundKey,
-        customBackgroundImages,
-        activeCustomBackgroundId,
-      } = store.getState();
-      const token = ++applyToken;
-      const preset = resolveBackground(
-        backgroundKey,
-        customBackgroundImages,
-        activeCustomBackgroundId,
-      );
-      const source =
-        backgroundKey === "custom"
-          ? preset.image
-          : (backgroundByKey(backgroundKey).iframeImage ?? preset.image);
-      const customIframeDataUrl =
-        backgroundKey === "custom"
-          ? (
-              customBackgroundImages.find((img) => img.id === activeCustomBackgroundId) ??
-              customBackgroundImages[0]
-            )?.iframeDataUrl
-          : undefined;
+  syncHostAdditiveLayersRef.current = syncHostAdditiveLayers;
 
-      if (!additive) {
-        resolvedImage = undefined;
-        resolvedImageSource = undefined;
-        syncCurrentAdditive();
-        return;
-      }
+  const syncAdditive = useCallback(() => {
+    settleAdditiveSync(syncHostAdditiveLayers);
+  }, [syncHostAdditiveLayers]);
 
-      if (!source) {
-        resolvedImage = undefined;
-        resolvedImageSource = undefined;
-        syncCurrentAdditive();
-        return;
-      }
-
-      const cached = customIframeDataUrl ?? getCachedIframeBackgroundImage(source);
-      if (cached) {
-        resolvedImage = cached;
-        resolvedImageSource = source;
-        syncCurrentAdditive();
-        return;
-      }
-
-      if (source === resolvedImageSource && resolvedImage) {
-        syncCurrentAdditive();
-        return;
-      }
-
-      if (source.startsWith("data:")) {
-        resolvedImage = source;
-        resolvedImageSource = source;
-        syncCurrentAdditive();
-        return;
-      }
-
-      resolvedImage = undefined;
-      resolvedImageSource = source;
-      syncCurrentAdditive();
-
-      void resolveIframeBackgroundImage(source)
-        .then((nextImage) => {
-          if (token !== applyToken) return;
-          resolvedImage = nextImage;
-          resolvedImageSource = source;
-          syncCurrentAdditive();
-        })
-        .catch(() => {
-          if (token !== applyToken) return;
-          resolvedImage = undefined;
-          resolvedImageSource = undefined;
-          syncCurrentAdditive();
-        });
-    };
-
-    const tickGeometry = () => {
-      if (!store.getState().additive) {
-        animationFrame = 0;
-        return;
-      }
-      syncCurrentAdditive();
-      animationFrame = requestAnimationFrame(tickGeometry);
-    };
-
-    const startGeometryLoop = () => {
-      if (animationFrame || !store.getState().additive) return;
-      animationFrame = requestAnimationFrame(tickGeometry);
-    };
-
-    const stopGeometryLoop = () => {
-      if (!animationFrame) return;
-      cancelAnimationFrame(animationFrame);
-      animationFrame = 0;
-    };
-
-    const iframe = iframeRef.current;
-    iframe?.addEventListener("load", applyAdditive);
+  useMountEffect(() => {
     const unsub = store.subscribe((state, prev) => {
       if (
         state.additive !== prev.additive ||
-        state.lensTint !== prev.lensTint ||
         state.background !== prev.background ||
         state.customBackgroundImages !== prev.customBackgroundImages ||
         state.activeCustomBackgroundId !== prev.activeCustomBackgroundId ||
@@ -445,29 +430,32 @@ export default function Simulator({ seed }: { seed: Seed }) {
         state.backgroundBlur !== prev.backgroundBlur ||
         state.displayBrightness !== prev.displayBrightness
       ) {
-        applyAdditive();
-      }
-      if (state.additive !== prev.additive) {
-        if (state.additive) {
-          startGeometryLoop();
-          if (state.background !== "custom") {
-            prewarmPresetBackgroundImages(state.background);
-          }
-        } else {
-          stopGeometryLoop();
-        }
+        syncAdditive();
       }
     });
 
-    applyAdditive();
-    startGeometryLoop();
-    applyAdditiveRef.current = applyAdditive;
+    syncAdditive();
+    applyAdditiveRef.current = syncHostAdditiveLayers;
     return () => {
       applyAdditiveRef.current = () => {};
-      stopGeometryLoop();
-      iframe?.removeEventListener("load", applyAdditive);
       unsub();
     };
+  });
+
+  useEffect(() => {
+    if (!store.getState().additive) return;
+    syncAdditive();
+  }, [panZoom.transformRevision, panZoom.revealed, view, store, syncAdditive]);
+
+  useMountEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const ro = new ResizeObserver(() => {
+      if (store.getState().additive) syncAdditive();
+    });
+    ro.observe(stage);
+    return () => ro.disconnect();
   });
 
   // physical keyboard mirrors the on-screen d-pad: host listeners drive inject + visuals.
@@ -585,10 +573,26 @@ export default function Simulator({ seed }: { seed: Seed }) {
       pressUp,
       pressedIntents,
       captureDisplay,
+      recordScreen,
+      isRecording,
       setView,
       panZoom,
+      syncAdditive,
     }),
-    [store, load, press, pressDown, pressUp, pressedIntents, captureDisplay, setView, panZoom],
+    [
+      store,
+      load,
+      press,
+      pressDown,
+      pressUp,
+      pressedIntents,
+      captureDisplay,
+      recordScreen,
+      isRecording,
+      setView,
+      panZoom,
+      syncAdditive,
+    ],
   );
 
   return (
@@ -604,13 +608,14 @@ export default function Simulator({ seed }: { seed: Seed }) {
               displayPanelOpen ? "gap-2 sm:grid-cols-[1fr_auto]" : "sm:grid-cols-1",
             )}
           >
-            <DisplaySidebarColumn />
+            <DisplaySidebarColumn sidebarToolbar={<Toolbar variant="sidebar" />} />
             <div className="relative grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:col-start-1 sm:row-start-1 sm:grid-rows-1 sm:gap-0">
               <div
                 ref={stageRef}
                 className="relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill"
               >
                 <BackgroundBackdrop
+                  ref={backdropRef}
                   preset={background}
                   placeholder={backdropPlaceholder}
                   backgroundBrightness={backgroundBrightness}
@@ -618,8 +623,14 @@ export default function Simulator({ seed }: { seed: Seed }) {
                 />
                 <Device />
               </div>
-              <div className="flex w-full shrink-0 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-2.5 sm:z-20 sm:w-auto sm:row-start-1 sm:justify-center sm:px-4 sm:py-0">
-                <Dpad
+              <div
+                className={cn(
+                  "flex w-full shrink-0 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-2.5 sm:z-20 sm:w-auto sm:row-start-1 sm:justify-center sm:px-4 sm:py-0",
+                  dockToolbarOnDesktop && "sm:hidden",
+                )}
+              >
+                <Toolbar
+                  variant="floaty"
                   endAction={
                     <MobileOnly>
                       <DisplayPanelMobileTrigger />

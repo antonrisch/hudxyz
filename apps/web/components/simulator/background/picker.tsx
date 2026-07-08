@@ -120,7 +120,7 @@ function CustomSwatch({
           onRemove();
         }}
       >
-        <X className="size-3" />
+        <X />
       </Button>
     </div>
   );
@@ -167,8 +167,8 @@ export function BackgroundPicker() {
     if (!file) return;
 
     void prepareCustomBackgroundImage(file)
-      .then(({ url, thumbUrl, iframeDataUrl }) => {
-        store.getState().addCustomBackground(url, thumbUrl, iframeDataUrl);
+      .then(({ url, thumbUrl }) => {
+        store.getState().addCustomBackground(url, thumbUrl);
         void setBackgroundParam("custom");
       })
       .catch(() => {});

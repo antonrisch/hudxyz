@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
+import { cookies } from "next/headers";
 import Simulator from "@/components/simulator";
 import { SIMULATOR_TAGLINE, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { backgroundImageHref, DEFAULT_BACKGROUND } from "@/lib/simulator/background";
 import { loadSimulatorSearchParams, seedFromParams } from "@/lib/simulator/search-params";
+import {
+  DISPLAY_PANEL_OPEN_COOKIE,
+  TOOLBAR_PLACEMENT_COOKIE,
+  parseDisplayPanelOpenCookie,
+  parseToolbarPlacementCookie,
+} from "@/lib/simulator/store";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
 
@@ -39,6 +46,7 @@ const jsonLd = {
 
 export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await loadSimulatorSearchParams(searchParams);
+  const cookieStore = await cookies();
   const preloadBackground =
     backgroundImageHref(params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg) ?? null;
   return (
@@ -56,7 +64,17 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sea
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Simulator seed={seedFromParams(params)} />
+      <Simulator
+        seed={{
+          ...seedFromParams(params),
+          displayPanelOpen: parseDisplayPanelOpenCookie(
+            cookieStore.get(DISPLAY_PANEL_OPEN_COOKIE)?.value,
+          ),
+          toolbarPlacement: parseToolbarPlacementCookie(
+            cookieStore.get(TOOLBAR_PLACEMENT_COOKIE)?.value,
+          ),
+        }}
+      />
     </main>
   );
 }

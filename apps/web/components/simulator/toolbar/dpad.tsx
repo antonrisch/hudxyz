@@ -1,6 +1,6 @@
 "use client";
 
-import type { MouseEvent, PointerEvent, ReactNode } from "react";
+import type { MouseEvent, PointerEvent } from "react";
 import {
   ArrowBigUp,
   ArrowBigDown,
@@ -8,22 +8,24 @@ import {
   ArrowBigRight,
   type LucideIcon,
   Pointer,
-  Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScreenshotButton } from "@/components/simulator/input/screenshot-button";
 import { useSimulator } from "@/components/simulator";
 import type { Intent } from "@/lib/simulator/store";
 import { dropFocus } from "@/lib/simulator/input";
 import { cn } from "@/lib/utils";
 
-const flankClass = "size-10 shrink-0 sm:size-8";
-
 const dpadCell =
-  "flex size-8 touch-manipulation items-center justify-center bg-transparent text-primary-foreground outline-none hover:bg-primary-hover active:bg-primary-active aria-pressed:bg-primary-pressed focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset";
+  "touch-manipulation rounded-lg border-0 bg-transparent bg-clip-border text-primary-foreground shadow-none hover:bg-primary-hover hover:text-primary-foreground active:bg-primary-active active:text-primary-foreground aria-pressed:bg-primary-pressed aria-pressed:text-primary-foreground";
+
+const selectCell =
+  "size-7 self-center justify-self-center bg-brand text-brand-foreground hover:bg-brand-hover hover:text-brand-foreground active:bg-brand-active active:text-brand-foreground aria-pressed:bg-brand-pressed aria-pressed:text-brand-foreground";
+
+// const selectCell =
+//   "size-7 self-center justify-self-center bg-primary-foreground text-primary hover:bg-[color-mix(in_oklch,var(--primary-foreground)_88%,var(--primary)_12%)] hover:text-primary active:bg-[color-mix(in_oklch,var(--primary-foreground)_80%,var(--primary)_20%)] active:text-primary aria-pressed:bg-[color-mix(in_oklch,var(--primary-foreground)_72%,var(--primary)_28%)] aria-pressed:text-primary";
 
 const dpadCrossPath =
-  "M40 0H56Q64 0 64 8V32H88Q96 32 96 40V56Q96 64 88 64H64V88Q64 96 56 96H40Q32 96 32 88V64H8Q0 64 0 56V40Q0 32 8 32H32V8Q32 0 40 0Z";
+  "M40 0H56Q64 0 64 8V26Q64 32 70 32H88Q96 32 96 40V56Q96 64 88 64H70Q64 64 64 70V88Q64 96 56 96H40Q32 96 32 88V70Q32 64 26 64H8Q0 64 0 56V40Q0 32 8 32H26Q32 32 32 26V8Q32 0 40 0Z";
 
 const dpadCrossClip = `path("${dpadCrossPath}")`;
 
@@ -60,7 +62,7 @@ const DPAD_CELLS = [
   },
 ] as const;
 
-function useIntentPress(intent: Intent) {
+export function useIntentPress(intent: Intent) {
   const { pressDown, pressUp } = useSimulator();
 
   const onPointerDown = (e: PointerEvent) => {
@@ -93,20 +95,22 @@ function CrossCell({
   const press = useIntentPress(intent);
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       aria-label={label}
       aria-pressed={pressed}
       onMouseDown={dropFocus}
       {...press}
-      className={cn(dpadCell, placement)}
+      className={cn(dpadCell, intent === "select" ? selectCell : null, placement)}
     >
-      <Icon className="size-4 shrink-0" />
-    </button>
+      <Icon />
+    </Button>
   );
 }
 
-function DpadCross({ pressedIntents }: { pressedIntents: ReadonlySet<Intent> }) {
+export function Dpad({ pressedIntents }: { pressedIntents: ReadonlySet<Intent> }) {
   return (
     <div className="relative size-24 shrink-0">
       <svg
@@ -117,7 +121,7 @@ function DpadCross({ pressedIntents }: { pressedIntents: ReadonlySet<Intent> }) 
       >
         <path
           d={dpadCrossPath}
-          className="stroke-primary"
+          className="fill-primary stroke-primary"
           strokeWidth={1}
           vectorEffect="non-scaling-stroke"
         />
@@ -137,34 +141,6 @@ function DpadCross({ pressedIntents }: { pressedIntents: ReadonlySet<Intent> }) 
           />
         ))}
       </div>
-    </div>
-  );
-}
-
-// gesture controls; emits intents to the shell.
-export function Dpad({ endAction }: { endAction?: ReactNode }) {
-  const { pressedIntents } = useSimulator();
-  const press = useIntentPress("back");
-
-  return (
-    <div className="pointer-events-auto flex w-full items-center justify-between gap-2 rounded-xl bg-muted px-2 py-1 shadow-lg sm:w-max sm:shrink-0 sm:justify-center sm:gap-4">
-      <ScreenshotButton className={flankClass} />
-
-      <DpadCross pressedIntents={pressedIntents} />
-
-      <Button
-        variant="default"
-        size="icon"
-        className={flankClass}
-        aria-label="Esc"
-        aria-pressed={pressedIntents.has("back")}
-        onMouseDown={dropFocus}
-        {...press}
-      >
-        <Undo2 />
-      </Button>
-
-      {endAction}
     </div>
   );
 }

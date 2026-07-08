@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import {
   BACKDROP_SCALE,
   backgroundBackdropFilter,
@@ -88,20 +88,23 @@ function FadingPhotoLayer({
   );
 }
 
-export function BackgroundBackdrop({
-  preset,
-  placeholder,
-  backgroundBrightness,
-  backgroundBlur,
-}: {
-  preset: BackgroundPreset;
-  placeholder: BackdropPlaceholder;
-  backgroundBrightness: number;
-  backgroundBlur: number;
-}) {
+export const BackgroundBackdrop = forwardRef<
+  HTMLDivElement,
+  {
+    preset: BackgroundPreset;
+    placeholder: BackdropPlaceholder;
+    backgroundBrightness: number;
+    backgroundBlur: number;
+  }
+>(function BackgroundBackdrop({ preset, placeholder, backgroundBrightness, backgroundBlur }, ref) {
   if (preset.image) {
     return (
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div
+        ref={ref}
+        aria-hidden
+        data-capture="backdrop"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
         <FadingPhotoLayer
           key={preset.image}
           src={preset.image}
@@ -116,9 +119,13 @@ export function BackgroundBackdrop({
 
   return (
     <div
+      ref={ref}
       aria-hidden
+      data-capture="backdrop"
       className="pointer-events-none absolute inset-0"
       style={backgroundBackdropStyle(preset, backgroundBrightness, backgroundBlur)}
     />
   );
-}
+});
+
+BackgroundBackdrop.displayName = "BackgroundBackdrop";

@@ -6,6 +6,12 @@ import {
 } from "@/lib/simulator/background";
 
 const DISPLAY_PANEL_OPEN_KEY = "simulator.displayPanelOpen";
+export const DISPLAY_PANEL_OPEN_COOKIE = "simulator.displayPanelOpen";
+
+const TOOLBAR_PLACEMENT_KEY = "simulator.toolbarPlacement";
+export const TOOLBAR_PLACEMENT_COOKIE = "simulator.toolbarPlacement";
+
+const PREFERENCE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 function readDisplayPanelOpen(): boolean {
   try {
@@ -22,7 +28,19 @@ export function getPersistedDisplayPanelOpen(): boolean {
   return readDisplayPanelOpen();
 }
 
+export function parseDisplayPanelOpenCookie(value: string | undefined): boolean {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return true;
+}
+
+function writeDisplayPanelOpenCookie(open: boolean) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${DISPLAY_PANEL_OPEN_COOKIE}=${open}; path=/; max-age=${PREFERENCE_COOKIE_MAX_AGE}; SameSite=Lax`;
+}
+
 function writeDisplayPanelOpen(open: boolean) {
+  writeDisplayPanelOpenCookie(open);
   try {
     localStorage.setItem(DISPLAY_PANEL_OPEN_KEY, String(open));
   } catch {
@@ -40,7 +58,42 @@ function writeDisplayPanelOpen(open: boolean) {
 export type Screen = "app" | "settings" | "home" | "apps";
 export type Status = "idle" | "loading" | "revealing" | "ready" | "error"; // app load lifecycle
 export type View = "glasses" | "pixel"; // host chrome around the device (?mode= in url)
+export type ToolbarPlacement = "floaty" | "sidebar"; // d-pad bar: over stage or panel footer
 export type Intent = "up" | "down" | "left" | "right" | "select" | "back"; // d-pad gestures
+
+function readToolbarPlacement(): ToolbarPlacement {
+  try {
+    const stored = localStorage.getItem(TOOLBAR_PLACEMENT_KEY);
+    if (stored === "floaty" || stored === "sidebar") return stored;
+    return "floaty";
+  } catch {
+    return "floaty";
+  }
+}
+
+// client-only; call after hydration to sync persisted toolbar placement.
+export function getPersistedToolbarPlacement(): ToolbarPlacement {
+  return readToolbarPlacement();
+}
+
+export function parseToolbarPlacementCookie(value: string | undefined): ToolbarPlacement {
+  if (value === "floaty" || value === "sidebar") return value;
+  return "floaty";
+}
+
+function writeToolbarPlacementCookie(placement: ToolbarPlacement) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${TOOLBAR_PLACEMENT_COOKIE}=${placement}; path=/; max-age=${PREFERENCE_COOKIE_MAX_AGE}; SameSite=Lax`;
+}
+
+function writeToolbarPlacement(placement: ToolbarPlacement) {
+  writeToolbarPlacementCookie(placement);
+  try {
+    localStorage.setItem(TOOLBAR_PLACEMENT_KEY, placement);
+  } catch {
+    // storage unavailable (private browsing, etc.)
+  }
+}
 
 export interface SimulatorState {
   screen: Screen;
@@ -57,13 +110,14 @@ export interface SimulatorState {
   backgroundBlur: number; // 0–100 gaussian blur on the stage backdrop
   displayBrightness: number; // 0–100, 100 = full visibility (extension semantics)
   displayPanelOpen: boolean; // rhs display panel (persisted in localStorage on sm+)
+  toolbarPlacement: ToolbarPlacement; // floaty over stage vs docked in panel footer
 
   setScreen: (screen: Screen) => void;
   setView: (view: View) => void;
   setUrl: (url: string) => void;
   setAdditive: (additive: boolean) => void;
   setBackground: (background: BackgroundKey) => void;
-  addCustomBackground: (url: string, thumbUrl: string, iframeDataUrl: string) => void;
+  addCustomBackground: (url: string, thumbUrl: string) => void;
   selectCustomBackground: (id: string) => void;
   removeCustomBackground: (id: string) => void;
   setLensTint: (lensTint: boolean) => void;
@@ -72,6 +126,7 @@ export interface SimulatorState {
   setDisplayBrightness: (value: number) => void;
   setDisplayPanelOpen: (open: boolean) => void;
   toggleDisplayPanel: () => void;
+  setToolbarPlacement: (placement: ToolbarPlacement) => void;
   requestLoad: (url: string) => void; // navigate the app surface; the proxy hook reacts
   reload: () => void; // re-navigate the current url
   appReveal: () => void;
@@ -99,6 +154,7 @@ export type Seed = Partial<
     | "backgroundBlur"
     | "displayBrightness"
     | "displayPanelOpen"
+    | "toolbarPlacement"
   >
 >;
 
@@ -118,20 +174,18 @@ export function createSimulatorStore(seed?: Seed) {
     backgroundBlur: seed?.backgroundBlur ?? 0,
     displayBrightness: seed?.displayBrightness ?? 100,
     displayPanelOpen: seed?.displayPanelOpen ?? true,
+    toolbarPlacement: seed?.toolbarPlacement ?? "floaty",
 
     setScreen: (screen) => set({ screen }),
     setView: (view) => set({ view }),
     setUrl: (url) => set({ url }),
     setAdditive: (additive) => set({ additive }),
     setBackground: (background) => set({ background }),
-    addCustomBackground: (url, thumbUrl, iframeDataUrl) =>
+    addCustomBackground: (url, thumbUrl) =>
       set((s) => {
         const id = crypto.randomUUID();
         return {
-          customBackgroundImages: [
-            ...s.customBackgroundImages,
-            { id, url, thumbUrl, iframeDataUrl },
-          ],
+          customBackgroundImages: [...s.customBackgroundImages, { id, url, thumbUrl }],
           activeCustomBackgroundId: id,
           background: "custom",
         };
@@ -171,6 +225,10 @@ export function createSimulatorStore(seed?: Seed) {
         writeDisplayPanelOpen(open);
         return { displayPanelOpen: open };
       }),
+    setToolbarPlacement: (toolbarPlacement) => {
+      writeToolbarPlacement(toolbarPlacement);
+      set({ toolbarPlacement });
+    },
     requestLoad: (url) => set((s) => ({ url, status: "loading", loadToken: s.loadToken + 1 })),
     reload: () => set((s) => ({ screen: "app", status: "loading", loadToken: s.loadToken + 1 })),
     appReveal: () => set({ status: "revealing" }),
@@ -179,4 +237,27 @@ export function createSimulatorStore(seed?: Seed) {
     launchApp: (url) =>
       set((s) => ({ screen: "app", url, status: "loading", loadToken: s.loadToken + 1 })),
   }));
+}
+
+function hasPreferenceCookie(name: string) {
+  return typeof document !== "undefined" && document.cookie.includes(`${name}=`);
+}
+
+// one-time localStorage -> cookie migration for prefs that predate SSR seeding.
+export function migrateLegacySimulatorPreferences(store: SimulatorStore) {
+  if (typeof document === "undefined") return;
+
+  if (!hasPreferenceCookie(TOOLBAR_PLACEMENT_COOKIE)) {
+    const legacy = readToolbarPlacement();
+    if (legacy !== store.getState().toolbarPlacement) {
+      store.getState().setToolbarPlacement(legacy);
+    }
+  }
+
+  if (!hasPreferenceCookie(DISPLAY_PANEL_OPEN_COOKIE)) {
+    const legacyOpen = readDisplayPanelOpen();
+    if (legacyOpen !== store.getState().displayPanelOpen) {
+      store.getState().setDisplayPanelOpen(legacyOpen);
+    }
+  }
 }

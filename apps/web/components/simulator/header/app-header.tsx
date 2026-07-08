@@ -2,12 +2,12 @@
 
 import { Logo } from "@/components/layout/logo";
 import { UrlBar } from "@/components/simulator/header/url-bar";
-import { FeedbackButton } from "@/components/simulator/header/feedback-button";
 import { ShareMenu } from "@/components/simulator/header/share-menu";
+import { ScreenRecordButton } from "@/components/simulator/toolbar/screen-record-button";
 import { DisplayPanelTrigger } from "@/components/simulator/panel/sidebar";
 import { DesktopOnly } from "@/components/simulator/mobile-only";
 
-// simulator toolbar: logo + url bar + share/feedback (+ desktop display panel toggle).
+// simulator toolbar: logo + url bar + record/share (+ desktop display panel toggle).
 export function AppHeader() {
   return (
     <header aria-label="Simulator toolbar" className="z-50 shrink-0">
@@ -15,7 +15,7 @@ export function AppHeader() {
         <Logo className="justify-self-start" />
         <UrlBar className="min-w-0 w-full max-w-full sm:max-w-96 sm:justify-self-center" />
         <div className="flex items-center gap-2 justify-self-end">
-          <FeedbackButton />
+          <ScreenRecordButton size="lg" showLabel className="shrink-0 max-sm:size-10 max-sm:px-0" />
           <ShareMenu />
           <DesktopOnly>
             <DisplayPanelTrigger />
