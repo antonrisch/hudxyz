@@ -94,7 +94,7 @@ export function PanelField({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="w-fit text-sm leading-none font-medium text-foreground">{label}</span>
+      <span className="w-fit text-sm leading-none font-normal text-foreground">{label}</span>
       <div className={cn(controlSlotClass, controlClassName ?? "w-full")}>{children}</div>
     </div>
   );

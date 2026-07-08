@@ -4,7 +4,7 @@ import { Logo } from "@/components/layout/logo";
 import { UrlBar } from "@/components/simulator/header/url-bar";
 import { ShareMenu } from "@/components/simulator/header/share-menu";
 import { ScreenRecordButton } from "@/components/simulator/toolbar/screen-record-button";
-import { DisplayPanelTrigger } from "@/components/simulator/panel/sidebar";
+import { PanelToggle } from "@/components/simulator/panel/sidebar";
 import { DesktopOnly } from "@/components/simulator/mobile-only";
 
 // simulator toolbar: logo + url bar + record/share (+ desktop display panel toggle).
@@ -20,7 +20,7 @@ export function AppHeader() {
           </DesktopOnly>
           <ShareMenu />
           <DesktopOnly>
-            <DisplayPanelTrigger />
+            <PanelToggle />
           </DesktopOnly>
         </div>
       </div>

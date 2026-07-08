@@ -25,6 +25,9 @@ const baseSecurity = [
   },
 ];
 
+// COEP require-corp on / needs CORP on embeddable first-party assets (fonts, images).
+const corpSameOrigin = [{ key: "Cross-Origin-Resource-Policy", value: "same-origin" }];
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
@@ -38,6 +41,11 @@ const nextConfig: NextConfig = {
         headers: [...baseSecurity, { key: "X-Frame-Options", value: "DENY" }],
       },
       { source: "/", headers: isolation },
+      { source: "/_next/static/:path*", headers: corpSameOrigin },
+      { source: "/backgrounds/:path*", headers: corpSameOrigin },
+      { source: "/suggested-apps/:path*", headers: corpSameOrigin },
+      { source: "/icon.svg", headers: corpSameOrigin },
+      { source: "/apple-icon.png", headers: corpSameOrigin },
       { source: "/sw.js", headers: [{ key: "Service-Worker-Allowed", value: "/" }] },
     ];
   },

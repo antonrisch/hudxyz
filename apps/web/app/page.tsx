@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
 import { cookies } from "next/headers";
 import Simulator from "@/components/simulator";
+import { legal } from "@/lib/legal/config";
 import { SIMULATOR_TAGLINE, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { backgroundImageHref, DEFAULT_BACKGROUND } from "@/lib/simulator/background";
 import { loadSimulatorSearchParams, seedFromParams } from "@/lib/simulator/search-params";
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
     siteName: "hud.xyz",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: SIMULATOR_TITLE,
     description: SIMULATOR_TAGLINE,
   },
@@ -41,6 +42,13 @@ const jsonLd = {
   url: siteUrl,
   applicationCategory: "DeveloperApplication",
   operatingSystem: "Web",
+  isAccessibleForFree: true,
+  browserRequirements: "Requires JavaScript. Requires HTML5.",
+  publisher: {
+    "@type": "Organization",
+    name: legal.entityName,
+    url: siteUrl,
+  },
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
 };
 

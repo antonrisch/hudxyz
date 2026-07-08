@@ -25,8 +25,8 @@ function syncSimulatorParam<T>(
   };
 }
 
-// display preview controls: view, zoom, and additive blend (shared by the rhs panel + mobile sheet).
-export function DisplayPanel() {
+// scrollable display preview settings (background, additive blend, sliders).
+export function PanelContent() {
   const { store } = useSimulator();
   const additive = useSimulatorState((s) => s.additive);
   const lensTint = useSimulatorState((s) => s.lensTint);

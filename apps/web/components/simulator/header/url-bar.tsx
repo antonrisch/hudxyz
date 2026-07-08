@@ -110,7 +110,13 @@ export function UrlBar({ className }: { className?: string }) {
                 onMouseDown={dropFocus}
                 onClick={() => selectUrl(app.url)}
               >
-                <img src={app.iconUrl} alt="" className="size-5 shrink-0 rounded-sm object-cover" />
+                <img
+                  src={app.iconUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="size-5 shrink-0 rounded-sm object-cover"
+                />
                 <div className="flex min-w-0 flex-1 items-center gap-1.5">
                   <span className="shrink-0">{app.name}</span>
                   <span title={app.url} className="max-w-48 truncate text-muted-foreground">

@@ -8,7 +8,8 @@ import { ScreenshotButton } from "@/components/simulator/toolbar/screenshot-butt
 import { ScreenRecordButton } from "@/components/simulator/toolbar/screen-record-button";
 import { ToolbarPlacementButton } from "@/components/simulator/toolbar/toolbar-placement-button";
 import { DesktopOnly, MobileOnly } from "@/components/simulator/mobile-only";
-import { DisplayPanelMobileTrigger } from "@/components/simulator/panel/sidebar";
+import { Panel } from "@/components/simulator/panel";
+import { PanelDrawer } from "@/components/simulator/panel/drawer";
 import { useSimulator } from "@/components/simulator";
 import { dropFocus } from "@/lib/simulator/input";
 import { useMobileLayout } from "@/lib/use-mobile-layout";
@@ -44,7 +45,9 @@ export function Toolbar({ variant = "floaty" }: { variant?: ToolbarVariant }) {
         </DesktopOnly>
         <ScreenshotButton />
         <MobileOnly>
-          <DisplayPanelMobileTrigger />
+          <PanelDrawer>
+            <Panel headerClassName="pt-2" hideFooter />
+          </PanelDrawer>
         </MobileOnly>
         <DesktopOnly>
           <ToolbarPlacementButton />
