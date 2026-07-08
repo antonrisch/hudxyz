@@ -59,7 +59,7 @@ Key files:
 Tailwind v4 + the shadcn theme tokens in `app/globals.css` (`@theme inline` maps `--color-*` to the `:root` values). Style with the **semantic tokens and shadcn defaults**, not hardcoded Tailwind colors:
 
 - Surfaces, text, borders, accents: `bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-primary` — not `bg-white` / `border-black/15`.
-- Brand accent lives in `--volt` (`#CEFF00`), exposed as `bg-volt` / `text-volt`. Add custom colors the same two-step way: raw value in `:root`, then `--color-<name>: var(--<name>)` in `@theme inline`.
+- Brand accent lives in `--brand` (`#0067ff`), exposed as `bg-brand` / `text-brand`. Add custom colors the same two-step way: raw value in `:root`, then `--color-<name>: var(--<name>)` in `@theme inline`.
 - **Exception:** the 600×600 device surface is genuinely black with white-on-black overlays — the MRBD display is additive, so it stays literal `bg-black` / `text-white`, not themed.
 
 ## Commands
