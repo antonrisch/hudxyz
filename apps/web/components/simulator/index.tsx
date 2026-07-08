@@ -54,7 +54,8 @@ import {
 import { MobileOnly } from "@/components/simulator/mobile-only";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
-import { downloadDisplay } from "@/lib/simulator/capture";
+import { downloadStage } from "@/lib/simulator/capture";
+import { createStageRecorder, downloadStageRecording } from "@/lib/simulator/record";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +73,8 @@ interface SimulatorContextValue {
   pressUp: (intent: Intent) => void;
   pressedIntents: ReadonlySet<Intent>;
   captureDisplay: () => Promise<void>;
+  recordScreen: () => void;
+  isRecording: boolean;
   setView: (view: View) => void;
   panZoom: PanZoom;
 }
@@ -98,6 +101,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const displayRef = useRef<HTMLDivElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<Frame | null>(null);
   const applyAdditiveRef = useRef<() => void>(() => {});
   const view = useStore(store, (s) => s.view);
@@ -179,15 +183,61 @@ export default function Simulator({ seed }: { seed: Seed }) {
   );
 
   const captureDisplay = useCallback(async () => {
-    const { screen, status } = store.getState();
+    const { screen, status, additive } = store.getState();
     if (screen !== "app" || status !== "ready") return;
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-    await downloadDisplay(iframe);
+    const stage = stageRef.current;
+    if (!stage) return;
+    await downloadStage({
+      stage,
+      backdrop: backdropRef.current,
+      display: displayRef.current,
+      iframe: iframeRef.current,
+      additive,
+    });
   }, [store]);
 
   const captureRef = useRef(captureDisplay);
   captureRef.current = captureDisplay;
+
+  const stageRecorderRef = useRef<ReturnType<typeof createStageRecorder> | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+
+  useMountEffect(() => {
+    stageRecorderRef.current = createStageRecorder({
+      getStage: () => stageRef.current,
+      getBackdrop: () => backdropRef.current,
+      getDisplay: () => displayRef.current,
+      getIframe: () => iframeRef.current,
+      getAdditive: () => store.getState().additive,
+      onAutoStop: (blob) => {
+        if (blob) downloadStageRecording(blob);
+        setIsRecording(false);
+      },
+    });
+    return () => {
+      void stageRecorderRef.current?.stop();
+      stageRecorderRef.current = null;
+    };
+  });
+
+  const recordScreen = useCallback(() => {
+    const recorder = stageRecorderRef.current;
+    if (!recorder) return;
+
+    if (recorder.isRecording) {
+      void recorder.stop().then((blob) => {
+        if (blob) downloadStageRecording(blob);
+        setIsRecording(false);
+      });
+      return;
+    }
+
+    const { screen, status } = store.getState();
+    if (screen !== "app" || status !== "ready") return;
+
+    recorder.start();
+    setIsRecording(true);
+  }, [store]);
 
   // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
   // reset in usePanZoom once the new chrome has laid out).
@@ -585,10 +635,24 @@ export default function Simulator({ seed }: { seed: Seed }) {
       pressUp,
       pressedIntents,
       captureDisplay,
+      recordScreen,
+      isRecording,
       setView,
       panZoom,
     }),
-    [store, load, press, pressDown, pressUp, pressedIntents, captureDisplay, setView, panZoom],
+    [
+      store,
+      load,
+      press,
+      pressDown,
+      pressUp,
+      pressedIntents,
+      captureDisplay,
+      recordScreen,
+      isRecording,
+      setView,
+      panZoom,
+    ],
   );
 
   return (
@@ -611,6 +675,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
                 className="relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill"
               >
                 <BackgroundBackdrop
+                  ref={backdropRef}
                   preset={background}
                   placeholder={backdropPlaceholder}
                   backgroundBrightness={backgroundBrightness}

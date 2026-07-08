@@ -20,9 +20,7 @@ export function ScreenshotButton({ className }: { className?: string }) {
             variant="outline"
             size="icon"
             aria-label="Screenshot"
-            className={cn(
-              className,
-            )}
+            className={cn(className)}
             onMouseDown={dropFocus}
             onClick={() => canCapture && void captureDisplay()}
           >
@@ -30,7 +28,7 @@ export function ScreenshotButton({ className }: { className?: string }) {
           </Button>
         }
       />
-      <TooltipContent>Screenshot</TooltipContent>
+      <TooltipContent>Screenshot stage</TooltipContent>
     </Tooltip>
   );
 }
