@@ -52,9 +52,9 @@ export function PanelFooter({
     return (
       <footer className="mt-auto shrink-0">
         <Separator />
-        <div className="flex flex-col gap-2 p-3">
-          <p className="text-xs text-pretty text-muted-foreground">{SIMULATOR_SUMMARY}</p>
-          <p className="text-xs">
+        <div className="flex flex-col gap-1 px-3 py-2">
+          <p className="text-[10px] text-pretty leading-tight text-muted-foreground">{SIMULATOR_SUMMARY}</p>
+          <p className="text-[10px]">
             <LegalLinks />
           </p>
         </div>

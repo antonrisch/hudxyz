@@ -637,7 +637,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
     <SimulatorContext.Provider value={ctx}>
       <TooltipProvider delay={1000}>
         <div className="flex min-h-0 flex-1 flex-col">
-          <h1 className="sr-only sm:hidden">{SIMULATOR_TITLE}</h1>
+          <h1 className="sr-only">{SIMULATOR_TITLE}</h1>
           <AppHeader />
 
           <div

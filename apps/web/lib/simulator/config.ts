@@ -3,11 +3,12 @@ import type { Intent, View } from "@/lib/simulator/store";
 // device identity shown in the simulator chrome (model + os build). placeholders — set real values.
 export const DEVICE_MODEL = "Meta Ray-Ban Display";
 export const SIMULATOR_TITLE = "Meta Ray-Ban Display Simulator";
-// 1:1 with the official Chrome extension one-liner.
+// sidebar footer, layout fallback, mobile drawer sr-only.
 export const SIMULATOR_SUMMARY =
-  "Simulate Meta Ray-Ban Display glasses for web apps — background environments, D-pad input, display settings, screen capture and QA checks.";
-// condensed extension long-form for meta / JSON-LD.
-export const SIMULATOR_TAGLINE = `${SIMULATOR_SUMMARY} Simulates the 600x600 display with additive blending in your browser so developers can preview and QA without the hardware.`;
+  "Test Meta Ray-Ban Display web apps in your browser — 600×600 viewport, D-pad input, additive blending, screenshots and screen recording, no glasses required.";
+// page meta, OG/Twitter, JSON-LD, manifest.
+export const SIMULATOR_TAGLINE =
+  "Meta Ray-Ban Display simulator for web app developers. Test MRBD apps at 600×600 with D-pad navigation, screenshots, and screen recording — no hardware required.";
 export const OS_VERSION = "125.1";
 
 export const RIGHT_LENS = { left: 58.5, top: 44.5, size: 10.5 };
