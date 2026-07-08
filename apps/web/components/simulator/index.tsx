@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -53,6 +54,8 @@ import { createStageRecorder, downloadStageRecording } from "@/lib/simulator/rec
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
+const RECORD_COUNTDOWN_SEC = 3;
+
 // -- context ------------------------------------------------
 // stable handles for the leaf components: the store (read via useSimulatorState),
 // the shared iframe ref, and the two behavior entry points (load / press).
@@ -69,6 +72,7 @@ interface SimulatorContextValue {
   captureDisplay: () => Promise<void>;
   recordScreen: () => void;
   isRecording: boolean;
+  recordCountdown: number | null;
   setView: (view: View) => void;
   panZoom: PanZoom;
 }
@@ -195,6 +199,9 @@ export default function Simulator({ seed }: { seed: Seed }) {
 
   const stageRecorderRef = useRef<ReturnType<typeof createStageRecorder> | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordCountdown, setRecordCountdown] = useState<number | null>(null);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const additiveSyncKeyRef = useRef("");
 
   useMountEffect(() => {
     stageRecorderRef.current = createStageRecorder({
@@ -226,12 +233,27 @@ export default function Simulator({ seed }: { seed: Seed }) {
       return;
     }
 
+    if (recordCountdown !== null) return;
+
     const { screen, status } = store.getState();
     if (screen !== "app" || status !== "ready") return;
 
-    recorder.start();
-    setIsRecording(true);
-  }, [store]);
+    setRecordCountdown(RECORD_COUNTDOWN_SEC);
+    let remaining = RECORD_COUNTDOWN_SEC;
+    countdownTimerRef.current = setInterval(() => {
+      remaining -= 1;
+      if (remaining > 0) {
+        setRecordCountdown(remaining);
+        return;
+      }
+
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+      setRecordCountdown(null);
+      recorder.start();
+      setIsRecording(true);
+    }, 1000);
+  }, [recordCountdown, store]);
 
   // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
   // reset in usePanZoom once the new chrome has laid out).
@@ -337,25 +359,23 @@ export default function Simulator({ seed }: { seed: Seed }) {
 
   // additive preview is composited on the host inside #hud-display so black waveguide
   // pixels blend with the aligned backdrop slice before device chrome transforms.
-  useMountEffect(() => {
-    let animationFrame = 0;
-
-    const syncHost = () => {
-      const {
-        additive,
-        background: backgroundKey,
-        customBackgroundImages,
-        activeCustomBackgroundId,
-        backgroundBrightness,
-        backgroundBlur,
-        displayBrightness,
-      } = store.getState();
-      const preset = resolveBackground(
-        backgroundKey,
-        customBackgroundImages,
-        activeCustomBackgroundId,
-      );
-      const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
+  const syncHostAdditiveLayers = useCallback(() => {
+    const {
+      additive,
+      background: backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+      backgroundBrightness,
+      backgroundBlur,
+      displayBrightness,
+    } = store.getState();
+    const preset = resolveBackground(
+      backgroundKey,
+      customBackgroundImages,
+      activeCustomBackgroundId,
+    );
+    const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
+    additiveSyncKeyRef.current =
       syncHostAdditive(
         displayRef.current,
         additive,
@@ -363,30 +383,12 @@ export default function Simulator({ seed }: { seed: Seed }) {
         geometry,
         backgroundBrightness,
         backgroundBlur,
-      );
-      syncDisplayBrightness(iframeRef.current, displayBrightness);
-    };
+        additiveSyncKeyRef.current,
+      ) ?? "";
+    syncDisplayBrightness(iframeRef.current, displayBrightness);
+  }, [store]);
 
-    const tickGeometry = () => {
-      if (!store.getState().additive) {
-        animationFrame = 0;
-        return;
-      }
-      syncHost();
-      animationFrame = requestAnimationFrame(tickGeometry);
-    };
-
-    const startGeometryLoop = () => {
-      if (animationFrame || !store.getState().additive) return;
-      animationFrame = requestAnimationFrame(tickGeometry);
-    };
-
-    const stopGeometryLoop = () => {
-      if (!animationFrame) return;
-      cancelAnimationFrame(animationFrame);
-      animationFrame = 0;
-    };
-
+  useMountEffect(() => {
     const unsub = store.subscribe((state, prev) => {
       if (
         state.additive !== prev.additive ||
@@ -397,21 +399,38 @@ export default function Simulator({ seed }: { seed: Seed }) {
         state.backgroundBlur !== prev.backgroundBlur ||
         state.displayBrightness !== prev.displayBrightness
       ) {
-        syncHost();
-      }
-      if (state.additive !== prev.additive) {
-        if (state.additive) startGeometryLoop();
-        else stopGeometryLoop();
+        syncHostAdditiveLayers();
       }
     });
 
-    syncHost();
-    if (store.getState().additive) startGeometryLoop();
-    applyAdditiveRef.current = syncHost;
+    syncHostAdditiveLayers();
+    applyAdditiveRef.current = syncHostAdditiveLayers;
     return () => {
       applyAdditiveRef.current = () => {};
-      stopGeometryLoop();
       unsub();
+    };
+  });
+
+  useEffect(() => {
+    if (!store.getState().additive) return;
+    syncHostAdditiveLayers();
+  }, [panZoom.transformRevision, store, syncHostAdditiveLayers]);
+
+  useMountEffect(() => {
+    const nodes = [stageRef.current, displayRef.current].filter(Boolean) as HTMLElement[];
+    if (nodes.length === 0) return;
+
+    const onResize = () => {
+      if (store.getState().additive) syncHostAdditiveLayers();
+    };
+    const ro = new ResizeObserver(onResize);
+    for (const node of nodes) ro.observe(node);
+    return () => ro.disconnect();
+  });
+
+  useMountEffect(() => {
+    return () => {
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     };
   });
 
@@ -532,6 +551,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
       captureDisplay,
       recordScreen,
       isRecording,
+      recordCountdown,
       setView,
       panZoom,
     }),
@@ -545,6 +565,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
       captureDisplay,
       recordScreen,
       isRecording,
+      recordCountdown,
       setView,
       panZoom,
     ],
@@ -576,6 +597,14 @@ export default function Simulator({ seed }: { seed: Seed }) {
                   backgroundBrightness={backgroundBrightness}
                   backgroundBlur={backgroundBlur}
                 />
+                {recordCountdown !== null && (
+                  <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-background/80 text-foreground">
+                    <span className="text-5xl font-semibold tabular-nums">{recordCountdown}</span>
+                    <span className="text-sm text-muted-foreground">
+                      Share this tab when prompted
+                    </span>
+                  </div>
+                )}
                 <Device />
               </div>
               <div className="flex w-full shrink-0 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-2.5 sm:z-20 sm:w-auto sm:row-start-1 sm:justify-center sm:px-4 sm:py-0">

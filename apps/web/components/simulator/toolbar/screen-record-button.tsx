@@ -8,9 +8,10 @@ import { dropFocus } from "@/lib/simulator/input";
 import { cn } from "@/lib/utils";
 
 export function ScreenRecordButton({ className }: { className?: string }) {
-  const { recordScreen, isRecording } = useSimulator();
+  const { recordScreen, isRecording, recordCountdown } = useSimulator();
   const canCapture = useSimulatorState((s) => s.screen === "app" && s.status === "ready");
-  const active = isRecording || canCapture;
+  const countingDown = recordCountdown !== null;
+  const active = isRecording || (canCapture && !countingDown);
 
   return (
     <Tooltip>
@@ -20,18 +21,26 @@ export function ScreenRecordButton({ className }: { className?: string }) {
             type="button"
             variant="outline"
             size="icon"
-            aria-label={isRecording ? "Stop recording" : "Start recording"}
+            aria-label={
+              isRecording ? "Stop recording" : countingDown ? "Recording countdown" : "Start recording"
+            }
             aria-pressed={isRecording}
-            disabled={!active}
+            disabled={!active && !isRecording}
             className={cn(isRecording && "border-destructive text-destructive", className)}
             onMouseDown={dropFocus}
-            onClick={() => active && recordScreen()}
+            onClick={() => (active || isRecording) && recordScreen()}
           >
             <RecordIcon className={cn(isRecording && "animate-pulse")} />
           </Button>
         }
       />
-      <TooltipContent>{isRecording ? "Stop recording" : "Record stage"}</TooltipContent>
+      <TooltipContent>
+        {isRecording
+          ? "Stop recording"
+          : countingDown
+            ? `Recording in ${recordCountdown}…`
+            : "Record stage"}
+      </TooltipContent>
     </Tooltip>
   );
 }

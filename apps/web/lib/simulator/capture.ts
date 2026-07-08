@@ -21,6 +21,7 @@ type CaptureStageOptions = {
   width?: number;
   height?: number;
   cachedBg?: HTMLCanvasElement | null;
+  preferPixel?: boolean;
 };
 
 function captureFilename() {
@@ -95,6 +96,22 @@ export async function captureBackdrop(
   }
 }
 
+async function captureStageWithBackdrop(
+  stage: HTMLElement,
+  width: number,
+  height: number,
+): Promise<HTMLCanvasElement> {
+  return snapdom.toCanvas(stage, {
+    width,
+    height,
+    dpr: 1,
+    fast: true,
+    exclude: ["iframe"],
+    excludeMode: "remove",
+    backgroundColor: "transparent",
+  });
+}
+
 async function captureStageChrome(
   stage: HTMLElement,
   backdrop: HTMLElement | null,
@@ -148,18 +165,30 @@ export async function captureStageSnapdom(
 
   if (iframe) await waitForIframePaint(iframe, () => false);
 
+  const frame = document.createElement("canvas");
+  frame.width = width;
+  frame.height = height;
+  const ctx = frame.getContext("2d");
+  if (!ctx) return null;
+
+  if (additive && display) {
+    const chrome = await captureStageWithBackdrop(stage, width, height);
+    ctx.drawImage(chrome, 0, 0);
+
+    const surface = await captureDisplaySurface(display);
+    if (surface) {
+      const { x, y, w, h } = displayRectOnStage(stage, display, width, height);
+      ctx.drawImage(surface, x, y, w, h);
+    }
+    return frame;
+  }
+
   let bg = options.cachedBg ?? null;
   if (!bg && backdrop) {
     bg = await captureBackdrop(backdrop, width, height);
   }
 
   const chrome = await captureStageChrome(stage, backdrop, width, height);
-
-  const frame = document.createElement("canvas");
-  frame.width = width;
-  frame.height = height;
-  const ctx = frame.getContext("2d");
-  if (!ctx) return null;
 
   if (bg) ctx.drawImage(bg, 0, 0, width, height);
   else {
@@ -170,11 +199,7 @@ export async function captureStageSnapdom(
   ctx.drawImage(chrome, 0, 0);
 
   if (display) {
-    const surface = additive
-      ? await captureDisplaySurface(display)
-      : iframe
-        ? await captureWaveguide(iframe)
-        : null;
+    const surface = iframe ? await captureWaveguide(iframe) : null;
     if (surface) {
       const { x, y, w, h } = displayRectOnStage(stage, display, width, height);
       ctx.drawImage(surface, x, y, w, h);
@@ -184,19 +209,24 @@ export async function captureStageSnapdom(
   return frame;
 }
 
-// Prefer painted pixels (Meta approach); fall back to layered snapdom without iframe head walks.
+// Screenshots prefer snapdom (no permission prompt); recording prefers painted pixels.
 export async function captureStage(
   target: StageCaptureTarget,
   options: CaptureStageOptions = {},
 ): Promise<HTMLCanvasElement | null> {
-  const pixels = await captureStagePixels(target.stage);
-  if (pixels) return pixels;
+  if (options.preferPixel) {
+    const pixels = await captureStagePixels(target.stage);
+    if (pixels) return pixels;
+    return captureStageSnapdom(target, options);
+  }
 
-  return captureStageSnapdom(target, options);
+  const snapdomFrame = await captureStageSnapdom(target, options);
+  if (snapdomFrame) return snapdomFrame;
+  return captureStagePixels(target.stage);
 }
 
 export async function downloadStage(target: StageCaptureTarget): Promise<void> {
-  const canvas = await captureStage(target);
+  const canvas = await captureStage(target, { preferPixel: false });
   if (!canvas) return;
 
   const url = canvas.toDataURL("image/png");
