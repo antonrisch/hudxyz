@@ -46,7 +46,7 @@ export function Toolbar({ variant = "floaty" }: { variant?: ToolbarVariant }) {
         </DesktopOnly>
         <MobileOnly>
           <PanelDrawer>
-            <Panel headerClassName="pt-2" hideFooter />
+            <Panel headerClassName="pt-2" hideFooter showDesktopOnlyCallout />
           </PanelDrawer>
         </MobileOnly>
         <DesktopOnly>
@@ -63,6 +63,7 @@ export function Toolbar({ variant = "floaty" }: { variant?: ToolbarVariant }) {
         aria-pressed={pressedIntents.has("back")}
         onMouseDown={dropFocus}
         {...press}
+        className="mr-1"
       >
         <Undo2 />
       </Button>

@@ -39,20 +39,26 @@ export function PanelDrawer({ children }: { children: ReactNode }) {
           <DrawerDescription className="sr-only">{SIMULATOR_SUMMARY}</DrawerDescription>
         </DrawerHeader>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
-        <DrawerFooter className="pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          <DrawerClose
-            render={
-              <Button
-                type="button"
-                size="lg"
-                className="w-full rounded-full"
-                onMouseDown={dropFocus}
-              />
-            }
-          >
-            Close
-          </DrawerClose>
-        </DrawerFooter>
+        <div className="relative shrink-0">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 -top-8 z-10 h-8 bg-linear-to-t from-popover to-transparent"
+          />
+          <DrawerFooter className="pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <DrawerClose
+              render={
+                <Button
+                  type="button"
+                  size="lg"
+                  className="w-full rounded-full"
+                  onMouseDown={dropFocus}
+                />
+              }
+            >
+              Close
+            </DrawerClose>
+          </DrawerFooter>
+        </div>
       </DrawerContent>
     </Drawer>
   );
