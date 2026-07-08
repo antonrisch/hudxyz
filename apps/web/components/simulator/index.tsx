@@ -42,9 +42,8 @@ import type { Frame } from "@mercuryworkshop/scramjet-controller";
 import { AppHeader } from "@/components/simulator/header/app-header";
 import { Toolbar } from "@/components/simulator/toolbar";
 import { Device } from "@/components/simulator/device";
-import {
-  DisplaySidebarColumn,
-} from "@/components/simulator/panel/sidebar";
+import { Panel } from "@/components/simulator/panel";
+import { PanelSidebar } from "@/components/simulator/panel/sidebar";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadStage, type StageCaptureTarget } from "@/lib/simulator/capture";
@@ -647,7 +646,9 @@ export default function Simulator({ seed }: { seed: Seed }) {
               displayPanelOpen ? "gap-2 sm:grid-cols-[1fr_auto]" : "sm:grid-cols-1",
             )}
           >
-            <DisplaySidebarColumn sidebarToolbar={<Toolbar variant="sidebar" />} />
+            <PanelSidebar>
+              <Panel footer={<Toolbar variant="sidebar" />} showSummary />
+            </PanelSidebar>
             <div className="relative grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:col-start-1 sm:row-start-1 sm:grid-rows-1 sm:gap-0">
               <div
                 ref={stageRef}
