@@ -109,7 +109,7 @@
   --volt: #ceff00;
 
   /* logo gradient bottom — brand accent blue */
-  --brand: #0067FF;
+  --brand: #0067ff;
   --brand-foreground: #ffffff;
   --brand-hover: color-mix(in oklch, var(--brand) 88%, var(--brand-foreground) 12%);
   --brand-active: color-mix(in oklch, var(--brand) 80%, var(--brand-foreground) 20%);
