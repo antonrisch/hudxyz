@@ -46,7 +46,7 @@ export function Toolbar({ variant = "floaty" }: { variant?: ToolbarVariant }) {
         <ScreenshotButton />
         <MobileOnly>
           <PanelDrawer>
-            <Panel headerClassName="pt-2" />
+            <Panel headerClassName="pt-2" showSummary />
           </PanelDrawer>
         </MobileOnly>
         <DesktopOnly>

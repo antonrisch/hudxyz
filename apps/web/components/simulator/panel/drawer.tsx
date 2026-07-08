@@ -14,9 +14,16 @@ import {
 import { SIMULATOR_SUMMARY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { dropFocus } from "@/lib/simulator/input";
 
+/** Tall peek so most settings are visible; swipe up for full height. */
+const PANEL_DRAWER_SNAP_POINTS = [0.8, 1] as const;
+
 export function PanelDrawer({ children }: { children: ReactNode }) {
   return (
-    <Drawer swipeDirection="right">
+    <Drawer
+      snapPoints={[...PANEL_DRAWER_SNAP_POINTS]}
+      showSwipeHandle
+      swipeDirection="down"
+    >
       <DrawerTrigger
         render={
           <Button
@@ -31,7 +38,7 @@ export function PanelDrawer({ children }: { children: ReactNode }) {
           </Button>
         }
       />
-      <DrawerContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-sm">
+      <DrawerContent className="flex w-full flex-col gap-0 overflow-hidden p-0">
         <DrawerHeader className="shrink-0 space-y-0 border-b p-3 pb-2">
           <DrawerTitle className="text-sm leading-snug font-semibold">
             {SIMULATOR_TITLE}
