@@ -114,7 +114,8 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const additive = useStore(store, (s) => s.additive);
   const displayPanelOpen = useStore(store, (s) => s.displayPanelOpen);
   const toolbarPlacement = useStore(store, (s) => s.toolbarPlacement);
-  const suppressStageVideo = Boolean(additive && background.video);
+  // Additive photo/video live in #hud-display; stage fill keeps LQIP/poster only.
+  const suppressStageMedia = Boolean(additive && (background.video || background.image));
   const dockToolbarOnDesktop = toolbarPlacement === "sidebar";
   // Filled after sync helpers are defined — one layout sync per committed pan/zoom frame.
   const onPanZoomCommitRef = useRef<() => void>(() => {});
@@ -209,7 +210,6 @@ export default function Simulator({ seed }: { seed: Seed }) {
       display: displayRef.current,
       iframe: iframeRef.current,
       frames: stage.querySelector<SVGSVGElement>('[data-capture="frames"]'),
-      lensTint: store.getState().lensTint,
       additive,
       backgroundCapture: {
         preset,
@@ -675,7 +675,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
                   ref={backdropRef}
                   preset={background}
                   placeholder={backdropPlaceholder}
-                  suppressVideo={suppressStageVideo}
+                  suppressMedia={suppressStageMedia}
                   keepPlaying={isRecording}
                 />
                 <Device />

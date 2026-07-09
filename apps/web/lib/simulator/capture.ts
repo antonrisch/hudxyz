@@ -38,7 +38,6 @@ export type StageCaptureTarget = {
   display: HTMLElement | null;
   iframe: HTMLIFrameElement | null;
   frames: SVGSVGElement | null;
-  lensTint: boolean;
   additive: boolean;
   backgroundCapture?: BackgroundCaptureContext;
   additiveContext?: {
@@ -70,11 +69,6 @@ function captureFilename() {
 function stageFillColor(): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue("--stage-fill").trim();
   return value || "#1e293b";
-}
-
-function lensTintColor(): string {
-  const value = getComputedStyle(document.documentElement).getPropertyValue("--lens-tint").trim();
-  return value || "oklch(0.18 0.02 155 / 0.5)";
 }
 
 function iframeDocument(iframe: HTMLIFrameElement): Document | null {
@@ -131,21 +125,31 @@ async function captureBackdrop(
   }
 }
 
-function resolveBackdropVideoSource(near: ParentNode): CanvasImageSource | null {
-  // Live HW video may sit on the stage backdrop or inside #hud-display (additive).
+/** Live photo/video may sit on the stage fill or inside #hud-display (additive). */
+function resolveBackdropMediaSource(near: ParentNode): CanvasImageSource | null {
   const el = near instanceof Element ? near : null;
   const doc = el?.ownerDocument ?? (near instanceof Document ? near : document);
+  const root = el ?? doc;
+
   const video =
-    el?.querySelector<HTMLVideoElement>("video") ??
+    root.querySelector<HTMLVideoElement>("video") ??
     doc.querySelector<HTMLVideoElement>('[data-capture="backdrop"] video');
   if (video && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0) {
     return video;
   }
+
+  const img =
+    root.querySelector<HTMLImageElement>("img") ??
+    doc.querySelector<HTMLImageElement>('[data-capture="backdrop"] img');
+  if (img?.complete && img.naturalWidth > 0) {
+    return img;
+  }
+
   return null;
 }
 
-async function captureVideoBackdrop(
-  backdrop: HTMLElement,
+async function captureMediaBackdrop(
+  near: ParentNode,
   preset: BackgroundPreset,
   width: number,
   height: number,
@@ -166,21 +170,24 @@ async function captureVideoBackdrop(
   );
   if (filter) ctx.filter = filter;
 
-  const live = resolveBackdropVideoSource(backdrop);
+  const live = resolveBackdropMediaSource(near);
   const { width: liveWidth } = live ? sourcePixelSize(live) : { width: 0 };
   if (live && liveWidth > 0) {
     drawImageCover(ctx, live, 0, 0, width, height);
-  } else if (preset.poster) {
-    try {
-      const img = await loadCaptureImage(preset.poster);
-      drawImageCover(ctx, img, 0, 0, width, height);
-    } catch {
+  } else {
+    const fallbackSrc = preset.image ?? preset.poster;
+    if (fallbackSrc) {
+      try {
+        const img = await loadCaptureImage(fallbackSrc);
+        drawImageCover(ctx, img, 0, 0, width, height);
+      } catch {
+        ctx.fillStyle = preset.placeholderColor ?? stageFillColor();
+        ctx.fillRect(0, 0, width, height);
+      }
+    } else {
       ctx.fillStyle = preset.placeholderColor ?? stageFillColor();
       ctx.fillRect(0, 0, width, height);
     }
-  } else {
-    ctx.fillStyle = preset.placeholderColor ?? stageFillColor();
-    ctx.fillRect(0, 0, width, height);
   }
 
   ctx.filter = "none";
@@ -193,8 +200,9 @@ async function captureStageBackground(
   height: number,
   capture?: BackgroundCaptureContext,
 ): Promise<HTMLCanvasElement | null> {
-  if (capture?.preset.video) {
-    return captureVideoBackdrop(
+  // Photo + video share one path (live element under stage or #hud-display).
+  if (capture?.preset.video || capture?.preset.image) {
+    return captureMediaBackdrop(
       backdrop,
       capture.preset,
       width,
@@ -289,37 +297,33 @@ function drawImageCover(
   ctx.drawImage(source, sx, sy, sWidth, sHeight, x, y, w, h);
 }
 
-function resolveVideoCaptureSource(display: HTMLElement): CanvasImageSource | null {
-  return resolveBackdropVideoSource(display);
-}
-
 async function paintAdditiveBackdropSlice(
   ctx: CanvasRenderingContext2D,
   preset: BackgroundPreset,
   geometry: AdditiveBackdropGeometry,
   backgroundBrightness: number,
   backgroundBlur: number,
-  videoSource?: CanvasImageSource | null,
+  mediaSource?: CanvasImageSource | null,
 ) {
   const blurScale = (backdropUsesOverscale(preset) ? BACKDROP_SCALE : 1) * geometry.displayScale;
   const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale);
   if (filter) ctx.filter = filter;
 
   const { left, top, width, height } = geometry;
-  if (preset.image) {
-    const img = await loadCaptureImage(preset.image);
-    drawImageCover(ctx, img, left, top, width, height);
-  } else if (preset.video) {
-    const live = videoSource ?? null;
+  if (preset.image || preset.video) {
+    const live = mediaSource ?? null;
     const { width: liveWidth } = live ? sourcePixelSize(live) : { width: 0 };
     if (live && liveWidth > 0) {
       drawImageCover(ctx, live, left, top, width, height);
-    } else if (preset.poster) {
-      const img = await loadCaptureImage(preset.poster);
-      drawImageCover(ctx, img, left, top, width, height);
     } else {
-      ctx.fillStyle = stageFillColor();
-      ctx.fillRect(left, top, width, height);
+      const fallbackSrc = preset.image ?? preset.poster;
+      if (fallbackSrc) {
+        const img = await loadCaptureImage(fallbackSrc);
+        drawImageCover(ctx, img, left, top, width, height);
+      } else {
+        ctx.fillStyle = stageFillColor();
+        ctx.fillRect(left, top, width, height);
+      }
     }
   } else {
     ctx.fillStyle = stageFillColor();
@@ -340,7 +344,6 @@ async function captureAdditiveDisplay(
   geometry: AdditiveBackdropGeometry,
   backgroundBrightness: number,
   backgroundBlur: number,
-  lensTint: boolean,
 ): Promise<HTMLCanvasElement | null> {
   const canvas = document.createElement("canvas");
   canvas.width = VIEWPORT;
@@ -362,13 +365,8 @@ async function captureAdditiveDisplay(
       geometry,
       backgroundBrightness,
       backgroundBlur,
-      resolveVideoCaptureSource(display),
+      resolveBackdropMediaSource(display),
     );
-  }
-  if (lensTint) {
-    const { left, top, width, height } = geometry;
-    ctx.fillStyle = lensTintColor();
-    ctx.fillRect(left, top, width, height);
   }
   ctx.restore();
 
@@ -474,8 +472,7 @@ export async function captureStageSnapdom(
   target: StageCaptureTarget,
   options: CaptureStageOptions = {},
 ): Promise<HTMLCanvasElement | null> {
-  const { stage, backdrop, display, iframe, frames, lensTint, additive, backgroundCapture } =
-    target;
+  const { stage, backdrop, display, iframe, frames, additive, backgroundCapture } = target;
   const stageRect = stage.getBoundingClientRect();
   const width = options.width ?? Math.max(1, Math.round(stageRect.width));
   const height = options.height ?? Math.max(1, Math.round(stageRect.height));
@@ -529,7 +526,6 @@ export async function captureStageSnapdom(
       geometry,
       backgroundBrightness,
       backgroundBlur,
-      lensTint,
     );
 
     paintStageBackground(ctx, bg, width, height);

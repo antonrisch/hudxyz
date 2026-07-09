@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect, type RefObject } from "react";
+import { useEffect, useState, type RefCallback } from "react";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 /**
  * Owns play/pause for the single HW-decoded backdrop <video>.
+ * Returns a callback ref so play re-binds when the element remounts (src switch).
  * keepPlaying: do not pause on document.hidden (share-tab picker / recording).
  */
 export function useBackdropVideoPlayback(
-  ref: RefObject<HTMLVideoElement | null>,
   active: boolean,
   keepPlaying = false,
-) {
+): RefCallback<HTMLVideoElement> {
   const reducedMotion = useReducedMotion();
+  const [el, setEl] = useState<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    const el = ref.current;
     if (!el || !active) return;
 
     const play = () => {
@@ -34,5 +34,7 @@ export function useBackdropVideoPlayback(
       document.removeEventListener("visibilitychange", onVisibility);
       el.pause();
     };
-  }, [active, keepPlaying, reducedMotion, ref]);
+  }, [active, el, keepPlaying, reducedMotion]);
+
+  return setEl;
 }

@@ -12,7 +12,10 @@ import {
 import type { Status } from "@/lib/simulator/store";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { releaseChromeFocus } from "@/lib/simulator/input";
-import { BackdropVideo } from "@/components/simulator/background/backdrop-media";
+import {
+  BackdropPhoto,
+  BackdropVideo,
+} from "@/components/simulator/background/backdrop-media";
 import { additiveBackdropContentStyle, additiveSliceStyle } from "@/lib/simulator/additive";
 import {
   resolveBackground,
@@ -41,7 +44,6 @@ export function Device() {
   const screen = useSimulatorState((s) => s.screen);
   const status = useSimulatorState((s) => s.status);
   const additive = useSimulatorState((s) => s.additive);
-  const lensTint = useSimulatorState((s) => s.lensTint);
   const backgroundKey = useSimulatorState((s) => s.background);
   const customBackgroundImages = useSimulatorState((s) => s.customBackgroundImages);
   const activeCustomBackgroundId = useSimulatorState((s) => s.activeCustomBackgroundId);
@@ -55,7 +57,8 @@ export function Device() {
     customBackgroundImages,
     activeCustomBackgroundId,
   );
-  const additiveVideo = Boolean(additive && background.video);
+  // Photo + video share one additive layout: media in #hud-display, overflow to stage.
+  const additiveMedia = Boolean(additive && (background.video || background.image));
   const isGlasses = view === "glasses";
   const panGesture = panZoom.bind();
   const [appRevealed, setAppRevealed] = useState(false);
@@ -113,61 +116,51 @@ export function Device() {
             // Above the additive video when it overflows the display to cover the stage.
             className="pointer-events-none absolute z-20 block"
             style={GLASSES_CHROME}
-            lensClassName={lensTint ? "fill-lens-tint" : "fill-transparent"}
           />
         )}
         <div
           ref={setDisplayNode}
           id="hud-display"
           className={cn(
-            // DEVICE_SURFACE includes overflow-hidden; override after so additive video
+            // DEVICE_SURFACE includes overflow-hidden; override after so additive media
             // can paint the stage-sized slice outside the 600×600 waveguide.
             DEVICE_SURFACE,
             "relative z-10 size-full",
-            additiveVideo ? "overflow-visible" : "overflow-hidden",
+            additiveMedia ? "overflow-visible" : "overflow-hidden",
             additive && "bg-transparent",
           )}
         >
           {additive && (
-            <>
-              <div
-                aria-hidden
-                data-additive-slice
-                data-capture={additiveVideo ? "backdrop" : undefined}
-                className={cn(
-                  "relative",
-                  // Clip photos; let the HW video paint the full stage-sized slice.
-                  additiveVideo ? "overflow-visible" : "overflow-hidden",
-                )}
-                style={additiveSliceStyle()}
-              >
-                {background.video ? (
-                  <BackdropVideo
-                    src={background.video}
-                    poster={background.poster}
-                    placeholder={backdropPlaceholder}
-                    keepPlaying={isRecording}
-                    showPlaceholder={false}
-                    overscale={false}
-                  />
-                ) : (
-                  <div
-                    className="absolute inset-0 origin-center"
-                    style={additiveBackdropContentStyle(background)}
-                  />
-                )}
-              </div>
-              {lensTint && (
+            <div
+              aria-hidden
+              data-additive-slice
+              data-capture={additiveMedia ? "backdrop" : undefined}
+              className={cn("relative", additiveMedia ? "overflow-visible" : "overflow-hidden")}
+              style={additiveSliceStyle()}
+            >
+              {background.video ? (
+                <BackdropVideo
+                  src={background.video}
+                  poster={background.poster}
+                  placeholder={backdropPlaceholder}
+                  keepPlaying={isRecording}
+                  showPlaceholder={false}
+                  overscale={false}
+                />
+              ) : background.image ? (
+                <BackdropPhoto
+                  src={background.image}
+                  placeholder={backdropPlaceholder}
+                  showPlaceholder={false}
+                  overscale={false}
+                />
+              ) : (
                 <div
-                  aria-hidden
-                  data-additive-slice
-                  style={{
-                    ...additiveSliceStyle(),
-                    background: "var(--lens-tint)",
-                  }}
+                  className="absolute inset-0 origin-center"
+                  style={additiveBackdropContentStyle(background)}
                 />
               )}
-            </>
+            </div>
           )}
           <iframe
             ref={iframeRef}

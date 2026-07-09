@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import {
   BACKDROP_SCALE,
   backgroundBackdropStyle,
@@ -14,13 +14,12 @@ import { cn } from "@/lib/utils";
 const PHOTO_FADE_MS = 500;
 const LQIP_BLUR_PX = 24;
 
-const mediaLayerBase = {
+const coverLayerClass = cn("absolute inset-0 size-full origin-center object-cover");
+
+const placeholderLayerBase = {
   backgroundSize: "cover" as const,
   backgroundPosition: "center" as const,
-  transform: `scale(${BACKDROP_SCALE})`,
 };
-
-const videoLayerClass = cn("absolute inset-0 size-full origin-center object-cover");
 
 /** Brightness/blur applied imperatively via --hud-bg-filter (see display-filters.ts). */
 const hudBgFilter = { filter: "var(--hud-bg-filter, none)" } as const;
@@ -35,8 +34,8 @@ function PlaceholderLayers({
   overscale: boolean;
 }) {
   const layerStyle = overscale
-    ? mediaLayerBase
-    : { backgroundSize: "cover" as const, backgroundPosition: "center" as const };
+    ? { ...placeholderLayerBase, transform: `scale(${BACKDROP_SCALE})` }
+    : placeholderLayerBase;
 
   return (
     <>
@@ -67,13 +66,32 @@ function PlaceholderLayers({
   );
 }
 
-function FadingPhotoLayer({
+type MediaPaintProps = {
+  placeholder: BackdropPlaceholder;
+  /** Keep decoding through tab-share pickers (recording). */
+  keepPlaying?: boolean;
+  showPlaceholder?: boolean;
+  /**
+   * Stage fill is exact stage size and needs CSS overscale.
+   * Additive display slice is already sized via --hud-bg-* geometry.
+   */
+  overscale?: boolean;
+  className?: string;
+  style?: CSSProperties;
+};
+
+/**
+ * Single <img> — same layout as BackdropVideo (object-cover + optional overscale).
+ * Used on the stage fill (!additive) or inside #hud-display (additive + overflow).
+ */
+export function BackdropPhoto({
   src,
   placeholder,
-}: {
-  src: string;
-  placeholder: BackdropPlaceholder;
-}) {
+  showPlaceholder = true,
+  overscale = true,
+  className,
+  style,
+}: MediaPaintProps & { src: string }) {
   const reducedMotion = useReducedMotion();
   const [ready, setReady] = useState(false);
   const [cached, setCached] = useState(false);
@@ -85,30 +103,30 @@ function FadingPhotoLayer({
     if (fromCache) setCached(true);
   };
 
+  const mediaStyle = {
+    ...(overscale ? { transform: `scale(${BACKDROP_SCALE})` } : null),
+    transitionDuration: `${fadeMs}ms`,
+    ...hudBgFilter,
+    ...style,
+  } satisfies CSSProperties;
+
   return (
     <>
+      {showPlaceholder ? <PlaceholderLayers placeholder={placeholder} overscale={overscale} /> : null}
       <img
         src={src}
         alt=""
         aria-hidden
-        className="hidden"
+        className={cn(
+          coverLayerClass,
+          !instant && "transition-opacity ease-out",
+          ready ? "opacity-100" : "opacity-0",
+          className,
+        )}
+        style={mediaStyle}
         onLoad={() => markReady(false)}
         ref={(el) => {
           if (el?.complete) markReady(true);
-        }}
-      />
-      <PlaceholderLayers placeholder={placeholder} overscale />
-      <div
-        className={cn(
-          "absolute inset-0 origin-center",
-          !instant && "transition-opacity ease-out",
-          ready ? "opacity-100" : "opacity-0",
-        )}
-        style={{
-          ...mediaLayerBase,
-          backgroundImage: `url(${src})`,
-          transitionDuration: `${fadeMs}ms`,
-          ...hudBgFilter,
         }}
       />
     </>
@@ -117,7 +135,7 @@ function FadingPhotoLayer({
 
 /**
  * Single hardware-decoded <video> — no canvas mirror.
- * Used on the stage backdrop (!additive) or inside #hud-display (additive + overflow).
+ * Used on the stage fill (!additive) or inside #hud-display (additive + overflow).
  */
 export function BackdropVideo({
   src,
@@ -125,28 +143,15 @@ export function BackdropVideo({
   placeholder,
   keepPlaying = false,
   showPlaceholder = true,
-  /** Stage backdrop is exact stage size and needs CSS overscale; additive slice is already sized. */
   overscale = true,
   className,
   style,
-}: {
-  src: string;
-  poster?: string;
-  placeholder: BackdropPlaceholder;
-  /** Keep decoding through tab-share pickers (recording). */
-  keepPlaying?: boolean;
-  showPlaceholder?: boolean;
-  overscale?: boolean;
-  className?: string;
-  style?: CSSProperties;
-}) {
+}: MediaPaintProps & { src: string; poster?: string }) {
   const reducedMotion = useReducedMotion();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);
   const fadeMs = reducedMotion ? 0 : PHOTO_FADE_MS;
   const shouldPlay = !reducedMotion;
-
-  useBackdropVideoPlayback(videoRef, shouldPlay, keepPlaying);
+  const setVideoEl = useBackdropVideoPlayback(shouldPlay, keepPlaying);
 
   const mediaStyle = {
     ...(overscale ? { transform: `scale(${BACKDROP_SCALE})` } : null),
@@ -158,15 +163,13 @@ export function BackdropVideo({
   return (
     <>
       {showPlaceholder ? (
-        <PlaceholderLayers placeholder={placeholder} poster={poster} overscale />
+        <PlaceholderLayers placeholder={placeholder} poster={poster} overscale={overscale} />
       ) : null}
       {shouldPlay ? (
         <video
           ref={(el) => {
-            if (el) {
-              videoRef.current = el;
-              if (el.readyState >= 3) setReady(true);
-            }
+            setVideoEl(el);
+            if (el && el.readyState >= 3) setReady(true);
           }}
           key={src}
           src={src}
@@ -174,16 +177,20 @@ export function BackdropVideo({
           muted
           loop
           playsInline
+          autoPlay
           preload="auto"
           aria-hidden
           className={cn(
-            videoLayerClass,
+            coverLayerClass,
             !reducedMotion && "transition-opacity ease-out",
             ready ? "opacity-100" : "opacity-0",
             className,
           )}
           style={mediaStyle}
-          onCanPlay={() => setReady(true)}
+          onCanPlay={(e) => {
+            setReady(true);
+            void e.currentTarget.play().catch(() => {});
+          }}
         />
       ) : null}
     </>
@@ -191,24 +198,23 @@ export function BackdropVideo({
 }
 
 /**
- * Stage backdrop media. For additive + video, only placeholders render here —
- * the live HW video lives in #hud-display (see Device) so mix-blend-screen works
- * without a JS canvas mirror.
+ * Stage fill media. When additive owns photo/video in #hud-display, pass
+ * suppressMedia so this layer only paints LQIP/poster placeholders.
  */
 export function BackdropMedia({
   preset,
   placeholder,
-  suppressVideo = false,
+  suppressMedia = false,
   keepPlaying = false,
 }: {
   preset: BackgroundPreset;
   placeholder: BackdropPlaceholder;
-  /** When true (additive + video), skip the stage <video> — Device owns it. */
-  suppressVideo?: boolean;
+  /** When true (additive + photo/video), skip live media — Device owns it. */
+  suppressMedia?: boolean;
   keepPlaying?: boolean;
 }) {
   if (preset.video) {
-    if (suppressVideo) {
+    if (suppressMedia) {
       return <PlaceholderLayers placeholder={placeholder} poster={preset.poster} overscale />;
     }
     return (
@@ -223,7 +229,10 @@ export function BackdropMedia({
   }
 
   if (preset.image) {
-    return <FadingPhotoLayer key={preset.image} src={preset.image} placeholder={placeholder} />;
+    if (suppressMedia) {
+      return <PlaceholderLayers placeholder={placeholder} overscale />;
+    }
+    return <BackdropPhoto key={preset.image} src={preset.image} placeholder={placeholder} />;
   }
 
   return (

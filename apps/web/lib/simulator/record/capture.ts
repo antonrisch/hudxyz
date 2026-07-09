@@ -125,6 +125,7 @@ export async function openStageCapture(
 
 /** One decoded video frame (or 2 rAF) + 2 display frames after the share picker. */
 export async function settleBeforeEncode(stage: HTMLElement): Promise<void> {
+  // Live media (video or photo) may be on the stage fill or under #hud-display.
   const video =
     stage.querySelector<HTMLVideoElement>('[data-capture="backdrop"] video') ??
     stage.querySelector("video");

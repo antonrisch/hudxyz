@@ -13,11 +13,11 @@ export const BackgroundBackdrop = forwardRef<
   {
     preset: BackgroundPreset;
     placeholder: BackdropPlaceholder;
-    /** Additive + video: stage shows poster only; live video is in #hud-display. */
-    suppressVideo?: boolean;
+    /** Additive + photo/video: stage shows placeholder only; live media is in #hud-display. */
+    suppressMedia?: boolean;
     keepPlaying?: boolean;
   }
->(function BackgroundBackdrop({ preset, placeholder, suppressVideo = false, keepPlaying = false }, ref) {
+>(function BackgroundBackdrop({ preset, placeholder, suppressMedia = false, keepPlaying = false }, ref) {
   const usesMediaLayer = Boolean(preset.image || preset.video);
 
   if (usesMediaLayer) {
@@ -31,7 +31,7 @@ export const BackgroundBackdrop = forwardRef<
         <BackdropMedia
           preset={preset}
           placeholder={placeholder}
-          suppressVideo={suppressVideo}
+          suppressMedia={suppressMedia}
           keepPlaying={keepPlaying}
         />
       </div>
