@@ -29,12 +29,26 @@ const GRADIENT_SWATCH = {
 
 const customId = (id: string) => `custom:${id}`;
 
+/** Strong ease-out — ring grows immediately, soft settle. */
+const SWATCH_EASE = "ease-[cubic-bezier(0.23,1,0.32,1)]";
+
+/**
+ * Selection chrome: ring-0 → ring-2 + offset. Only box-shadow transitions so the
+ * grow feels continuous (Tailwind rings are box-shadow under the hood).
+ */
 const selectChrome = (selected: boolean) =>
   cn(
-    "ring-offset-background transition-shadow",
+    "ring-offset-background outline-none",
+    "transition-[transform,box-shadow] duration-200",
+    SWATCH_EASE,
+    "active:scale-[0.97]",
+    "motion-reduce:transition-none motion-reduce:active:scale-100",
     selected
       ? "ring-2 ring-offset-2 ring-primary"
-      : "ring-0 ring-offset-0 hover:ring-1 hover:ring-offset-1 hover:ring-muted-foreground/80 active:ring-2 active:ring-offset-2 active:ring-primary",
+      : cn(
+          "ring-0 ring-offset-0",
+          "[@media(hover:hover)]:hover:ring-1 [@media(hover:hover)]:hover:ring-offset-1 [@media(hover:hover)]:hover:ring-muted-foreground/55",
+        ),
   );
 
 const SWATCH = "size-12 rounded-lg";
@@ -71,7 +85,7 @@ function Swatch({
       onMouseDown={dropFocus}
       onClick={onSelect}
       className={cn(
-        "relative shrink-0 p-0 outline-none",
+        "relative shrink-0 p-0",
         SWATCH,
         selectChrome(selected),
         className,
@@ -244,7 +258,11 @@ export function BackgroundPicker() {
         className={cn(
           buttonVariants({ variant: "outline" }),
           SWATCH,
-          "cursor-pointer border-border bg-muted text-muted-foreground hover:bg-input/80 hover:text-foreground",
+          "cursor-pointer border-border bg-muted text-muted-foreground",
+          "transition-[transform,background-color,color] duration-150",
+          SWATCH_EASE,
+          "active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100",
+          "[@media(hover:hover)]:hover:bg-input/80 [@media(hover:hover)]:hover:text-foreground",
         )}
         aria-label="Upload background photo"
       >
