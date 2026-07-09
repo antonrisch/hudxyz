@@ -168,7 +168,8 @@ export function Device() {
             tabIndex={-1}
             allow="clipboard-read; clipboard-write"
             className={cn(
-              "relative z-10 size-full border-0 transition-opacity ease-out",
+              // Round the app surface only — additive bg overflows square past this.
+              "relative z-10 size-full rounded-3xl border-0 transition-opacity ease-out",
               additive && "mix-blend-screen",
               appVisible && appRevealed ? "opacity-100" : "opacity-0",
               showWelcome && "pointer-events-none",
@@ -216,7 +217,7 @@ export function Device() {
               type="button"
               onClick={focusUrlBar}
               className={cn(
-                "absolute inset-0 grid cursor-pointer place-items-center px-4 text-center",
+                "absolute inset-0 grid cursor-pointer place-items-center rounded-3xl px-4 text-center",
                 DEVICE_OVERLAY,
               )}
             >
@@ -228,7 +229,7 @@ export function Device() {
           {showLoadOverlay && (
             <div
               className={cn(
-                "absolute inset-0 grid place-items-center px-4 text-center transition-opacity ease-out",
+                "absolute inset-0 grid place-items-center rounded-3xl px-4 text-center transition-opacity ease-out",
                 DEVICE_OVERLAY,
                 status === "revealing" && appRevealed
                   ? "pointer-events-none opacity-0"
