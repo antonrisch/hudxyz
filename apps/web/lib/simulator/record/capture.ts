@@ -1,28 +1,17 @@
 /**
- * Display capture for the stage: getDisplayMedia + Region or Element crop/restrict.
- *
- * - region  → CropTarget.fromElement + track.cropTo (bounding box)
- * - element → RestrictionTarget.fromElement + track.restrictTo (DOM subtree only)
- *
- * Default production path is region. Element is a Chrome-oriented A/B toggle.
+ * Stage display capture: getDisplayMedia + Region Capture (CropTarget).
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Element_Region_Capture
  */
 
-import {
-  CAPTURE_FRAME_RATE,
-  type RecordCaptureMode,
-} from "@/lib/simulator/record/config";
+export const CAPTURE_FRAME_RATE = 30;
 
 declare global {
   interface CropTarget {}
-  interface RestrictionTarget {}
   interface Window {
     CropTarget?: { fromElement(element: Element): Promise<CropTarget> };
-    RestrictionTarget?: { fromElement(element: Element): Promise<RestrictionTarget> };
   }
   interface MediaStreamTrack {
     cropTo?(target: CropTarget | null): Promise<void>;
-    restrictTo?(target: RestrictionTarget | null): Promise<void>;
   }
 }
 
@@ -38,9 +27,8 @@ type DisplayMediaOptions = DisplayMediaStreamOptions & {
   controller?: CaptureControllerLike;
 };
 
-export type RegionCaptureSession = {
+export type CaptureSession = {
   stream: MediaStream;
-  mode: RecordCaptureMode;
   stop: () => void;
 };
 
@@ -48,13 +36,6 @@ export function canUseRegionCapture(): boolean {
   return (
     typeof navigator.mediaDevices?.getDisplayMedia === "function" &&
     typeof window.CropTarget?.fromElement === "function"
-  );
-}
-
-export function canUseElementCapture(): boolean {
-  return (
-    typeof navigator.mediaDevices?.getDisplayMedia === "function" &&
-    typeof window.RestrictionTarget?.fromElement === "function"
   );
 }
 
@@ -72,9 +53,7 @@ async function openDisplayStream(frameRate = CAPTURE_FRAME_RATE): Promise<MediaS
         frameRate: { ideal: frameRate, max: frameRate },
       } as MediaTrackConstraints,
       preferCurrentTab: true,
-      // Keep "this tab" available — we self-capture the simulator.
       selfBrowserSurface: "include",
-      // Chrome hints: fewer picker surfaces → often faster openMs (ignored elsewhere).
       monitorTypeSurfaces: "exclude",
       surfaceSwitching: "exclude",
       audio: false,
@@ -114,49 +93,26 @@ async function openDisplayStream(frameRate = CAPTURE_FRAME_RATE): Promise<MediaS
   }
 }
 
-export async function openRegionCapture(
+export async function openStageCapture(
   stage: HTMLElement,
-  mode: RecordCaptureMode = "region",
   frameRate = CAPTURE_FRAME_RATE,
-): Promise<RegionCaptureSession | null> {
-  const preferElement = mode === "element" && canUseElementCapture();
-  const preferRegion = canUseRegionCapture();
-
-  if (!preferElement && !preferRegion) return null;
+): Promise<CaptureSession | null> {
+  if (!canUseRegionCapture()) return null;
 
   const stream = await openDisplayStream(frameRate);
   if (!stream) return null;
 
   const track = stream.getVideoTracks()[0];
-  if (!track) {
+  if (!track?.cropTo || !window.CropTarget) {
     stream.getTracks().forEach((t) => t.stop());
     return null;
   }
 
   try {
-    if (preferElement && track.restrictTo && window.RestrictionTarget) {
-      // Element Capture: only the stage DOM subtree (needs stacking context — see stage CSS).
-      const target = await window.RestrictionTarget.fromElement(stage);
-      await track.restrictTo(target);
-      return {
-        stream,
-        mode: "element",
-        stop: () => {
-          stream.getTracks().forEach((t) => t.stop());
-        },
-      };
-    }
-
-    if (!track.cropTo || !window.CropTarget) {
-      stream.getTracks().forEach((t) => t.stop());
-      return null;
-    }
-
     const cropTarget = await window.CropTarget.fromElement(stage);
     await track.cropTo(cropTarget);
     return {
       stream,
-      mode: "region",
       stop: () => {
         stream.getTracks().forEach((t) => t.stop());
       },
@@ -165,4 +121,38 @@ export async function openRegionCapture(
     stream.getTracks().forEach((t) => t.stop());
     return null;
   }
+}
+
+/** One decoded video frame (or 2 rAF) + 2 display frames after the share picker. */
+export async function settleBeforeEncode(stage: HTMLElement): Promise<void> {
+  const video =
+    stage.querySelector<HTMLVideoElement>('[data-capture="backdrop"] video') ??
+    stage.querySelector("video");
+
+  if (video && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+    if (video.paused) void video.play().catch(() => {});
+    if ("requestVideoFrameCallback" in video) {
+      await new Promise<void>((resolve) => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          resolve();
+        };
+        const handle = video.requestVideoFrameCallback(() => finish());
+        window.setTimeout(() => {
+          try {
+            video.cancelVideoFrameCallback(handle);
+          } catch {
+            // ignore
+          }
+          finish();
+        }, 500);
+      });
+    }
+  }
+
+  await new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  );
 }

@@ -3,10 +3,10 @@
  * Continuous recording lives in lib/simulator/record/.
  */
 
-import { openRegionCapture } from "@/lib/simulator/record/region-capture";
+import { openStageCapture } from "@/lib/simulator/record";
 
 export async function captureStagePixels(stage: HTMLElement): Promise<HTMLCanvasElement | null> {
-  const session = await openRegionCapture(stage);
+  const session = await openStageCapture(stage);
   if (!session) return null;
 
   const video = document.createElement("video");

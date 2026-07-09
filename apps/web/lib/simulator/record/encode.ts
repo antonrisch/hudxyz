@@ -1,7 +1,16 @@
-import { TIMESLICE_MS, VIDEO_BITRATE } from "@/lib/simulator/record/config";
+/** MediaRecorder encode + download helpers. */
 
-export function pickRecorderMimeType(): string | undefined {
-  // Quality-first: VP9 when available, then VP8, then MP4.
+export const MAX_RECORD_MS = 5 * 60 * 1000;
+export const VIDEO_BITRATE = 12_000_000;
+export const TIMESLICE_MS = 1000;
+
+const LOG = "[mrbd:record]";
+
+export function logRecord(...args: unknown[]) {
+  console.info(LOG, ...args);
+}
+
+function pickMimeType(): string | undefined {
   const types = [
     "video/webm;codecs=vp9",
     "video/webm;codecs=vp8",
@@ -20,7 +29,7 @@ export type StreamEncoder = {
 };
 
 export function createStreamEncoder(stream: MediaStream): StreamEncoder {
-  const picked = pickRecorderMimeType();
+  const picked = pickMimeType();
   const mimeType = picked ?? "video/webm";
   const options: MediaRecorderOptions = { videoBitsPerSecond: VIDEO_BITRATE };
   if (picked) options.mimeType = picked;
@@ -61,4 +70,15 @@ export function createStreamEncoder(stream: MediaStream): StreamEncoder {
       });
     },
   };
+}
+
+export function downloadStageRecording(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  const ext = blob.type.includes("mp4") ? "mp4" : "webm";
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  anchor.download = `mrbd-${stamp}.${ext}`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
