@@ -45,8 +45,6 @@ export function Device() {
   const backgroundKey = useSimulatorState((s) => s.background);
   const customBackgroundImages = useSimulatorState((s) => s.customBackgroundImages);
   const activeCustomBackgroundId = useSimulatorState((s) => s.activeCustomBackgroundId);
-  const backgroundBrightness = useSimulatorState((s) => s.backgroundBrightness);
-  const backgroundBlur = useSimulatorState((s) => s.backgroundBlur);
   const background = resolveBackground(
     backgroundKey,
     customBackgroundImages,
@@ -59,7 +57,7 @@ export function Device() {
   );
   const additiveVideo = Boolean(additive && background.video);
   const isGlasses = view === "glasses";
-  const { onPointerDown, ...panGesture } = panZoom.bind();
+  const panGesture = panZoom.bind();
   const [appRevealed, setAppRevealed] = useState(false);
 
   const setDisplayNode = useCallback(
@@ -108,12 +106,7 @@ export function Device() {
       <div
         ref={panZoom.contentRef}
         id="hud-device"
-        className={cn(
-          "absolute left-0 top-0 size-150",
-          panZoom.revealed ? "opacity-100" : "opacity-0",
-          panZoom.revealed && "transition-opacity duration-200 ease-out",
-        )}
-        style={panZoom.style}
+        className="absolute left-0 top-0 size-150 will-change-transform opacity-0 transition-opacity duration-200 ease-out"
       >
         {isGlasses && (
           <Frames
@@ -152,14 +145,10 @@ export function Device() {
                   <BackdropVideo
                     src={background.video}
                     poster={background.poster}
-                    preset={background}
                     placeholder={backdropPlaceholder}
-                    backgroundBrightness={backgroundBrightness}
-                    backgroundBlur={backgroundBlur}
                     keepPlaying={isRecording}
                     showPlaceholder={false}
                     overscale={false}
-                    style={{ filter: "var(--hud-bg-filter, none)" }}
                   />
                 ) : (
                   <div
@@ -266,7 +255,7 @@ export function Device() {
         </div>
       </div>
 
-      {/* capture overlay: drag = pan; pinch / cmd-scroll = zoom. */}
+      {/* capture overlay: drag = pan; pinch / cmd-scroll = zoom (Pointer Events). */}
       <div
         className={cn(
           "absolute inset-0 touch-none",
@@ -276,7 +265,7 @@ export function Device() {
         {...panGesture}
         onPointerDown={(e) => {
           releaseChromeFocus();
-          onPointerDown?.(e);
+          panGesture.onPointerDown(e);
         }}
       />
     </div>

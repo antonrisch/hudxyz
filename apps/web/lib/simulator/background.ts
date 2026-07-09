@@ -201,25 +201,19 @@ export function backgroundBackdropFilter(
   return parts.length > 0 ? parts.join(" ") : undefined;
 }
 
-export function backgroundBackdropStyle(
-  preset: BackgroundPreset,
-  backgroundBrightness = 80,
-  backgroundBlur = 0,
-): CSSProperties {
-  const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur);
-
+/** Media/gradient fill only — brightness/blur via `--hud-bg-filter` (display-filters.ts). */
+export function backgroundBackdropStyle(preset: BackgroundPreset): CSSProperties {
   if (preset.image) {
     return {
       backgroundColor: "var(--stage-fill)",
       backgroundImage: `url(${preset.image})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
-      ...(filter && { filter }),
     };
   }
 
   const gradient = BACKGROUND_GRADIENT[preset.key as keyof typeof BACKGROUND_GRADIENT];
-  if (gradient) return { backgroundImage: gradient, ...(filter && { filter }) };
+  if (gradient) return { backgroundImage: gradient };
 
-  return { backgroundColor: "var(--stage-fill)", ...(filter && { filter }) };
+  return { backgroundColor: "var(--stage-fill)" };
 }

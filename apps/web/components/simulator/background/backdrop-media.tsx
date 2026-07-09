@@ -3,12 +3,11 @@
 import { useRef, useState, type CSSProperties } from "react";
 import {
   BACKDROP_SCALE,
-  backgroundBackdropFilter,
   backgroundBackdropStyle,
   type BackdropPlaceholder,
   type BackgroundPreset,
 } from "@/lib/simulator/background";
-import { useBackdropVideoLeader } from "@/lib/simulator/use-backdrop-video";
+import { useBackdropVideoPlayback } from "@/lib/simulator/use-backdrop-video";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +21,9 @@ const mediaLayerBase = {
 };
 
 const videoLayerClass = cn("absolute inset-0 size-full origin-center object-cover");
+
+/** Brightness/blur applied imperatively via --hud-bg-filter (see display-filters.ts). */
+const hudBgFilter = { filter: "var(--hud-bg-filter, none)" } as const;
 
 function PlaceholderLayers({
   placeholder,
@@ -67,21 +69,14 @@ function PlaceholderLayers({
 
 function FadingPhotoLayer({
   src,
-  preset,
   placeholder,
-  backgroundBrightness,
-  backgroundBlur,
 }: {
   src: string;
-  preset: BackgroundPreset;
   placeholder: BackdropPlaceholder;
-  backgroundBrightness: number;
-  backgroundBlur: number;
 }) {
   const reducedMotion = useReducedMotion();
   const [ready, setReady] = useState(false);
   const [cached, setCached] = useState(false);
-  const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur);
   const instant = cached || reducedMotion;
   const fadeMs = instant ? 0 : PHOTO_FADE_MS;
 
@@ -113,7 +108,7 @@ function FadingPhotoLayer({
           ...mediaLayerBase,
           backgroundImage: `url(${src})`,
           transitionDuration: `${fadeMs}ms`,
-          ...(filter && { filter }),
+          ...hudBgFilter,
         }}
       />
     </>
@@ -127,10 +122,7 @@ function FadingPhotoLayer({
 export function BackdropVideo({
   src,
   poster,
-  preset,
   placeholder,
-  backgroundBrightness,
-  backgroundBlur,
   keepPlaying = false,
   showPlaceholder = true,
   /** Stage backdrop is exact stage size and needs CSS overscale; additive slice is already sized. */
@@ -140,10 +132,7 @@ export function BackdropVideo({
 }: {
   src: string;
   poster?: string;
-  preset: BackgroundPreset;
   placeholder: BackdropPlaceholder;
-  backgroundBrightness: number;
-  backgroundBlur: number;
   /** Keep decoding through tab-share pickers (recording). */
   keepPlaying?: boolean;
   showPlaceholder?: boolean;
@@ -154,16 +143,15 @@ export function BackdropVideo({
   const reducedMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);
-  const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur);
   const fadeMs = reducedMotion ? 0 : PHOTO_FADE_MS;
   const shouldPlay = !reducedMotion;
 
-  useBackdropVideoLeader(videoRef, shouldPlay, keepPlaying);
+  useBackdropVideoPlayback(videoRef, shouldPlay, keepPlaying);
 
   const mediaStyle = {
     ...(overscale ? { transform: `scale(${BACKDROP_SCALE})` } : null),
     transitionDuration: `${fadeMs}ms`,
-    ...(filter && { filter }),
+    ...hudBgFilter,
     ...style,
   } satisfies CSSProperties;
 
@@ -210,15 +198,11 @@ export function BackdropVideo({
 export function BackdropMedia({
   preset,
   placeholder,
-  backgroundBrightness,
-  backgroundBlur,
   suppressVideo = false,
   keepPlaying = false,
 }: {
   preset: BackgroundPreset;
   placeholder: BackdropPlaceholder;
-  backgroundBrightness: number;
-  backgroundBlur: number;
   /** When true (additive + video), skip the stage <video> — Device owns it. */
   suppressVideo?: boolean;
   keepPlaying?: boolean;
@@ -232,32 +216,20 @@ export function BackdropMedia({
         key={preset.video}
         src={preset.video}
         poster={preset.poster}
-        preset={preset}
         placeholder={placeholder}
-        backgroundBrightness={backgroundBrightness}
-        backgroundBlur={backgroundBlur}
         keepPlaying={keepPlaying}
       />
     );
   }
 
   if (preset.image) {
-    return (
-      <FadingPhotoLayer
-        key={preset.image}
-        src={preset.image}
-        preset={preset}
-        placeholder={placeholder}
-        backgroundBrightness={backgroundBrightness}
-        backgroundBlur={backgroundBlur}
-      />
-    );
+    return <FadingPhotoLayer key={preset.image} src={preset.image} placeholder={placeholder} />;
   }
 
   return (
     <div
       className="absolute inset-0"
-      style={backgroundBackdropStyle(preset, backgroundBrightness, backgroundBlur)}
+      style={{ ...backgroundBackdropStyle(preset), ...hudBgFilter }}
     />
   );
 }

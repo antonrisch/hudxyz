@@ -1,14 +1,13 @@
 "use client";
 
 import {
-  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
   type RefObject,
   useCallback,
   useLayoutEffect,
   useRef,
-  useState,
+  useSyncExternalStore,
 } from "react";
-import { useGesture } from "@use-gesture/react";
 import {
   DEFAULT_DEVICE_SCALE,
   desktopDeviceScale,
@@ -30,6 +29,10 @@ const isTypingTarget = (el: EventTarget | null) => {
   const tag = node.tagName;
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || node.isContentEditable;
 };
+
+function pointerDistance(a: { x: number; y: number }, b: { x: number; y: number }): number {
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
 
 // cmd/ctrl +/-/0 → canvas zoom; returns true when handled (caller should not fall through).
 export function applyPanZoomShortcut(
@@ -61,30 +64,62 @@ interface Transform {
   y: number;
 }
 
+/** Pointer handlers for the stage capture overlay (Pointer Events + touch-action: none). */
+export type PanZoomBind = {
+  onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
+  onPointerMove: (e: ReactPointerEvent<HTMLElement>) => void;
+  onPointerUp: (e: ReactPointerEvent<HTMLElement>) => void;
+  onPointerCancel: (e: ReactPointerEvent<HTMLElement>) => void;
+};
+
 export interface PanZoom {
   viewportRef: RefObject<HTMLDivElement | null>;
   contentRef: RefObject<HTMLDivElement | null>;
-  style: CSSProperties; // transform for the content; origin top-left
-  revealed: boolean; // false while layout is applied; fades in on the next frame
-  scale: number; // 600×600 magnification; 1 = true device pixels on screen
-  transformRevision: number; // bumps on pan/zoom/resize so additive sync can react
+  /** Current 600×600 magnification (read anytime; does not subscribe). */
+  getScale: () => number;
+  /** Subscribe to scale commits (ZoomControls). Returns unsubscribe. */
+  subscribeScale: (onStoreChange: () => void) => () => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomTo: (scale: number) => void;
   reset: (view?: View) => void; // pass the target view to recenter after a switch
-  bind: ReturnType<typeof useGesture>;
+  bind: () => PanZoomBind;
 }
 
-// canvas pan/zoom over the device plane. the content plane is always the 600×600 display
-// (glasses chrome hangs off it decoratively), so zoom is the plain deviceScale in every
-// view (1 = true pixels). drag pans; pinch / cmd-scroll zooms to the cursor; the buttons
-// zoom about the viewport center.
-export function usePanZoom(view: View): PanZoom {
+/** React subscription for the zoom % label — does not re-render Simulator. */
+export function usePanZoomScale(panZoom: PanZoom): number {
+  return useSyncExternalStore(panZoom.subscribeScale, panZoom.getScale, panZoom.getScale);
+}
+
+type SetTransformOptions = {
+  /** Skip rAF coalescing — use for view reset / layout so the first paint is correct. */
+  immediate?: boolean;
+};
+
+// canvas pan/zoom over the device plane. Gestures write CSS transform on #hud-device
+// imperatively (no React re-render per frame). Zoom UI subscribes via usePanZoomScale.
+export function usePanZoom(view: View, onTransformCommit?: () => void): PanZoom {
   const mobile = useMobileLayout();
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const mobileRef = useRef(mobile);
   mobileRef.current = mobile;
+  const onTransformCommitRef = useRef(onTransformCommit);
+  onTransformCommitRef.current = onTransformCommit;
+
+  const tRef = useRef<Transform>({ scale: 1, x: 0, y: 0 });
+  const pendingRef = useRef<Transform | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const scaleListenersRef = useRef(new Set<() => void>());
+
+  const setContentRevealed = useCallback((visible: boolean) => {
+    const el = contentRef.current;
+    if (el) el.style.opacity = visible ? "1" : "0";
+  }, []);
+
+  // Active pointers for pan (1) / pinch (2). Keyed by pointerId.
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const pinchStartRef = useRef<{ distance: number; scale: number } | null>(null);
 
   const resolveDeviceScale = useCallback(
     (v: View = view) => {
@@ -98,24 +133,54 @@ export function usePanZoom(view: View): PanZoom {
     [view],
   );
 
-  const deviceScaleRef = useRef<number>(DEFAULT_DEVICE_SCALE.pixel);
-  const [deviceScale, setDeviceScale] = useState<number>(DEFAULT_DEVICE_SCALE.pixel);
-  const [t, setT] = useState<Transform>({ scale: 1, x: 0, y: 0 });
-  const [transformRevision, setTransformRevision] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-  const pinchStartScale = useRef(deviceScaleRef.current);
-
-  const bumpTransformRevision = useCallback(() => {
-    setTransformRevision((revision) => revision + 1);
+  const paintTransform = useCallback((next: Transform) => {
+    tRef.current = next;
+    const el = contentRef.current;
+    if (el) {
+      el.style.transform = `translate(${next.x}px, ${next.y}px) scale(${next.scale})`;
+      el.style.transformOrigin = "0 0";
+    }
+    for (const cb of scaleListenersRef.current) cb();
+    onTransformCommitRef.current?.();
   }, []);
 
+  const flushPending = useCallback(() => {
+    rafRef.current = null;
+    const next = pendingRef.current;
+    if (!next) return;
+    pendingRef.current = null;
+    paintTransform(next);
+  }, [paintTransform]);
+
+  // One DOM write per animation frame during gestures (not per pointer/wheel event).
   const setTransform = useCallback(
-    (updater: Transform | ((cur: Transform) => Transform)) => {
-      setT(updater);
-      bumpTransformRevision();
+    (updater: Transform | ((cur: Transform) => Transform), options?: SetTransformOptions) => {
+      const cur = pendingRef.current ?? tRef.current;
+      const next = typeof updater === "function" ? updater(cur) : updater;
+      pendingRef.current = next;
+
+      if (options?.immediate) {
+        if (rafRef.current != null) {
+          cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
+        }
+        pendingRef.current = null;
+        paintTransform(next);
+        return;
+      }
+
+      if (rafRef.current == null) {
+        rafRef.current = requestAnimationFrame(flushPending);
+      }
     },
-    [bumpTransformRevision],
+    [flushPending, paintTransform],
   );
+
+  useMountEffect(() => {
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    };
+  });
 
   // default framing at a given 600×600 magnification: center the display in the viewport.
   const computeDefault = useCallback((ds: number): Transform => {
@@ -132,10 +197,7 @@ export function usePanZoom(view: View): PanZoom {
 
   const reset = useCallback(
     (v: View = view) => {
-      const ds = resolveDeviceScale(v);
-      deviceScaleRef.current = ds;
-      setDeviceScale(ds);
-      setTransform(computeDefault(ds));
+      setTransform(computeDefault(resolveDeviceScale(v)), { immediate: true });
     },
     [computeDefault, resolveDeviceScale, setTransform, view],
   );
@@ -145,15 +207,12 @@ export function usePanZoom(view: View): PanZoom {
     const c = contentRef.current;
     if (!c) return;
 
-    setRevealed(false);
+    setContentRevealed(false);
     let frame = 0;
 
     const apply = () => {
-      const ds = resolveDeviceScale(view);
-      deviceScaleRef.current = ds;
-      setDeviceScale(ds);
-      setTransform(computeDefault(ds));
-      frame = requestAnimationFrame(() => setRevealed(true));
+      setTransform(computeDefault(resolveDeviceScale(view)), { immediate: true });
+      frame = requestAnimationFrame(() => setContentRevealed(true));
     };
 
     if (c.offsetWidth && c.offsetHeight) {
@@ -171,7 +230,7 @@ export function usePanZoom(view: View): PanZoom {
       cancelAnimationFrame(frame);
       ro.disconnect();
     };
-  }, [computeDefault, mobile, resolveDeviceScale, setTransform, view]);
+  }, [computeDefault, mobile, resolveDeviceScale, setContentRevealed, setTransform, view]);
 
   // zoom about a viewport point, keeping the content point under it fixed
   const setDeviceScaleAt = useCallback(
@@ -183,8 +242,6 @@ export function usePanZoom(view: View): PanZoom {
       const py = clientY - r.top;
       setTransform((cur) => {
         const scale = clamp(nextDevice, SCALE_MIN, SCALE_MAX);
-        deviceScaleRef.current = scale;
-        setDeviceScale(scale);
         const k = scale / cur.scale;
         return { scale, x: px - (px - cur.x) * k, y: py - (py - cur.y) * k };
       });
@@ -201,8 +258,6 @@ export function usePanZoom(view: View): PanZoom {
       const py = clientY - r.top;
       setTransform((cur) => {
         const scale = clamp(cur.scale * factor, SCALE_MIN, SCALE_MAX);
-        deviceScaleRef.current = scale;
-        setDeviceScale(scale);
         const k = scale / cur.scale;
         return { scale, x: px - (px - cur.x) * k, y: py - (py - cur.y) * k };
       });
@@ -212,16 +267,6 @@ export function usePanZoom(view: View): PanZoom {
 
   const zoomAtRef = useRef(zoomAt);
   zoomAtRef.current = zoomAt;
-
-  const zoomCenter = useCallback(
-    (factor: number) => {
-      const vp = viewportRef.current;
-      if (!vp) return;
-      const r = vp.getBoundingClientRect();
-      zoomAt(r.left + r.width / 2, r.top + r.height / 2, factor);
-    },
-    [zoomAt],
-  );
 
   const zoomTo = useCallback(
     (nextDeviceScale: number) => {
@@ -235,19 +280,19 @@ export function usePanZoom(view: View): PanZoom {
 
   const stepZoom = useCallback(
     (delta: number) => {
-      zoomTo(clamp(deviceScaleRef.current + delta, SCALE_MIN, SCALE_MAX));
+      zoomTo(clamp(tRef.current.scale + delta, SCALE_MIN, SCALE_MAX));
     },
     [zoomTo],
   );
 
-  const zoomCenterRef = useRef(zoomCenter);
-  zoomCenterRef.current = zoomCenter;
   const resetRef = useRef(reset);
   resetRef.current = reset;
   const setDeviceScaleAtRef = useRef(setDeviceScaleAt);
   setDeviceScaleAtRef.current = setDeviceScaleAt;
   const stepZoomRef = useRef(stepZoom);
   stepZoomRef.current = stepZoom;
+  const zoomToRef = useRef(zoomTo);
+  zoomToRef.current = zoomTo;
 
   const panShortcutRef = useRef({
     zoomIn: () => stepZoomRef.current(ZOOM_STEP),
@@ -265,8 +310,8 @@ export function usePanZoom(view: View): PanZoom {
   const setTransformRef = useRef(setTransform);
   setTransformRef.current = setTransform;
 
-  // pinch (ctrlKey) / cmd-scroll = zoom to cursor; plain wheel = pan. native non-passive
-  // listener so preventDefault works (react's onWheel is passive).
+  // Trackpad pinch arrives as wheel+ctrlKey; cmd/ctrl-scroll zooms; plain wheel pans.
+  // Native non-passive listener — React's onWheel is passive and can't preventDefault.
   useMountEffect(() => {
     const vp = viewportRef.current;
     if (!vp) return;
@@ -302,40 +347,82 @@ export function usePanZoom(view: View): PanZoom {
     return () => ro.disconnect();
   });
 
-  const bind = useGesture(
-    {
-      onDrag: ({ delta: [dx, dy] }) => {
-        setTransform((cur) => ({ ...cur, x: cur.x + dx, y: cur.y + dy }));
-      },
-      onPinch: ({ first, movement: [scale], origin: [x, y] }) => {
-        if (first) pinchStartScale.current = deviceScaleRef.current;
-        setDeviceScaleAtRef.current(x, y, pinchStartScale.current * scale);
-      },
-    },
-    {
-      drag: { preventDefault: true },
-      eventOptions: { passive: false },
-      pinch: {
-        preventDefault: true,
-        scaleBounds: { min: SCALE_MIN, max: SCALE_MAX },
-      },
-    },
-  );
+  const endPointer = useCallback((e: ReactPointerEvent<HTMLElement>) => {
+    const pointers = pointersRef.current;
+    if (!pointers.has(e.pointerId)) return;
+    pointers.delete(e.pointerId);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // Already released.
+    }
+    if (pointers.size < 2) pinchStartRef.current = null;
+  }, []);
 
-  return {
-    viewportRef,
-    contentRef,
-    revealed,
-    style: {
-      transform: `translate(${t.x}px, ${t.y}px) scale(${t.scale})`,
-      transformOrigin: "0 0",
-    },
-    scale: deviceScale,
-    transformRevision,
-    zoomIn: () => stepZoom(ZOOM_STEP),
-    zoomOut: () => stepZoom(-ZOOM_STEP),
-    zoomTo,
-    reset,
-    bind,
-  };
+  // Stable API object — must not change identity or SimulatorContext re-renders the tree.
+  const apiRef = useRef<PanZoom | null>(null);
+  if (!apiRef.current) {
+    apiRef.current = {
+      viewportRef,
+      contentRef,
+      getScale: () => tRef.current.scale,
+      subscribeScale: (onStoreChange) => {
+        scaleListenersRef.current.add(onStoreChange);
+        return () => {
+          scaleListenersRef.current.delete(onStoreChange);
+        };
+      },
+      zoomIn: () => stepZoomRef.current(ZOOM_STEP),
+      zoomOut: () => stepZoomRef.current(-ZOOM_STEP),
+      zoomTo: (scale) => zoomToRef.current(scale),
+      reset: (v) => resetRef.current(v),
+      bind: () => ({
+        onPointerDown: (e) => {
+          if (e.pointerType === "mouse" && e.button !== 0) return;
+
+          const pointers = pointersRef.current;
+          pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          e.currentTarget.setPointerCapture(e.pointerId);
+
+          if (pointers.size === 2) {
+            const [a, b] = [...pointers.values()];
+            const distance = pointerDistance(a, b);
+            if (distance > 0) {
+              pinchStartRef.current = { distance, scale: tRef.current.scale };
+            }
+          }
+        },
+
+        onPointerMove: (e) => {
+          const pointers = pointersRef.current;
+          if (!pointers.has(e.pointerId)) return;
+
+          const prev = pointers.get(e.pointerId)!;
+          pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+          if (pointers.size >= 2) {
+            const [a, b] = [...pointers.values()];
+            const distance = pointerDistance(a, b);
+            const pinch = pinchStartRef.current;
+            if (!pinch || distance <= 0) return;
+
+            const originX = (a.x + b.x) / 2;
+            const originY = (a.y + b.y) / 2;
+            setDeviceScaleAtRef.current(originX, originY, pinch.scale * (distance / pinch.distance));
+            return;
+          }
+
+          const dx = e.clientX - prev.x;
+          const dy = e.clientY - prev.y;
+          if (dx === 0 && dy === 0) return;
+          setTransformRef.current((cur) => ({ ...cur, x: cur.x + dx, y: cur.y + dy }));
+        },
+
+        onPointerUp: endPointer,
+        onPointerCancel: endPointer,
+      }),
+    };
+  }
+
+  return apiRef.current;
 }

@@ -13,23 +13,11 @@ export const BackgroundBackdrop = forwardRef<
   {
     preset: BackgroundPreset;
     placeholder: BackdropPlaceholder;
-    backgroundBrightness: number;
-    backgroundBlur: number;
     /** Additive + video: stage shows poster only; live video is in #hud-display. */
     suppressVideo?: boolean;
     keepPlaying?: boolean;
   }
->(function BackgroundBackdrop(
-  {
-    preset,
-    placeholder,
-    backgroundBrightness,
-    backgroundBlur,
-    suppressVideo = false,
-    keepPlaying = false,
-  },
-  ref,
-) {
+>(function BackgroundBackdrop({ preset, placeholder, suppressVideo = false, keepPlaying = false }, ref) {
   const usesMediaLayer = Boolean(preset.image || preset.video);
 
   if (usesMediaLayer) {
@@ -43,8 +31,6 @@ export const BackgroundBackdrop = forwardRef<
         <BackdropMedia
           preset={preset}
           placeholder={placeholder}
-          backgroundBrightness={backgroundBrightness}
-          backgroundBlur={backgroundBlur}
           suppressVideo={suppressVideo}
           keepPlaying={keepPlaying}
         />
@@ -58,7 +44,10 @@ export const BackgroundBackdrop = forwardRef<
       aria-hidden
       data-capture="backdrop"
       className="pointer-events-none absolute inset-0"
-      style={backgroundBackdropStyle(preset, backgroundBrightness, backgroundBlur)}
+      style={{
+        ...backgroundBackdropStyle(preset),
+        filter: "var(--hud-bg-filter, none)",
+      }}
     />
   );
 });

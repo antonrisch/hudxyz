@@ -7,7 +7,7 @@ import { useReducedMotion } from "@/lib/use-reduced-motion";
  * Owns play/pause for the single HW-decoded backdrop <video>.
  * keepPlaying: do not pause on document.hidden (share-tab picker / recording).
  */
-export function useBackdropVideoLeader(
+export function useBackdropVideoPlayback(
   ref: RefObject<HTMLVideoElement | null>,
   active: boolean,
   keepPlaying = false,

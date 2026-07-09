@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { useSimulator } from "@/components/simulator";
+import { usePanZoomScale } from "@/components/simulator/use-pan-zoom";
 import { dropFocus } from "@/lib/simulator/input";
 import { cn } from "@/lib/utils";
 
@@ -37,10 +38,11 @@ function ZoomMenuItem({
 // zoom dropdown: editable percentage, presets, and keyboard shortcuts.
 export function ZoomControls({ className }: { className?: string }) {
   const { panZoom } = useSimulator();
+  const scale = usePanZoomScale(panZoom);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [editing, setEditing] = useState(false);
-  const percent = Math.round(panZoom.scale * 100);
+  const percent = Math.round(scale * 100);
 
   const commitZoom = (raw: string, close = false) => {
     setEditing(false);

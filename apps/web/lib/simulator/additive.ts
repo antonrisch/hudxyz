@@ -1,11 +1,5 @@
 import type { CSSProperties } from "react";
-import {
-  BACKDROP_SCALE,
-  backdropUsesOverscale,
-  backgroundBackdropFilter,
-  backgroundBackdropStyle,
-  type BackgroundPreset,
-} from "@/lib/simulator/background";
+import { BACKDROP_SCALE, backgroundBackdropStyle, type BackgroundPreset } from "@/lib/simulator/background";
 
 export type AdditiveBackdropGeometry = {
   left: number;
@@ -21,13 +15,7 @@ function additiveGeometryKey(geometry: AdditiveBackdropGeometry | undefined): st
   return `${geometry.left}|${geometry.top}|${geometry.width}|${geometry.height}|${geometry.displayScale}`;
 }
 
-const GEOMETRY_PROPS = [
-  "--hud-bg-left",
-  "--hud-bg-top",
-  "--hud-bg-width",
-  "--hud-bg-height",
-  "--hud-bg-filter",
-] as const;
+const GEOMETRY_PROPS = ["--hud-bg-left", "--hud-bg-top", "--hud-bg-width", "--hud-bg-height"] as const;
 
 export function measureAdditiveBackdrop(
   stage: HTMLElement | null,
@@ -78,13 +66,11 @@ export function additiveBackdropContentStyle(preset: BackgroundPreset): CSSPrope
   };
 }
 
+/** Geometry only — brightness/blur filters live in display-filters.ts. */
 export function syncHostAdditive(
   display: HTMLElement | null,
   additive: boolean,
-  preset: BackgroundPreset,
   geometry: AdditiveBackdropGeometry | undefined,
-  backgroundBrightness: number,
-  backgroundBlur: number,
   lastKey?: string,
 ): string | undefined {
   if (!display) return undefined;
@@ -94,21 +80,15 @@ export function syncHostAdditive(
     return "";
   }
 
-  const blurScale =
-    (backdropUsesOverscale(preset) ? BACKDROP_SCALE : 1) * (geometry?.displayScale ?? 1);
-  const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale);
   if (!geometry) return lastKey;
 
-  const key = `${additiveGeometryKey(geometry)}|${filter ?? ""}`;
+  const key = additiveGeometryKey(geometry);
   if (key === lastKey) return key;
 
   display.style.setProperty("--hud-bg-left", `${geometry.left}px`);
   display.style.setProperty("--hud-bg-top", `${geometry.top}px`);
   display.style.setProperty("--hud-bg-width", `${geometry.width}px`);
   display.style.setProperty("--hud-bg-height", `${geometry.height}px`);
-
-  if (filter) display.style.setProperty("--hud-bg-filter", filter);
-  else display.style.removeProperty("--hud-bg-filter");
 
   return key;
 }
@@ -135,15 +115,3 @@ export function settleAdditiveSync(sync: () => void) {
   });
 }
 
-// matches the Meta chrome extension: filter on the app body, not a host overlay.
-export function syncDisplayBrightness(iframe: HTMLIFrameElement | null, displayBrightness: number) {
-  const doc = iframe?.contentDocument;
-  if (!doc?.body) return;
-
-  try {
-    if (displayBrightness >= 100) doc.body.style.removeProperty("filter");
-    else doc.body.style.filter = `brightness(${displayBrightness / 100})`;
-  } catch {
-    // The frame can briefly expose a cross-origin WindowProxy while Scramjet navigates.
-  }
-}
