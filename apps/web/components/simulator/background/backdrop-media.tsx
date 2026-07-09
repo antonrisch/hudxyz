@@ -8,7 +8,7 @@ import {
   type BackdropPlaceholder,
   type BackgroundPreset,
 } from "@/lib/simulator/background";
-import { useBackdropVideoLeader, useBackdropVideoMirror } from "@/lib/simulator/use-backdrop-video";
+import { useBackdropVideoLeader } from "@/lib/simulator/use-backdrop-video";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -120,13 +120,23 @@ function FadingPhotoLayer({
   );
 }
 
-function FadingVideoLayer({
+/**
+ * Single hardware-decoded <video> — no canvas mirror.
+ * Used on the stage backdrop (!additive) or inside #hud-display (additive + overflow).
+ */
+export function BackdropVideo({
   src,
   poster,
   preset,
   placeholder,
   backgroundBrightness,
   backgroundBlur,
+  keepPlaying = false,
+  showPlaceholder = true,
+  /** Stage backdrop is exact stage size and needs CSS overscale; additive slice is already sized. */
+  overscale = true,
+  className,
+  style,
 }: {
   src: string;
   poster?: string;
@@ -134,6 +144,12 @@ function FadingVideoLayer({
   placeholder: BackdropPlaceholder;
   backgroundBrightness: number;
   backgroundBlur: number;
+  /** Keep decoding through tab-share pickers (recording). */
+  keepPlaying?: boolean;
+  showPlaceholder?: boolean;
+  overscale?: boolean;
+  className?: string;
+  style?: CSSProperties;
 }) {
   const reducedMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -142,63 +158,77 @@ function FadingVideoLayer({
   const fadeMs = reducedMotion ? 0 : PHOTO_FADE_MS;
   const shouldPlay = !reducedMotion;
 
-  useBackdropVideoLeader(videoRef, shouldPlay);
+  useBackdropVideoLeader(videoRef, shouldPlay, keepPlaying);
+
+  const mediaStyle = {
+    ...(overscale ? { transform: `scale(${BACKDROP_SCALE})` } : null),
+    transitionDuration: `${fadeMs}ms`,
+    ...(filter && { filter }),
+    ...style,
+  } satisfies CSSProperties;
 
   return (
     <>
-      <PlaceholderLayers placeholder={placeholder} poster={poster} overscale />
-      <video
-        ref={(el) => {
-          if (el) {
-            videoRef.current = el;
-            if (el.readyState >= 3) setReady(true);
-          }
-        }}
-        key={src}
-        src={shouldPlay ? src : undefined}
-        poster={poster}
-        muted
-        loop
-        playsInline
-        preload={shouldPlay ? "auto" : "none"}
-        aria-hidden
-        className="absolute w-px h-px opacity-0 pointer-events-none"
-        onCanPlay={() => setReady(true)}
-      />
-      <BackdropVideoMirror
-        className={cn(
-          videoLayerClass,
-          !reducedMotion && "transition-opacity ease-out",
-          ready || reducedMotion ? "opacity-100" : "opacity-0",
-        )}
-        style={{
-          transform: `scale(${BACKDROP_SCALE})`,
-          transitionDuration: `${fadeMs}ms`,
-          ...(filter && { filter }),
-        }}
-      />
+      {showPlaceholder ? (
+        <PlaceholderLayers placeholder={placeholder} poster={poster} overscale />
+      ) : null}
+      {shouldPlay ? (
+        <video
+          ref={(el) => {
+            if (el) {
+              videoRef.current = el;
+              if (el.readyState >= 3) setReady(true);
+            }
+          }}
+          key={src}
+          src={src}
+          poster={poster}
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden
+          className={cn(
+            videoLayerClass,
+            !reducedMotion && "transition-opacity ease-out",
+            ready ? "opacity-100" : "opacity-0",
+            className,
+          )}
+          style={mediaStyle}
+          onCanPlay={() => setReady(true)}
+        />
+      ) : null}
     </>
   );
 }
 
 /**
- * Renders the backdrop media layer (gradient, photo, or video leader).
- * For the additive video mirror, use {@link BackdropVideoMirror} instead.
+ * Stage backdrop media. For additive + video, only placeholders render here —
+ * the live HW video lives in #hud-display (see Device) so mix-blend-screen works
+ * without a JS canvas mirror.
  */
 export function BackdropMedia({
   preset,
   placeholder,
   backgroundBrightness,
   backgroundBlur,
+  suppressVideo = false,
+  keepPlaying = false,
 }: {
   preset: BackgroundPreset;
   placeholder: BackdropPlaceholder;
   backgroundBrightness: number;
   backgroundBlur: number;
+  /** When true (additive + video), skip the stage <video> — Device owns it. */
+  suppressVideo?: boolean;
+  keepPlaying?: boolean;
 }) {
   if (preset.video) {
+    if (suppressVideo) {
+      return <PlaceholderLayers placeholder={placeholder} poster={preset.poster} overscale />;
+    }
     return (
-      <FadingVideoLayer
+      <BackdropVideo
         key={preset.video}
         src={preset.video}
         poster={preset.poster}
@@ -206,6 +236,7 @@ export function BackdropMedia({
         placeholder={placeholder}
         backgroundBrightness={backgroundBrightness}
         backgroundBlur={backgroundBlur}
+        keepPlaying={keepPlaying}
       />
     );
   }
@@ -227,30 +258,6 @@ export function BackdropMedia({
     <div
       className="absolute inset-0"
       style={backgroundBackdropStyle(preset, backgroundBrightness, backgroundBlur)}
-    />
-  );
-}
-
-/**
- * Canvas that mirrors the leader video's frames into the additive slice.
- * Single decoder — draws the exact frame the leader shows via requestVideoFrameCallback.
- */
-export function BackdropVideoMirror({
-  className,
-  style,
-}: {
-  className?: string;
-  style?: CSSProperties;
-}) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useBackdropVideoMirror(canvasRef, true);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden
-      className={cn("absolute inset-0 size-full object-cover", className)}
-      style={style}
     />
   );
 }

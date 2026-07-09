@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -14,6 +15,8 @@ import { BackgroundPicker } from "@/components/simulator/background/picker";
 import { useQueryState } from "nuqs";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { simulatorParsers } from "@/lib/simulator/search-params";
+import { canUseElementCapture } from "@/lib/simulator/record";
+import { useMountEffect } from "@/lib/use-mount-effect";
 
 function syncSimulatorParam<T>(
   apply: (next: T) => void,
@@ -41,6 +44,14 @@ export function PanelContent() {
     "displayBrightness",
     simulatorParsers.displayBrightness,
   );
+  const [recordCapture, setRecordCapture] = useQueryState(
+    "recordCapture",
+    simulatorParsers.recordCapture,
+  );
+  const [elementCaptureSupported, setElementCaptureSupported] = useState(false);
+  useMountEffect(() => {
+    setElementCaptureSupported(canUseElementCapture());
+  });
 
   const setAdditive = syncSimulatorParam(
     (next) => store.getState().setAdditive(next),
@@ -135,6 +146,46 @@ export function PanelContent() {
           onChange={setDisplayBrightness}
         />
       </PanelSection>
+
+      {process.env.NODE_ENV === "development" ? (
+        <>
+          <Separator />
+          <PanelSection title="Recording (dev)">
+            <PanelRow
+              label="Element capture"
+              htmlFor="record-element-capture"
+              hint={
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        type="button"
+                        aria-label="About element capture"
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <Info className="size-3.5" />
+                      </button>
+                    }
+                  />
+                  <TooltipContent className="max-w-56 text-pretty">
+                    A/B vs Region Capture (default). Element Capture restricts to the stage DOM
+                    subtree (Chrome). Falls back to Region if unsupported. Also: ?recordCapture=
+                    element
+                  </TooltipContent>
+                </Tooltip>
+              }
+            >
+              <Switch
+                id="record-element-capture"
+                checked={recordCapture === "element"}
+                disabled={!elementCaptureSupported}
+                onCheckedChange={(on) => void setRecordCapture(on ? "element" : "region")}
+                aria-label="Element capture"
+              />
+            </PanelRow>
+          </PanelSection>
+        </>
+      ) : null}
     </>
   );
 }

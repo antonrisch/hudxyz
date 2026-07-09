@@ -38,6 +38,8 @@ const BACKGROUND_KEYS = BACKGROUNDS.map((bg) => bg.key);
 // the initial (server-parsed) seed and the client-side writes, so ssr and hydration agree.
 // nuqs clears a param when it equals its default, keeping shared urls clean.
 // `mode` is url-only (cosmetic chrome); the store field is `view`.
+export const RECORD_CAPTURE_MODES = ["region", "element"] as const;
+
 export const simulatorParsers = {
   mode: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
   url: parseAsString.withDefault(""),
@@ -47,6 +49,8 @@ export const simulatorParsers = {
   bgBrightness: parseAsInteger.withDefault(80),
   bgBlur: parseAsInteger.withDefault(0),
   displayBrightness: parseAsInteger.withDefault(100),
+  /** Dev A/B: Region Capture (default) vs Element Capture. Not part of share seed. */
+  recordCapture: parseAsStringLiteral(RECORD_CAPTURE_MODES).withDefault("region"),
 };
 
 // server-side reader: parse Next's searchParams (a promise in app router) into typed values.

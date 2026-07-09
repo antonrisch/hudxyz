@@ -131,6 +131,19 @@ async function captureBackdrop(
   }
 }
 
+function resolveBackdropVideoSource(near: ParentNode): CanvasImageSource | null {
+  // Live HW video may sit on the stage backdrop or inside #hud-display (additive).
+  const el = near instanceof Element ? near : null;
+  const doc = el?.ownerDocument ?? (near instanceof Document ? near : document);
+  const video =
+    el?.querySelector<HTMLVideoElement>("video") ??
+    doc.querySelector<HTMLVideoElement>('[data-capture="backdrop"] video');
+  if (video && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+    return video;
+  }
+  return null;
+}
+
 async function captureVideoBackdrop(
   backdrop: HTMLElement,
   preset: BackgroundPreset,
@@ -153,9 +166,10 @@ async function captureVideoBackdrop(
   );
   if (filter) ctx.filter = filter;
 
-  const video = backdrop.querySelector("video");
-  if (video && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0) {
-    drawImageCover(ctx, video, 0, 0, width, height);
+  const live = resolveBackdropVideoSource(backdrop);
+  const { width: liveWidth } = live ? sourcePixelSize(live) : { width: 0 };
+  if (live && liveWidth > 0) {
+    drawImageCover(ctx, live, 0, 0, width, height);
   } else if (preset.poster) {
     try {
       const img = await loadCaptureImage(preset.poster);
@@ -276,17 +290,7 @@ function drawImageCover(
 }
 
 function resolveVideoCaptureSource(display: HTMLElement): CanvasImageSource | null {
-  const mirror = display.querySelector("[data-additive-slice] canvas");
-  if (mirror instanceof HTMLCanvasElement && mirror.width > 0) return mirror;
-
-  const video = display.ownerDocument.querySelector<HTMLVideoElement>(
-    '[data-capture="backdrop"] video',
-  );
-  if (video && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0) {
-    return video;
-  }
-
-  return null;
+  return resolveBackdropVideoSource(display);
 }
 
 async function paintAdditiveBackdropSlice(
@@ -465,7 +469,7 @@ function paintStageBackground(
   }
 }
 
-// Snapdom fallback when tab capture is unavailable or denied.
+// Snapdom path for screenshots (and Region Capture fallback for stills).
 export async function captureStageSnapdom(
   target: StageCaptureTarget,
   options: CaptureStageOptions = {},

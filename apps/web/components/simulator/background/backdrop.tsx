@@ -15,8 +15,21 @@ export const BackgroundBackdrop = forwardRef<
     placeholder: BackdropPlaceholder;
     backgroundBrightness: number;
     backgroundBlur: number;
+    /** Additive + video: stage shows poster only; live video is in #hud-display. */
+    suppressVideo?: boolean;
+    keepPlaying?: boolean;
   }
->(function BackgroundBackdrop({ preset, placeholder, backgroundBrightness, backgroundBlur }, ref) {
+>(function BackgroundBackdrop(
+  {
+    preset,
+    placeholder,
+    backgroundBrightness,
+    backgroundBlur,
+    suppressVideo = false,
+    keepPlaying = false,
+  },
+  ref,
+) {
   const usesMediaLayer = Boolean(preset.image || preset.video);
 
   if (usesMediaLayer) {
@@ -32,6 +45,8 @@ export const BackgroundBackdrop = forwardRef<
           placeholder={placeholder}
           backgroundBrightness={backgroundBrightness}
           backgroundBlur={backgroundBlur}
+          suppressVideo={suppressVideo}
+          keepPlaying={keepPlaying}
         />
       </div>
     );

@@ -25,9 +25,12 @@ import {
 import { INTENT_BY_KEY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
 import { releaseChromeFocus } from "@/lib/simulator/input";
-import { BackdropVideoLeaderProvider } from "@/lib/simulator/backdrop-video-context";
 import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
-import { resolveBackground, resolveBackdropPlaceholder } from "@/lib/simulator/background";
+import {
+  backgroundMediaKind,
+  resolveBackground,
+  resolveBackdropPlaceholder,
+} from "@/lib/simulator/background";
 import {
   measureAdditiveBackdrop,
   settleAdditiveSync,
@@ -49,7 +52,11 @@ import { MobileAppFooter } from "@/components/simulator/app-footer";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadStage, type StageCaptureTarget } from "@/lib/simulator/capture";
-import { createStageRecorder, downloadStageRecording } from "@/lib/simulator/record";
+import {
+  createStageRecorder,
+  downloadStageRecording,
+  type RecordCaptureMode,
+} from "@/lib/simulator/record";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -92,6 +99,9 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const storeRef = useRef<SimulatorStore>(undefined);
   const store = (storeRef.current ??= createSimulatorStore(seed));
   const [, setModeParam] = useQueryState("mode", simulatorParsers.mode);
+  const [recordCaptureMode] = useQueryState("recordCapture", simulatorParsers.recordCapture);
+  const recordCaptureModeRef = useRef<RecordCaptureMode>(recordCaptureMode);
+  recordCaptureModeRef.current = recordCaptureMode;
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -113,10 +123,12 @@ export default function Simulator({ seed }: { seed: Seed }) {
     customBackgroundImages,
     activeCustomBackgroundId,
   );
+  const additive = useStore(store, (s) => s.additive);
   const backgroundBrightness = useStore(store, (s) => s.backgroundBrightness);
   const backgroundBlur = useStore(store, (s) => s.backgroundBlur);
   const displayPanelOpen = useStore(store, (s) => s.displayPanelOpen);
   const toolbarPlacement = useStore(store, (s) => s.toolbarPlacement);
+  const suppressStageVideo = Boolean(additive && background.video);
   const dockToolbarOnDesktop = toolbarPlacement === "sidebar";
   const panZoom = usePanZoom(view);
   const panZoomRef = useRef(panZoom);
@@ -282,14 +294,21 @@ export default function Simulator({ seed }: { seed: Seed }) {
   useMountEffect(() => {
     stageRecorderRef.current = createStageRecorder({
       getStage: () => stageRef.current,
-      getBackdrop: () => backdropRef.current,
-      getDisplay: () => displayRef.current,
-      getIframe: () => iframeRef.current,
-      getFrames: () =>
-        stageRef.current?.querySelector<SVGSVGElement>('[data-capture="frames"]') ?? null,
-      getLensTint: () => store.getState().lensTint,
+      getCaptureMode: () => recordCaptureModeRef.current,
+      getVideoBg: () => {
+        const {
+          background: backgroundKey,
+          customBackgroundImages,
+          activeCustomBackgroundId,
+        } = store.getState();
+        const preset = resolveBackground(
+          backgroundKey,
+          customBackgroundImages,
+          activeCustomBackgroundId,
+        );
+        return backgroundMediaKind(preset) === "video";
+      },
       getAdditive: () => store.getState().additive,
-      getAdditiveContext: () => getAdditiveCaptureContextRef.current(),
       onAutoStop: (blob) => {
         if (blob) downloadStageRecording(blob);
         setIsRecording(false);
@@ -318,13 +337,19 @@ export default function Simulator({ seed }: { seed: Seed }) {
     const { screen, status } = store.getState();
     if (screen !== "app" || status !== "ready" || !stageRef.current) return;
 
-    await prepareRecordChrome();
-    recorder.start();
-    if (!recorder.isRecording) {
-      restoreRecordChrome();
-      return;
-    }
+    // Leader paints full-bleed before the share picker so Region Capture sees live video.
     setIsRecording(true);
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
+    // Dock chrome after the leader is live — still before capture so the crop is stable.
+    await prepareRecordChrome();
+
+    const ok = await recorder.start();
+    if (!ok) {
+      setIsRecording(false);
+      restoreRecordChrome();
+    }
   }, [prepareRecordChrome, restoreRecordChrome, store]);
 
   // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
@@ -657,21 +682,22 @@ export default function Simulator({ seed }: { seed: Seed }) {
               <Panel footer={<Toolbar variant="sidebar" />} showSummary />
             </PanelSidebar>
             <div className="relative grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:col-start-1 sm:row-start-1 sm:grid-rows-1 sm:gap-0">
-              <BackdropVideoLeaderProvider>
-                <div
-                  ref={stageRef}
-                  className="relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill"
-                >
-                  <BackgroundBackdrop
-                    ref={backdropRef}
-                    preset={background}
-                    placeholder={backdropPlaceholder}
-                    backgroundBrightness={backgroundBrightness}
-                    backgroundBlur={backgroundBlur}
-                  />
-                  <Device />
-                </div>
-              </BackdropVideoLeaderProvider>
+              <div
+                ref={stageRef}
+                // isolation + flat: Element Capture (RestrictionTarget) eligibility per MDN.
+                className="relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-stage-fill isolate [transform-style:flat]"
+              >
+                <BackgroundBackdrop
+                  ref={backdropRef}
+                  preset={background}
+                  placeholder={backdropPlaceholder}
+                  backgroundBrightness={backgroundBrightness}
+                  backgroundBlur={backgroundBlur}
+                  suppressVideo={suppressStageVideo}
+                  keepPlaying={isRecording}
+                />
+                <Device />
+              </div>
               <div
                 className={cn(
                   "flex w-full shrink-0 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-2.5 sm:z-20 sm:w-auto sm:row-start-1 sm:justify-center sm:px-4 sm:py-0",

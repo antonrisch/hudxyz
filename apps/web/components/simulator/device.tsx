@@ -12,9 +12,12 @@ import {
 import type { Status } from "@/lib/simulator/store";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { releaseChromeFocus } from "@/lib/simulator/input";
-import { BackdropVideoMirror } from "@/components/simulator/background/backdrop-media";
+import { BackdropVideo } from "@/components/simulator/background/backdrop-media";
 import { additiveBackdropContentStyle, additiveSliceStyle } from "@/lib/simulator/additive";
-import { resolveBackground } from "@/lib/simulator/background";
+import {
+  resolveBackground,
+  resolveBackdropPlaceholder,
+} from "@/lib/simulator/background";
 import { cn } from "@/lib/utils";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
@@ -32,7 +35,8 @@ const APP_REVEAL_MS = 300;
 // the frames svg off it decoratively, so glasses ≡ 1:1 at a smaller default zoom). the
 // iframe stays the same element across views/modes/zoom.
 export function Device() {
-  const { iframeRef, displayRef, panZoom, store, urlInputRef, syncAdditive } = useSimulator();
+  const { iframeRef, displayRef, panZoom, store, urlInputRef, syncAdditive, isRecording } =
+    useSimulator();
   const view = useSimulatorState((s) => s.view);
   const screen = useSimulatorState((s) => s.screen);
   const status = useSimulatorState((s) => s.status);
@@ -41,11 +45,19 @@ export function Device() {
   const backgroundKey = useSimulatorState((s) => s.background);
   const customBackgroundImages = useSimulatorState((s) => s.customBackgroundImages);
   const activeCustomBackgroundId = useSimulatorState((s) => s.activeCustomBackgroundId);
+  const backgroundBrightness = useSimulatorState((s) => s.backgroundBrightness);
+  const backgroundBlur = useSimulatorState((s) => s.backgroundBlur);
   const background = resolveBackground(
     backgroundKey,
     customBackgroundImages,
     activeCustomBackgroundId,
   );
+  const backdropPlaceholder = resolveBackdropPlaceholder(
+    backgroundKey,
+    customBackgroundImages,
+    activeCustomBackgroundId,
+  );
+  const additiveVideo = Boolean(additive && background.video);
   const isGlasses = view === "glasses";
   const { onPointerDown, ...panGesture } = panZoom.bind();
   const [appRevealed, setAppRevealed] = useState(false);
@@ -105,7 +117,8 @@ export function Device() {
       >
         {isGlasses && (
           <Frames
-            className="pointer-events-none absolute block"
+            // Above the additive video when it overflows the display to cover the stage.
+            className="pointer-events-none absolute z-20 block"
             style={GLASSES_CHROME}
             lensClassName={lensTint ? "fill-lens-tint" : "fill-transparent"}
           />
@@ -114,8 +127,11 @@ export function Device() {
           ref={setDisplayNode}
           id="hud-display"
           className={cn(
-            "relative z-10 size-full overflow-hidden",
+            // DEVICE_SURFACE includes overflow-hidden; override after so additive video
+            // can paint the stage-sized slice outside the 600×600 waveguide.
             DEVICE_SURFACE,
+            "relative z-10 size-full",
+            additiveVideo ? "overflow-visible" : "overflow-hidden",
             additive && "bg-transparent",
           )}
         >
@@ -124,11 +140,27 @@ export function Device() {
               <div
                 aria-hidden
                 data-additive-slice
-                className="relative overflow-hidden"
+                data-capture={additiveVideo ? "backdrop" : undefined}
+                className={cn(
+                  "relative",
+                  // Clip photos; let the HW video paint the full stage-sized slice.
+                  additiveVideo ? "overflow-visible" : "overflow-hidden",
+                )}
                 style={additiveSliceStyle()}
               >
                 {background.video ? (
-                  <BackdropVideoMirror style={{ filter: "var(--hud-bg-filter, none)" }} />
+                  <BackdropVideo
+                    src={background.video}
+                    poster={background.poster}
+                    preset={background}
+                    placeholder={backdropPlaceholder}
+                    backgroundBrightness={backgroundBrightness}
+                    backgroundBlur={backgroundBlur}
+                    keepPlaying={isRecording}
+                    showPlaceholder={false}
+                    overscale={false}
+                    style={{ filter: "var(--hud-bg-filter, none)" }}
+                  />
                 ) : (
                   <div
                     className="absolute inset-0 origin-center"
