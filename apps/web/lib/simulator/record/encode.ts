@@ -11,10 +11,14 @@ export function logRecord(...args: unknown[]) {
 }
 
 function pickMimeType(): string | undefined {
+  // Prefer avc3 over avc1: Region Capture can change resolution mid-record, and
+  // avc1 forbids in-band SPS/PPS updates (Chrome warns + often freezes the file).
   const types = [
+    "video/mp4;codecs=avc3.424028",
+    "video/mp4;codecs=avc3",
+    "video/mp4",
     "video/webm;codecs=vp9",
     "video/webm;codecs=vp8",
-    "video/mp4;codecs=avc1.424028",
     "video/webm",
   ];
   return types.find((type) => MediaRecorder.isTypeSupported(type));
