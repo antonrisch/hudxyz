@@ -8,6 +8,7 @@ export type BackgroundKey =
   | "beach"
   | "city-day"
   | "city-night"
+  | "driving"
   | "bike-trail"
   | "day"
   | "night"
@@ -86,6 +87,15 @@ export const BACKGROUNDS = [
     thumb: "/backgrounds/city-night-thumb.webp",
     placeholderColor: "#2c3e50",
     lqip: BACKGROUND_LQIP["city-night"],
+  },
+  {
+    key: "driving",
+    label: "Driving",
+    video: "/backgrounds/driving.mp4",
+    poster: "/backgrounds/driving-poster.webp",
+    thumb: "/backgrounds/driving-thumb.webp",
+    placeholderColor: "#545851",
+    lqip: BACKGROUND_LQIP.driving,
   },
   {
     key: "bike-trail",

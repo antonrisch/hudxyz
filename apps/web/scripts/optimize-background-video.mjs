@@ -18,7 +18,7 @@ const LQIP_EDGE = 16;
 const POSTER_EDGE = 1920;
 const POSTER_QUALITY = 80;
 
-const PRESETS = ["bike-trail", "bike-city", "city-day", "city-night"];
+const PRESETS = ["city-day", "city-night", "driving", "bike-trail", "bike-city"];
 
 function findSourcePath(name) {
   const candidates = [
@@ -129,11 +129,21 @@ ${lines.join("\n")}
   writeFileSync(lqipPath, contents);
 }
 
+const selected = process.argv.slice(2);
+const targets = selected.length > 0 ? selected : PRESETS;
+for (const name of targets) {
+  if (!PRESETS.includes(name)) {
+    throw new Error(`Unknown video preset "${name}". Known: ${PRESETS.join(", ")}`);
+  }
+}
+
 const lqipEntries = readExistingLqip();
-for (const name of PRESETS) {
+for (const name of targets) {
   const { name: presetName, lqip } = await optimizePreset(name);
   lqipEntries[presetName] = lqip;
 }
 
 writeLqipFile(lqipEntries);
-console.log("optimized video background presets into /public/backgrounds");
+console.log(
+  `optimized video background preset${targets.length === 1 ? "" : "s"} (${targets.join(", ")}) into /public/backgrounds`,
+);
