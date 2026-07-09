@@ -34,7 +34,9 @@ export type CaptureSession = {
 
 export function canUseRegionCapture(): boolean {
   return (
+    typeof navigator !== "undefined" &&
     typeof navigator.mediaDevices?.getDisplayMedia === "function" &&
+    typeof window !== "undefined" &&
     typeof window.CropTarget?.fromElement === "function"
   );
 }
