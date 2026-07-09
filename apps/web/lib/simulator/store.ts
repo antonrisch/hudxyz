@@ -4,54 +4,10 @@ import {
   type CustomBackgroundImage,
   type BackgroundKey,
 } from "@/lib/simulator/background";
-
-const DISPLAY_PANEL_OPEN_KEY = "simulator.displayPanelOpen";
-export const DISPLAY_PANEL_OPEN_COOKIE = "simulator.displayPanelOpen";
-
-const TOOLBAR_PLACEMENT_KEY = "simulator.toolbarPlacement";
-export const TOOLBAR_PLACEMENT_COOKIE = "simulator.toolbarPlacement";
-
-const PREFERENCE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-
-function readDisplayPanelOpen(): boolean {
-  try {
-    const stored = localStorage.getItem(DISPLAY_PANEL_OPEN_KEY);
-    if (stored === null) return true;
-    return stored === "true";
-  } catch {
-    return true;
-  }
-}
-
-// client-only; call after hydration to sync persisted panel state.
-export function getPersistedDisplayPanelOpen(): boolean {
-  return readDisplayPanelOpen();
-}
-
-export function parseDisplayPanelOpenCookie(value: string | undefined): boolean {
-  if (value === "true") return true;
-  if (value === "false") return false;
-  return true;
-}
-
-function writeDisplayPanelOpenCookie(open: boolean) {
-  if (typeof document === "undefined") return;
-  document.cookie = `${DISPLAY_PANEL_OPEN_COOKIE}=${open}; path=/; max-age=${PREFERENCE_COOKIE_MAX_AGE}; SameSite=Lax`;
-}
-
-function writeDisplayPanelOpen(open: boolean) {
-  writeDisplayPanelOpenCookie(open);
-  try {
-    localStorage.setItem(DISPLAY_PANEL_OPEN_KEY, String(open));
-  } catch {
-    // storage unavailable (private browsing, etc.)
-  }
-}
+import { writeDisplayPanelOpen, writeToolbarPlacement } from "@/lib/simulator/prefs";
 
 // headless simulator core: a DOM-free state machine. all side effects (proxy, iframe,
-// history, pan/zoom) live in the shell hooks that subscribe to this store, so the core
-// stays unit-testable in node and liftable into a package later. (pan/zoom needs DOM
-// measurement, so it lives in usePanZoom, not here.)
+// history, pan/zoom, CSS filters) live in the shell that subscribes to this store.
 
 // what the device screen shows. app: the running proxied app (keys inject here). settings:
 // a blurred control overlay over the app. home / apps: baby-os screens (stubs for now).
@@ -60,40 +16,6 @@ export type Status = "idle" | "loading" | "revealing" | "ready" | "error"; // ap
 export type View = "glasses" | "pixel"; // host chrome around the device (?mode= in url)
 export type ToolbarPlacement = "floaty" | "sidebar"; // d-pad bar: over stage or panel footer
 export type Intent = "up" | "down" | "left" | "right" | "select" | "back"; // d-pad gestures
-
-function readToolbarPlacement(): ToolbarPlacement {
-  try {
-    const stored = localStorage.getItem(TOOLBAR_PLACEMENT_KEY);
-    if (stored === "floaty" || stored === "sidebar") return stored;
-    return "floaty";
-  } catch {
-    return "floaty";
-  }
-}
-
-// client-only; call after hydration to sync persisted toolbar placement.
-export function getPersistedToolbarPlacement(): ToolbarPlacement {
-  return readToolbarPlacement();
-}
-
-export function parseToolbarPlacementCookie(value: string | undefined): ToolbarPlacement {
-  if (value === "floaty" || value === "sidebar") return value;
-  return "floaty";
-}
-
-function writeToolbarPlacementCookie(placement: ToolbarPlacement) {
-  if (typeof document === "undefined") return;
-  document.cookie = `${TOOLBAR_PLACEMENT_COOKIE}=${placement}; path=/; max-age=${PREFERENCE_COOKIE_MAX_AGE}; SameSite=Lax`;
-}
-
-function writeToolbarPlacement(placement: ToolbarPlacement) {
-  writeToolbarPlacementCookie(placement);
-  try {
-    localStorage.setItem(TOOLBAR_PLACEMENT_KEY, placement);
-  } catch {
-    // storage unavailable (private browsing, etc.)
-  }
-}
 
 export interface SimulatorState {
   screen: Screen;
@@ -105,12 +27,11 @@ export interface SimulatorState {
   background: BackgroundKey; // world behind the waveguide (decoupled from canvas chrome)
   customBackgroundImages: CustomBackgroundImage[]; // session uploads (cleared on refresh)
   activeCustomBackgroundId: string | null;
-  lensTint: boolean; // cosmetic G-15 tint on svg lenses + additive bg layer
   backgroundBrightness: number; // 0–100, 100 = full (absolute brightness filter)
   backgroundBlur: number; // 0–100 gaussian blur on the stage backdrop
   displayBrightness: number; // 0–100, 100 = full visibility (extension semantics)
-  displayPanelOpen: boolean; // rhs display panel (persisted in localStorage on sm+)
-  toolbarPlacement: ToolbarPlacement; // floaty over stage vs docked in panel footer
+  displayPanelOpen: boolean; // rhs display panel (cookie pref)
+  toolbarPlacement: ToolbarPlacement; // floaty over stage vs docked in panel footer (cookie pref)
 
   setScreen: (screen: Screen) => void;
   setView: (view: View) => void;
@@ -120,7 +41,6 @@ export interface SimulatorState {
   addCustomBackground: (url: string, thumbUrl: string) => void;
   selectCustomBackground: (id: string) => void;
   removeCustomBackground: (id: string) => void;
-  setLensTint: (lensTint: boolean) => void;
   setBackgroundBrightness: (value: number) => void;
   setBackgroundBlur: (value: number) => void;
   setDisplayBrightness: (value: number) => void;
@@ -149,7 +69,6 @@ export type Seed = Partial<
     | "background"
     | "customBackgroundImages"
     | "activeCustomBackgroundId"
-    | "lensTint"
     | "backgroundBrightness"
     | "backgroundBlur"
     | "displayBrightness"
@@ -169,7 +88,6 @@ export function createSimulatorStore(seed?: Seed) {
     background: seed?.background ?? DEFAULT_BACKGROUND,
     customBackgroundImages: seed?.customBackgroundImages ?? [],
     activeCustomBackgroundId: seed?.activeCustomBackgroundId ?? null,
-    lensTint: seed?.lensTint ?? false,
     backgroundBrightness: seed?.backgroundBrightness ?? 80,
     backgroundBlur: seed?.backgroundBlur ?? 0,
     displayBrightness: seed?.displayBrightness ?? 100,
@@ -211,7 +129,6 @@ export function createSimulatorStore(seed?: Seed) {
           background: nextActive ? ("custom" as const) : DEFAULT_BACKGROUND,
         };
       }),
-    setLensTint: (lensTint) => set({ lensTint }),
     setBackgroundBrightness: (backgroundBrightness) => set({ backgroundBrightness }),
     setBackgroundBlur: (backgroundBlur) => set({ backgroundBlur }),
     setDisplayBrightness: (displayBrightness) => set({ displayBrightness }),
@@ -239,25 +156,11 @@ export function createSimulatorStore(seed?: Seed) {
   }));
 }
 
-function hasPreferenceCookie(name: string) {
-  return typeof document !== "undefined" && document.cookie.includes(`${name}=`);
-}
-
-// one-time localStorage -> cookie migration for prefs that predate SSR seeding.
-export function migrateLegacySimulatorPreferences(store: SimulatorStore) {
-  if (typeof document === "undefined") return;
-
-  if (!hasPreferenceCookie(TOOLBAR_PLACEMENT_COOKIE)) {
-    const legacy = readToolbarPlacement();
-    if (legacy !== store.getState().toolbarPlacement) {
-      store.getState().setToolbarPlacement(legacy);
-    }
-  }
-
-  if (!hasPreferenceCookie(DISPLAY_PANEL_OPEN_COOKIE)) {
-    const legacyOpen = readDisplayPanelOpen();
-    if (legacyOpen !== store.getState().displayPanelOpen) {
-      store.getState().setDisplayPanelOpen(legacyOpen);
-    }
-  }
-}
+// Re-export prefs surface so existing page.tsx imports keep working.
+export {
+  DISPLAY_PANEL_OPEN_COOKIE,
+  TOOLBAR_PLACEMENT_COOKIE,
+  parseDisplayPanelOpenCookie,
+  parseToolbarPlacementCookie,
+  migrateLegacySimulatorPreferences,
+} from "@/lib/simulator/prefs";

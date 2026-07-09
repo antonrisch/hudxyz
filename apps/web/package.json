@@ -12,7 +12,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "postinstall": "node scripts/copy-proxy-assets.mjs",
-    "optimize-backgrounds": "node scripts/optimize-backgrounds.mjs"
+    "optimize-backgrounds": "node scripts/optimize-backgrounds.mjs",
+    "optimize-background-video": "node scripts/optimize-background-video.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -21,7 +22,6 @@
     "@mercuryworkshop/scramjet-controller": "^0.0.14",
     "@mercuryworkshop/wisp-js": "^0.4.1",
     "@sentry/nextjs": "^10.63.0",
-    "@use-gesture/react": "^10.3.1",
     "@vercel/analytics": "^2.0.1",
     "@zumer/snapdom": "^2.12.9",
     "class-variance-authority": "^0.7.1",

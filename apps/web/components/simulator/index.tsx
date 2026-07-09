@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -31,9 +30,9 @@ import {
   measureAdditiveBackdrop,
   settleAdditiveSync,
   clearIframeBodyBlend,
-  syncDisplayBrightness,
   syncHostAdditive,
 } from "@/lib/simulator/additive";
+import { applyDisplayFilters } from "@/lib/simulator/display-filters";
 import { simulatorParsers } from "@/lib/simulator/search-params";
 import { normalizeWebUrl } from "@/lib/simulator/search-params";
 import { useMountEffect } from "@/lib/use-mount-effect";
@@ -47,7 +46,7 @@ import { PanelSidebar } from "@/components/simulator/panel/sidebar";
 import { MobileAppFooter } from "@/components/simulator/app-footer";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
-import { downloadStage, type StageCaptureTarget } from "@/lib/simulator/capture";
+import { downloadStage } from "@/lib/simulator/capture";
 import { createStageRecorder, downloadStageRecording } from "@/lib/simulator/record";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -112,14 +111,19 @@ export default function Simulator({ seed }: { seed: Seed }) {
     customBackgroundImages,
     activeCustomBackgroundId,
   );
-  const backgroundBrightness = useStore(store, (s) => s.backgroundBrightness);
-  const backgroundBlur = useStore(store, (s) => s.backgroundBlur);
+  const additive = useStore(store, (s) => s.additive);
   const displayPanelOpen = useStore(store, (s) => s.displayPanelOpen);
   const toolbarPlacement = useStore(store, (s) => s.toolbarPlacement);
+  // Additive photo/video live in #hud-display; stage fill keeps LQIP/poster only.
+  const suppressStageMedia = Boolean(additive && (background.video || background.image));
   const dockToolbarOnDesktop = toolbarPlacement === "sidebar";
-  const panZoom = usePanZoom(view);
+  // Filled after sync helpers are defined — one layout sync per committed pan/zoom frame.
+  const onPanZoomCommitRef = useRef<() => void>(() => {});
+  const panZoom = usePanZoom(view, () => onPanZoomCommitRef.current());
   const panZoomRef = useRef(panZoom);
   panZoomRef.current = panZoom;
+  const displayScaleRef = useRef(1);
+  const filterRafRef = useRef<number | null>(null);
 
   // navigate: route the target through the same-origin proxy. created once, reused.
   const load = useCallback(
@@ -181,26 +185,6 @@ export default function Simulator({ seed }: { seed: Seed }) {
   const additiveSyncKeyRef = useRef("");
   const syncHostAdditiveLayersRef = useRef<() => void>(() => {});
 
-  const getAdditiveCaptureContext = useCallback((): StageCaptureTarget["additiveContext"] => {
-    const {
-      additive,
-      background: backgroundKey,
-      customBackgroundImages,
-      activeCustomBackgroundId,
-      backgroundBrightness,
-      backgroundBlur,
-    } = store.getState();
-    if (!additive) return undefined;
-    return {
-      preset: resolveBackground(backgroundKey, customBackgroundImages, activeCustomBackgroundId),
-      backgroundBrightness,
-      backgroundBlur,
-      onBeforeCapture: () => syncHostAdditiveLayersRef.current(),
-    };
-  }, [store]);
-  const getAdditiveCaptureContextRef = useRef(getAdditiveCaptureContext);
-  getAdditiveCaptureContextRef.current = getAdditiveCaptureContext;
-
   const captureDisplay = useCallback(async () => {
     const {
       screen,
@@ -226,8 +210,12 @@ export default function Simulator({ seed }: { seed: Seed }) {
       display: displayRef.current,
       iframe: iframeRef.current,
       frames: stage.querySelector<SVGSVGElement>('[data-capture="frames"]'),
-      lensTint: store.getState().lensTint,
       additive,
+      backgroundCapture: {
+        preset,
+        backgroundBrightness,
+        backgroundBlur,
+      },
       additiveContext: additive
         ? {
             preset,
@@ -276,14 +264,6 @@ export default function Simulator({ seed }: { seed: Seed }) {
   useMountEffect(() => {
     stageRecorderRef.current = createStageRecorder({
       getStage: () => stageRef.current,
-      getBackdrop: () => backdropRef.current,
-      getDisplay: () => displayRef.current,
-      getIframe: () => iframeRef.current,
-      getFrames: () =>
-        stageRef.current?.querySelector<SVGSVGElement>('[data-capture="frames"]') ?? null,
-      getLensTint: () => store.getState().lensTint,
-      getAdditive: () => store.getState().additive,
-      getAdditiveContext: () => getAdditiveCaptureContextRef.current(),
       onAutoStop: (blob) => {
         if (blob) downloadStageRecording(blob);
         setIsRecording(false);
@@ -312,13 +292,15 @@ export default function Simulator({ seed }: { seed: Seed }) {
     const { screen, status } = store.getState();
     if (screen !== "app" || status !== "ready" || !stageRef.current) return;
 
-    await prepareRecordChrome();
-    recorder.start();
-    if (!recorder.isRecording) {
-      restoreRecordChrome();
-      return;
-    }
+    // keepPlaying before the share picker so the HW video doesn't pause on document.hidden.
     setIsRecording(true);
+    await prepareRecordChrome();
+
+    const ok = await recorder.start();
+    if (!ok) {
+      setIsRecording(false);
+      restoreRecordChrome();
+    }
   }, [prepareRecordChrome, restoreRecordChrome, store]);
 
   // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
@@ -422,7 +404,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
 
   // additive preview is composited on the host inside #hud-display so black waveguide
   // pixels blend with the aligned backdrop slice before device chrome transforms.
-  const syncHostAdditiveLayers = useCallback(() => {
+  const applyFiltersNow = useCallback(() => {
     const {
       additive,
       background: backgroundKey,
@@ -437,22 +419,52 @@ export default function Simulator({ seed }: { seed: Seed }) {
       customBackgroundImages,
       activeCustomBackgroundId,
     );
+    applyDisplayFilters(
+      {
+        stage: stageRef.current,
+        display: displayRef.current,
+        iframe: iframeRef.current,
+      },
+      {
+        additive,
+        preset,
+        backgroundBrightness,
+        backgroundBlur,
+        displayBrightness,
+        displayScale: displayScaleRef.current,
+      },
+    );
+  }, [store]);
+
+  const scheduleFilters = useCallback(() => {
+    if (filterRafRef.current != null) return;
+    filterRafRef.current = requestAnimationFrame(() => {
+      filterRafRef.current = null;
+      applyFiltersNow();
+    });
+  }, [applyFiltersNow]);
+
+  const syncHostAdditiveLayers = useCallback(() => {
+    const { additive } = store.getState();
     const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
+    if (geometry) displayScaleRef.current = geometry.displayScale;
     additiveSyncKeyRef.current =
       syncHostAdditive(
         displayRef.current,
         additive,
-        preset,
         geometry,
-        backgroundBrightness,
-        backgroundBlur,
         additiveSyncKeyRef.current,
       ) ?? additiveSyncKeyRef.current;
     clearIframeBodyBlend(iframeRef.current);
-    syncDisplayBrightness(iframeRef.current, displayBrightness);
-  }, [store]);
+    applyFiltersNow();
+  }, [applyFiltersNow, store]);
 
   syncHostAdditiveLayersRef.current = syncHostAdditiveLayers;
+  onPanZoomCommitRef.current = () => {
+    if (!store.getState().additive) return;
+    // Single sync per committed frame — not settleAdditiveSync (3× layout reads).
+    syncHostAdditiveLayers();
+  };
 
   const syncAdditive = useCallback(() => {
     settleAdditiveSync(syncHostAdditiveLayers);
@@ -460,16 +472,24 @@ export default function Simulator({ seed }: { seed: Seed }) {
 
   useMountEffect(() => {
     const unsub = store.subscribe((state, prev) => {
-      if (
+      const sceneChanged =
         state.additive !== prev.additive ||
         state.background !== prev.background ||
         state.customBackgroundImages !== prev.customBackgroundImages ||
-        state.activeCustomBackgroundId !== prev.activeCustomBackgroundId ||
+        state.activeCustomBackgroundId !== prev.activeCustomBackgroundId;
+
+      if (sceneChanged) {
+        syncAdditive();
+        return;
+      }
+
+      // Sliders: filter CSS vars only — no geometry settle, no React stage re-render.
+      if (
         state.backgroundBrightness !== prev.backgroundBrightness ||
         state.backgroundBlur !== prev.backgroundBlur ||
         state.displayBrightness !== prev.displayBrightness
       ) {
-        syncAdditive();
+        scheduleFilters();
       }
     });
 
@@ -478,13 +498,9 @@ export default function Simulator({ seed }: { seed: Seed }) {
     return () => {
       applyAdditiveRef.current = () => {};
       unsub();
+      if (filterRafRef.current != null) cancelAnimationFrame(filterRafRef.current);
     };
   });
-
-  useEffect(() => {
-    if (!store.getState().additive) return;
-    syncAdditive();
-  }, [panZoom.transformRevision, panZoom.revealed, view, store, syncAdditive]);
 
   useMountEffect(() => {
     const stage = stageRef.current;
@@ -659,8 +675,8 @@ export default function Simulator({ seed }: { seed: Seed }) {
                   ref={backdropRef}
                   preset={background}
                   placeholder={backdropPlaceholder}
-                  backgroundBrightness={backgroundBrightness}
-                  backgroundBlur={backgroundBlur}
+                  suppressMedia={suppressStageMedia}
+                  keepPlaying={isRecording}
                 />
                 <Device />
               </div>

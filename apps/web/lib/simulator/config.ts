@@ -69,6 +69,8 @@ export const DEVICE_OVERLAY_TEXT = "text-4xl font-medium leading-snug text-white
 // the device surface: clipped, rounded, black — consistent across every view (it's what
 // shows whenever an app isn't covering it). only the positioning differs, so device.tsx
 // composes this base with per-view layout classes.
+// Rounded black waveguide. Additive media uses overflow-visible on #hud-display so the
+// backdrop still paints square past the corners; app iframe + overlays also use rounded-3xl.
 export const DEVICE_SURFACE = "overflow-hidden rounded-3xl bg-black";
 
 // physical keys the glasses emit, mapped to device intents (window keydown -> intent).

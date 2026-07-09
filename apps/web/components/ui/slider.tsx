@@ -8,7 +8,7 @@ function Slider({
   value,
   min = 0,
   max = 100,
-  step = 5,
+  step,
   ...props
 }: SliderPrimitive.Root.Props) {
   const _values = Array.isArray(value)

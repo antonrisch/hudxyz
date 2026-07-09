@@ -15,53 +15,15 @@ import { useQueryState } from "nuqs";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { simulatorParsers } from "@/lib/simulator/search-params";
 
-function syncSimulatorParam<T>(
-  apply: (next: T) => void,
-  setParam: (value: T | null | ((old: T) => T | null)) => void | Promise<unknown>,
-) {
-  return (next: T) => {
-    apply(next);
-    void setParam(next);
-  };
-}
-
-// scrollable display preview settings (background, additive blend, sliders).
+// Display panel: Zustand for live preview. Shareable scene fields (additive)
+// also mirror to the URL once per toggle — not on every slider tick.
 export function PanelContent() {
   const { store } = useSimulator();
   const additive = useSimulatorState((s) => s.additive);
-  const lensTint = useSimulatorState((s) => s.lensTint);
   const backgroundBrightness = useSimulatorState((s) => s.backgroundBrightness);
   const backgroundBlur = useSimulatorState((s) => s.backgroundBlur);
   const displayBrightness = useSimulatorState((s) => s.displayBrightness);
   const [, setAdditiveParam] = useQueryState("additive", simulatorParsers.additive);
-  const [, setLensTintParam] = useQueryState("lensTint", simulatorParsers.lensTint);
-  const [, setBgBrightnessParam] = useQueryState("bgBrightness", simulatorParsers.bgBrightness);
-  const [, setBgBlurParam] = useQueryState("bgBlur", simulatorParsers.bgBlur);
-  const [, setDisplayBrightnessParam] = useQueryState(
-    "displayBrightness",
-    simulatorParsers.displayBrightness,
-  );
-
-  const setAdditive = syncSimulatorParam(
-    (next) => store.getState().setAdditive(next),
-    setAdditiveParam,
-  );
-  const setBgBrightness = syncSimulatorParam(
-    (next) => store.getState().setBackgroundBrightness(next),
-    setBgBrightnessParam,
-  );
-  const setBgBlur = syncSimulatorParam(
-    (next) => store.getState().setBackgroundBlur(next),
-    setBgBlurParam,
-  );
-  const setDisplayBrightness = syncSimulatorParam(
-    (next) => store.getState().setDisplayBrightness(next),
-    setDisplayBrightnessParam,
-  );
-  const setLensTint = syncSimulatorParam(
-    (next) => store.getState().setLensTint(next),
-    setLensTintParam,
-  );
 
   return (
     <>
@@ -72,14 +34,14 @@ export function PanelContent() {
           id="bg-brightness"
           label="Background brightness"
           value={backgroundBrightness}
-          onChange={setBgBrightness}
+          onChange={(next) => store.getState().setBackgroundBrightness(next)}
         />
 
         <PanelSlider
           id="bg-blur"
           label="Background blur"
           value={backgroundBlur}
-          onChange={setBgBlur}
+          onChange={(next) => store.getState().setBackgroundBlur(next)}
         />
       </PanelSection>
 
@@ -113,17 +75,11 @@ export function PanelContent() {
             <Switch
               id="additive"
               checked={additive}
-              onCheckedChange={setAdditive}
+              onCheckedChange={(next) => {
+                store.getState().setAdditive(next);
+                void setAdditiveParam(next);
+              }}
               aria-label="Display transparency"
-            />
-          </PanelRow>
-
-          <PanelRow label="Lens tint" htmlFor="lens-tint">
-            <Switch
-              id="lens-tint"
-              checked={lensTint}
-              onCheckedChange={setLensTint}
-              aria-label="Lens tint"
             />
           </PanelRow>
         </PanelRowGroup>
@@ -132,7 +88,7 @@ export function PanelContent() {
           id="display-brightness"
           label="Display brightness"
           value={displayBrightness}
-          onChange={setDisplayBrightness}
+          onChange={(next) => store.getState().setDisplayBrightness(next)}
         />
       </PanelSection>
     </>

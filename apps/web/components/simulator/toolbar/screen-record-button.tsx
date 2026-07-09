@@ -79,7 +79,7 @@ export function ScreenRecordButton({
           </Button>
         }
       />
-      <TooltipContent>{isRecording ? "Stop recording" : "Record canvas"}</TooltipContent>
+      <TooltipContent>{isRecording ? "Stop recording" : "Record stage"}</TooltipContent>
     </Tooltip>
   );
 }

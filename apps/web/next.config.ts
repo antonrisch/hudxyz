@@ -19,9 +19,21 @@ const baseSecurity = [
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+];
+
+// Hard-deny camera on non-simulator routes. On `/`, omit camera=() — Chrome probes the
+// camera policy during getDisplayMedia and logs a Violation even though we only capture
+// the tab (Region Capture). display-capture must be allowed for Path A recording.
+const permissionsDenyMedia = [
   {
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+  },
+];
+const permissionsSimulator = [
+  {
+    key: "Permissions-Policy",
+    value: "display-capture=(self), microphone=(), geolocation=(), interest-cohort=()",
   },
 ];
 
@@ -33,14 +45,27 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/apps/:path*",
-        headers: [...baseSecurity, ...appHeaders],
+        headers: [...baseSecurity, ...permissionsDenyMedia, ...appHeaders],
       },
       {
-        // deny external framing everywhere except /apps/* (embedded by the simulator).
-        source: "/((?!apps).*)",
-        headers: [...baseSecurity, { key: "X-Frame-Options", value: "DENY" }],
+        // Simulator: isolation + display-capture. Do not also send camera=().
+        source: "/",
+        headers: [
+          ...baseSecurity,
+          ...permissionsSimulator,
+          ...isolation,
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
       },
-      { source: "/", headers: isolation },
+      {
+        // Everything else (except /apps/* and exact /): deny framing + camera.
+        source: "/((?!apps(?:/|$)|$).*)",
+        headers: [
+          ...baseSecurity,
+          ...permissionsDenyMedia,
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
       { source: "/_next/static/:path*", headers: corpSameOrigin },
       { source: "/backgrounds/:path*", headers: corpSameOrigin },
       { source: "/suggested-apps/:path*", headers: corpSameOrigin },

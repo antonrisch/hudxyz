@@ -3,6 +3,7 @@ import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { measureAdditiveBackdrop, type AdditiveBackdropGeometry } from "@/lib/simulator/additive";
 import {
   BACKDROP_SCALE,
+  backdropUsesOverscale,
   backgroundBackdropFilter,
   type BackgroundPreset,
 } from "@/lib/simulator/background";
@@ -15,14 +16,30 @@ const WAVEGUIDE = {
   dpr: 1,
 } as const;
 
+const WAVEGUIDE_SNAP_OPTS = {
+  ...WAVEGUIDE,
+  fast: true,
+  backgroundColor: "#000",
+  embedFonts: false,
+  cache: "disabled" as const,
+  exclude: ["script", "link"],
+  excludeMode: "remove" as const,
+};
+
+export type BackgroundCaptureContext = {
+  preset: BackgroundPreset;
+  backgroundBrightness: number;
+  backgroundBlur: number;
+};
+
 export type StageCaptureTarget = {
   stage: HTMLElement;
   backdrop: HTMLElement | null;
   display: HTMLElement | null;
   iframe: HTMLIFrameElement | null;
   frames: SVGSVGElement | null;
-  lensTint: boolean;
   additive: boolean;
+  backgroundCapture?: BackgroundCaptureContext;
   additiveContext?: {
     preset: BackgroundPreset;
     backgroundBrightness: number;
@@ -54,11 +71,6 @@ function stageFillColor(): string {
   return value || "#1e293b";
 }
 
-function lensTintColor(): string {
-  const value = getComputedStyle(document.documentElement).getPropertyValue("--lens-tint").trim();
-  return value || "oklch(0.18 0.02 155 / 0.5)";
-}
-
 function iframeDocument(iframe: HTMLIFrameElement): Document | null {
   try {
     return iframe.contentDocument;
@@ -76,16 +88,21 @@ async function captureWaveguide(iframe: HTMLIFrameElement): Promise<HTMLCanvasEl
   const doc = iframeDocument(iframe);
   if (!doc?.body) return null;
 
-  try {
-    return await snapdom.toCanvas(waveguideRoot(doc), {
-      ...WAVEGUIDE,
-      fast: true,
-      backgroundColor: "#000",
-    });
-  } catch (e) {
-    console.error("SnapDOM waveguide capture failed", e);
-    return null;
+  const roots: HTMLElement[] = [waveguideRoot(doc)];
+  const firstChild = doc.body.firstElementChild;
+  if (firstChild instanceof HTMLElement && !roots.includes(firstChild)) {
+    roots.push(firstChild);
   }
+
+  for (const root of roots) {
+    try {
+      return await snapdom.toCanvas(root, WAVEGUIDE_SNAP_OPTS);
+    } catch (e) {
+      console.error("SnapDOM waveguide capture failed", e);
+    }
+  }
+
+  return null;
 }
 
 async function captureBackdrop(
@@ -99,11 +116,102 @@ async function captureBackdrop(
       height,
       dpr: 1,
       fast: false,
+      embedFonts: false,
+      cache: "disabled",
     });
   } catch (e) {
     console.error("SnapDOM backdrop capture failed", e);
     return null;
   }
+}
+
+/** Live photo/video may sit on the stage fill or inside #hud-display (additive). */
+function resolveBackdropMediaSource(near: ParentNode): CanvasImageSource | null {
+  const el = near instanceof Element ? near : null;
+  const doc = el?.ownerDocument ?? (near instanceof Document ? near : document);
+  const root = el ?? doc;
+
+  const video =
+    root.querySelector<HTMLVideoElement>("video") ??
+    doc.querySelector<HTMLVideoElement>('[data-capture="backdrop"] video');
+  if (video && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+    return video;
+  }
+
+  const img =
+    root.querySelector<HTMLImageElement>("img") ??
+    doc.querySelector<HTMLImageElement>('[data-capture="backdrop"] img');
+  if (img?.complete && img.naturalWidth > 0) {
+    return img;
+  }
+
+  return null;
+}
+
+async function captureMediaBackdrop(
+  near: ParentNode,
+  preset: BackgroundPreset,
+  width: number,
+  height: number,
+  backgroundBrightness: number,
+  backgroundBlur: number,
+): Promise<HTMLCanvasElement | null> {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const filter = backgroundBackdropFilter(
+    preset,
+    backgroundBrightness,
+    backgroundBlur,
+    BACKDROP_SCALE,
+  );
+  if (filter) ctx.filter = filter;
+
+  const live = resolveBackdropMediaSource(near);
+  const { width: liveWidth } = live ? sourcePixelSize(live) : { width: 0 };
+  if (live && liveWidth > 0) {
+    drawImageCover(ctx, live, 0, 0, width, height);
+  } else {
+    const fallbackSrc = preset.image ?? preset.poster;
+    if (fallbackSrc) {
+      try {
+        const img = await loadCaptureImage(fallbackSrc);
+        drawImageCover(ctx, img, 0, 0, width, height);
+      } catch {
+        ctx.fillStyle = preset.placeholderColor ?? stageFillColor();
+        ctx.fillRect(0, 0, width, height);
+      }
+    } else {
+      ctx.fillStyle = preset.placeholderColor ?? stageFillColor();
+      ctx.fillRect(0, 0, width, height);
+    }
+  }
+
+  ctx.filter = "none";
+  return canvas;
+}
+
+async function captureStageBackground(
+  backdrop: HTMLElement,
+  width: number,
+  height: number,
+  capture?: BackgroundCaptureContext,
+): Promise<HTMLCanvasElement | null> {
+  // Photo + video share one path (live element under stage or #hud-display).
+  if (capture?.preset.video || capture?.preset.image) {
+    return captureMediaBackdrop(
+      backdrop,
+      capture.preset,
+      width,
+      height,
+      capture.backgroundBrightness,
+      capture.backgroundBlur,
+    );
+  }
+  return captureBackdrop(backdrop, width, height);
 }
 
 // Root the snap on the SVG itself — avoids nested-svg + overflow clipping in the stage chrome pass.
@@ -143,16 +251,28 @@ function loadCaptureImage(src: string) {
   return pending;
 }
 
+function sourcePixelSize(source: CanvasImageSource): { width: number; height: number } {
+  if (source instanceof HTMLImageElement) {
+    return { width: source.naturalWidth, height: source.naturalHeight };
+  }
+  if (source instanceof HTMLVideoElement) {
+    return { width: source.videoWidth, height: source.videoHeight };
+  }
+  if (source instanceof HTMLCanvasElement) {
+    return { width: source.width, height: source.height };
+  }
+  return { width: 0, height: 0 };
+}
+
 function drawImageCover(
   ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
+  source: CanvasImageSource,
   x: number,
   y: number,
   w: number,
   h: number,
 ) {
-  const sw = img.naturalWidth;
-  const sh = img.naturalHeight;
+  const { width: sw, height: sh } = sourcePixelSize(source);
   if (!sw || !sh) return;
 
   const imageRatio = sw / sh;
@@ -174,7 +294,7 @@ function drawImageCover(
     sy = (sh - sHeight) / 2;
   }
 
-  ctx.drawImage(img, sx, sy, sWidth, sHeight, x, y, w, h);
+  ctx.drawImage(source, sx, sy, sWidth, sHeight, x, y, w, h);
 }
 
 async function paintAdditiveBackdropSlice(
@@ -183,15 +303,28 @@ async function paintAdditiveBackdropSlice(
   geometry: AdditiveBackdropGeometry,
   backgroundBrightness: number,
   backgroundBlur: number,
+  mediaSource?: CanvasImageSource | null,
 ) {
-  const blurScale = (preset.image ? BACKDROP_SCALE : 1) * geometry.displayScale;
+  const blurScale = (backdropUsesOverscale(preset) ? BACKDROP_SCALE : 1) * geometry.displayScale;
   const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale);
   if (filter) ctx.filter = filter;
 
   const { left, top, width, height } = geometry;
-  if (preset.image) {
-    const img = await loadCaptureImage(preset.image);
-    drawImageCover(ctx, img, left, top, width, height);
+  if (preset.image || preset.video) {
+    const live = mediaSource ?? null;
+    const { width: liveWidth } = live ? sourcePixelSize(live) : { width: 0 };
+    if (live && liveWidth > 0) {
+      drawImageCover(ctx, live, left, top, width, height);
+    } else {
+      const fallbackSrc = preset.image ?? preset.poster;
+      if (fallbackSrc) {
+        const img = await loadCaptureImage(fallbackSrc);
+        drawImageCover(ctx, img, left, top, width, height);
+      } else {
+        ctx.fillStyle = stageFillColor();
+        ctx.fillRect(left, top, width, height);
+      }
+    }
   } else {
     ctx.fillStyle = stageFillColor();
     ctx.fillRect(left, top, width, height);
@@ -203,12 +336,14 @@ async function paintAdditiveBackdropSlice(
 // Canvas composite at layout resolution (600×600) — snapdom can't screen-blend the iframe
 // with the host backdrop slice when the device plane is CSS-scaled.
 async function captureAdditiveDisplay(
+  bg: HTMLCanvasElement | null,
+  stage: HTMLElement,
+  display: HTMLElement,
   iframe: HTMLIFrameElement,
   preset: BackgroundPreset,
   geometry: AdditiveBackdropGeometry,
   backgroundBrightness: number,
   backgroundBlur: number,
-  lensTint: boolean,
 ): Promise<HTMLCanvasElement | null> {
   const canvas = document.createElement("canvas");
   canvas.width = VIEWPORT;
@@ -220,11 +355,18 @@ async function captureAdditiveDisplay(
   ctx.beginPath();
   ctx.rect(0, 0, VIEWPORT, VIEWPORT);
   ctx.clip();
-  await paintAdditiveBackdropSlice(ctx, preset, geometry, backgroundBrightness, backgroundBlur);
-  if (lensTint) {
-    const { left, top, width, height } = geometry;
-    ctx.fillStyle = lensTintColor();
-    ctx.fillRect(left, top, width, height);
+  if (bg) {
+    const { x, y, w, h } = elementRectOnStage(stage, display, bg.width, bg.height);
+    ctx.drawImage(bg, x, y, w, h, 0, 0, VIEWPORT, VIEWPORT);
+  } else {
+    await paintAdditiveBackdropSlice(
+      ctx,
+      preset,
+      geometry,
+      backgroundBrightness,
+      backgroundBlur,
+      resolveBackdropMediaSource(display),
+    );
   }
   ctx.restore();
 
@@ -325,12 +467,12 @@ function paintStageBackground(
   }
 }
 
-// Snapdom fallback when tab capture is unavailable or denied.
+// Snapdom path for screenshots (and Region Capture fallback for stills).
 export async function captureStageSnapdom(
   target: StageCaptureTarget,
   options: CaptureStageOptions = {},
 ): Promise<HTMLCanvasElement | null> {
-  const { stage, backdrop, display, iframe, frames, lensTint, additive } = target;
+  const { stage, backdrop, display, iframe, frames, additive, backgroundCapture } = target;
   const stageRect = stage.getBoundingClientRect();
   const width = options.width ?? Math.max(1, Math.round(stageRect.width));
   const height = options.height ?? Math.max(1, Math.round(stageRect.height));
@@ -359,7 +501,13 @@ export async function captureStageSnapdom(
     const geometry = measureAdditiveBackdrop(stage, display);
     if (!geometry) return null;
 
-    const bg = backdrop ? await captureBackdrop(backdrop, width, height) : null;
+    const bg = backdrop
+      ? await captureStageBackground(backdrop, width, height, {
+          preset,
+          backgroundBrightness,
+          backgroundBlur,
+        })
+      : null;
 
     const slices = display.querySelectorAll("[data-additive-slice]");
     setVisibility(slices, false);
@@ -370,12 +518,14 @@ export async function captureStageSnapdom(
     iframe.style.visibility = iframeWas;
 
     const surface = await captureAdditiveDisplay(
+      bg,
+      stage,
+      display,
       iframe,
       preset,
       geometry,
       backgroundBrightness,
       backgroundBlur,
-      lensTint,
     );
 
     paintStageBackground(ctx, bg, width, height);
@@ -387,7 +537,9 @@ export async function captureStageSnapdom(
     return frame;
   }
 
-  const bg = backdrop ? await captureBackdrop(backdrop, width, height) : null;
+  const bg = backdrop
+    ? await captureStageBackground(backdrop, width, height, backgroundCapture)
+    : null;
   const chrome = await captureStageChrome(stage, width, height, chromeOptions);
   const surface = iframe ? await captureWaveguide(iframe) : null;
 

@@ -12,8 +12,15 @@ import {
 import type { Status } from "@/lib/simulator/store";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { releaseChromeFocus } from "@/lib/simulator/input";
+import {
+  BackdropPhoto,
+  BackdropVideo,
+} from "@/components/simulator/background/backdrop-media";
 import { additiveBackdropContentStyle, additiveSliceStyle } from "@/lib/simulator/additive";
-import { resolveBackground } from "@/lib/simulator/background";
+import {
+  resolveBackground,
+  resolveBackdropPlaceholder,
+} from "@/lib/simulator/background";
 import { cn } from "@/lib/utils";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
@@ -31,12 +38,12 @@ const APP_REVEAL_MS = 300;
 // the frames svg off it decoratively, so glasses ≡ 1:1 at a smaller default zoom). the
 // iframe stays the same element across views/modes/zoom.
 export function Device() {
-  const { iframeRef, displayRef, panZoom, store, urlInputRef, syncAdditive } = useSimulator();
+  const { iframeRef, displayRef, panZoom, store, urlInputRef, syncAdditive, isRecording } =
+    useSimulator();
   const view = useSimulatorState((s) => s.view);
   const screen = useSimulatorState((s) => s.screen);
   const status = useSimulatorState((s) => s.status);
   const additive = useSimulatorState((s) => s.additive);
-  const lensTint = useSimulatorState((s) => s.lensTint);
   const backgroundKey = useSimulatorState((s) => s.background);
   const customBackgroundImages = useSimulatorState((s) => s.customBackgroundImages);
   const activeCustomBackgroundId = useSimulatorState((s) => s.activeCustomBackgroundId);
@@ -45,8 +52,15 @@ export function Device() {
     customBackgroundImages,
     activeCustomBackgroundId,
   );
+  const backdropPlaceholder = resolveBackdropPlaceholder(
+    backgroundKey,
+    customBackgroundImages,
+    activeCustomBackgroundId,
+  );
+  // Photo + video share one additive layout: media in #hud-display, overflow to stage.
+  const additiveMedia = Boolean(additive && (background.video || background.image));
   const isGlasses = view === "glasses";
-  const { onPointerDown, ...panGesture } = panZoom.bind();
+  const panGesture = panZoom.bind();
   const [appRevealed, setAppRevealed] = useState(false);
 
   const setDisplayNode = useCallback(
@@ -95,53 +109,58 @@ export function Device() {
       <div
         ref={panZoom.contentRef}
         id="hud-device"
-        className={cn(
-          "absolute left-0 top-0 size-150",
-          panZoom.revealed ? "opacity-100" : "opacity-0",
-          panZoom.revealed && "transition-opacity duration-200 ease-out",
-        )}
-        style={panZoom.style}
+        className="absolute left-0 top-0 size-150 will-change-transform opacity-0 transition-opacity duration-200 ease-out"
       >
         {isGlasses && (
           <Frames
-            className="pointer-events-none absolute block"
+            // Above the additive video when it overflows the display to cover the stage.
+            className="pointer-events-none absolute z-20 block"
             style={GLASSES_CHROME}
-            lensClassName={lensTint ? "fill-lens-tint" : "fill-transparent"}
           />
         )}
         <div
           ref={setDisplayNode}
           id="hud-display"
           className={cn(
-            "relative z-10 size-full overflow-hidden",
+            // DEVICE_SURFACE includes overflow-hidden; override after so additive media
+            // can paint the stage-sized slice outside the 600×600 waveguide.
             DEVICE_SURFACE,
+            "relative z-10 size-full",
+            additiveMedia ? "overflow-visible" : "overflow-hidden",
             additive && "bg-transparent",
           )}
         >
           {additive && (
-            <>
-              <div
-                aria-hidden
-                data-additive-slice
-                className="overflow-hidden"
-                style={additiveSliceStyle()}
-              >
+            <div
+              aria-hidden
+              data-additive-slice
+              data-capture={additiveMedia ? "backdrop" : undefined}
+              className={cn("relative", additiveMedia ? "overflow-visible" : "overflow-hidden")}
+              style={additiveSliceStyle()}
+            >
+              {background.video ? (
+                <BackdropVideo
+                  src={background.video}
+                  poster={background.poster}
+                  placeholder={backdropPlaceholder}
+                  keepPlaying={isRecording}
+                  showPlaceholder={false}
+                  overscale={false}
+                />
+              ) : background.image ? (
+                <BackdropPhoto
+                  src={background.image}
+                  placeholder={backdropPlaceholder}
+                  showPlaceholder={false}
+                  overscale={false}
+                />
+              ) : (
                 <div
                   className="absolute inset-0 origin-center"
                   style={additiveBackdropContentStyle(background)}
                 />
-              </div>
-              {lensTint && (
-                <div
-                  aria-hidden
-                  data-additive-slice
-                  style={{
-                    ...additiveSliceStyle(),
-                    background: "var(--lens-tint)",
-                  }}
-                />
               )}
-            </>
+            </div>
           )}
           <iframe
             ref={iframeRef}
@@ -149,7 +168,8 @@ export function Device() {
             tabIndex={-1}
             allow="clipboard-read; clipboard-write"
             className={cn(
-              "relative z-10 size-full border-0 transition-opacity ease-out",
+              // Round the app surface only — additive bg overflows square past this.
+              "relative z-10 size-full rounded-3xl border-0 transition-opacity ease-out",
               additive && "mix-blend-screen",
               appVisible && appRevealed ? "opacity-100" : "opacity-0",
               showWelcome && "pointer-events-none",
@@ -197,7 +217,7 @@ export function Device() {
               type="button"
               onClick={focusUrlBar}
               className={cn(
-                "absolute inset-0 grid cursor-pointer place-items-center px-4 text-center",
+                "absolute inset-0 grid cursor-pointer place-items-center rounded-3xl px-4 text-center",
                 DEVICE_OVERLAY,
               )}
             >
@@ -209,7 +229,7 @@ export function Device() {
           {showLoadOverlay && (
             <div
               className={cn(
-                "absolute inset-0 grid place-items-center px-4 text-center transition-opacity ease-out",
+                "absolute inset-0 grid place-items-center rounded-3xl px-4 text-center transition-opacity ease-out",
                 DEVICE_OVERLAY,
                 status === "revealing" && appRevealed
                   ? "pointer-events-none opacity-0"
@@ -229,7 +249,7 @@ export function Device() {
         </div>
       </div>
 
-      {/* capture overlay: drag = pan; pinch / cmd-scroll = zoom. */}
+      {/* capture overlay: drag = pan; pinch / cmd-scroll = zoom (Pointer Events). */}
       <div
         className={cn(
           "absolute inset-0 touch-none",
@@ -239,7 +259,7 @@ export function Device() {
         {...panGesture}
         onPointerDown={(e) => {
           releaseChromeFocus();
-          onPointerDown?.(e);
+          panGesture.onPointerDown(e);
         }}
       />
     </div>

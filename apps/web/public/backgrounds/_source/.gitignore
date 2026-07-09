@@ -1,0 +1,2 @@
+# raw video sources can be large — commit optimized outputs in the parent dir instead.
+*.mp4

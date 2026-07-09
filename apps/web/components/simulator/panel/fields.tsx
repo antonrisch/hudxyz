@@ -8,13 +8,12 @@ import { cn } from "@/lib/utils";
 
 const SLIDER_MIN = 0;
 const SLIDER_MAX = 100;
-const SLIDER_STEP = 5;
 
 const controlSlotClass = "flex min-h-9 items-center";
 
-function snapSliderValue(value: number) {
-  const snapped = Math.round(value / SLIDER_STEP) * SLIDER_STEP;
-  return Math.min(SLIDER_MAX, Math.max(SLIDER_MIN, snapped));
+function clampSliderValue(value: number) {
+  const rounded = Math.round(value);
+  return Math.min(SLIDER_MAX, Math.max(SLIDER_MIN, rounded));
 }
 
 export function PanelSection({
@@ -120,7 +119,7 @@ export function PanelSlider({
     setDraft("");
     const next = Number.parseFloat(raw.replace("%", "").trim());
     if (!Number.isFinite(next)) return;
-    onChange(snapSliderValue(next));
+    onChange(clampSliderValue(next));
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -142,7 +141,6 @@ export function PanelSlider({
           className="min-w-0 flex-1"
           min={SLIDER_MIN}
           max={SLIDER_MAX}
-          step={SLIDER_STEP}
           value={[value]}
           onValueChange={(values) => {
             const next = Array.isArray(values) ? values[0] : values;

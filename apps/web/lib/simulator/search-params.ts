@@ -1,10 +1,4 @@
-import {
-  createLoader,
-  parseAsBoolean,
-  parseAsInteger,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs/server";
+import { createLoader, parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs/server";
 import { VIEWS } from "@/lib/simulator/config";
 import { DEFAULT_BACKGROUND, BACKGROUNDS } from "@/lib/simulator/background";
 import type { Seed, View } from "@/lib/simulator/store";
@@ -34,44 +28,31 @@ export function buildDeviceSetupDeepLink(appName: string, appUrl: string): strin
 const VIEW_KEYS = VIEWS.map((v) => v.key);
 const BACKGROUND_KEYS = BACKGROUNDS.map((bg) => bg.key);
 
-// url <-> simulator state contract. these parsers are the single source of truth for both
-// the initial (server-parsed) seed and the client-side writes, so ssr and hydration agree.
-// nuqs clears a param when it equals its default, keeping shared urls clean.
-// `mode` is url-only (cosmetic chrome); the store field is `view`.
+/**
+ * Shareable URL ↔ seed contract (nuqs).
+ * Keep: url, mode, bg, additive.
+ * Do NOT put sliders or chrome prefs here — see apps/web/AGENTS.md (state ownership).
+ */
 export const simulatorParsers = {
   mode: parseAsStringLiteral(VIEW_KEYS).withDefault("glasses" satisfies View),
   url: parseAsString.withDefault(""),
   additive: parseAsBoolean.withDefault(true),
   bg: parseAsStringLiteral(BACKGROUND_KEYS).withDefault(DEFAULT_BACKGROUND),
-  lensTint: parseAsBoolean.withDefault(false),
-  bgBrightness: parseAsInteger.withDefault(80),
-  bgBlur: parseAsInteger.withDefault(0),
-  displayBrightness: parseAsInteger.withDefault(100),
 };
 
-// server-side reader: parse Next's searchParams (a promise in app router) into typed values.
 export const loadSimulatorSearchParams = createLoader(simulatorParsers);
 
-// turn parsed url params into the store's initial state. a deep-linked ?url= arms a load.
 export function seedFromParams(params: {
   mode: View;
   url: string;
   additive: boolean;
   bg: (typeof BACKGROUND_KEYS)[number];
-  lensTint: boolean;
-  bgBrightness: number;
-  bgBlur: number;
-  displayBrightness: number;
 }): Seed {
   const seed: Seed = {
     view: params.mode,
     additive: params.additive,
     // custom uploads are session-only; a refreshed ?bg=custom has no image to show.
     background: params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg,
-    lensTint: params.lensTint,
-    backgroundBrightness: params.bgBrightness,
-    backgroundBlur: params.bgBlur,
-    displayBrightness: params.displayBrightness,
   };
   if (params.url) {
     seed.url = params.url;
