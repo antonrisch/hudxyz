@@ -30,7 +30,7 @@ const BACKGROUND_KEYS = BACKGROUNDS.map((bg) => bg.key);
 
 /**
  * Shareable URL ↔ seed contract (nuqs).
- * Keep: url, mode, bg, additive, lensTint.
+ * Keep: url, mode, bg, additive.
  * Do NOT put sliders or chrome prefs here — see apps/web/AGENTS.md (state ownership).
  */
 export const simulatorParsers = {
@@ -38,7 +38,6 @@ export const simulatorParsers = {
   url: parseAsString.withDefault(""),
   additive: parseAsBoolean.withDefault(true),
   bg: parseAsStringLiteral(BACKGROUND_KEYS).withDefault(DEFAULT_BACKGROUND),
-  lensTint: parseAsBoolean.withDefault(false),
 };
 
 export const loadSimulatorSearchParams = createLoader(simulatorParsers);
@@ -48,14 +47,12 @@ export function seedFromParams(params: {
   url: string;
   additive: boolean;
   bg: (typeof BACKGROUND_KEYS)[number];
-  lensTint: boolean;
 }): Seed {
   const seed: Seed = {
     view: params.mode,
     additive: params.additive,
     // custom uploads are session-only; a refreshed ?bg=custom has no image to show.
     background: params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg,
-    lensTint: params.lensTint,
   };
   if (params.url) {
     seed.url = params.url;

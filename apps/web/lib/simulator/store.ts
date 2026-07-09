@@ -27,7 +27,6 @@ export interface SimulatorState {
   background: BackgroundKey; // world behind the waveguide (decoupled from canvas chrome)
   customBackgroundImages: CustomBackgroundImage[]; // session uploads (cleared on refresh)
   activeCustomBackgroundId: string | null;
-  lensTint: boolean; // cosmetic G-15 tint on svg lenses + additive bg layer
   backgroundBrightness: number; // 0–100, 100 = full (absolute brightness filter)
   backgroundBlur: number; // 0–100 gaussian blur on the stage backdrop
   displayBrightness: number; // 0–100, 100 = full visibility (extension semantics)
@@ -42,7 +41,6 @@ export interface SimulatorState {
   addCustomBackground: (url: string, thumbUrl: string) => void;
   selectCustomBackground: (id: string) => void;
   removeCustomBackground: (id: string) => void;
-  setLensTint: (lensTint: boolean) => void;
   setBackgroundBrightness: (value: number) => void;
   setBackgroundBlur: (value: number) => void;
   setDisplayBrightness: (value: number) => void;
@@ -71,7 +69,6 @@ export type Seed = Partial<
     | "background"
     | "customBackgroundImages"
     | "activeCustomBackgroundId"
-    | "lensTint"
     | "backgroundBrightness"
     | "backgroundBlur"
     | "displayBrightness"
@@ -91,7 +88,6 @@ export function createSimulatorStore(seed?: Seed) {
     background: seed?.background ?? DEFAULT_BACKGROUND,
     customBackgroundImages: seed?.customBackgroundImages ?? [],
     activeCustomBackgroundId: seed?.activeCustomBackgroundId ?? null,
-    lensTint: seed?.lensTint ?? false,
     backgroundBrightness: seed?.backgroundBrightness ?? 80,
     backgroundBlur: seed?.backgroundBlur ?? 0,
     displayBrightness: seed?.displayBrightness ?? 100,
@@ -133,7 +129,6 @@ export function createSimulatorStore(seed?: Seed) {
           background: nextActive ? ("custom" as const) : DEFAULT_BACKGROUND,
         };
       }),
-    setLensTint: (lensTint) => set({ lensTint }),
     setBackgroundBrightness: (backgroundBrightness) => set({ backgroundBrightness }),
     setBackgroundBlur: (backgroundBlur) => set({ backgroundBlur }),
     setDisplayBrightness: (displayBrightness) => set({ displayBrightness }),

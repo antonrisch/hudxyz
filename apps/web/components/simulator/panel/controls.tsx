@@ -15,17 +15,15 @@ import { useQueryState } from "nuqs";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { simulatorParsers } from "@/lib/simulator/search-params";
 
-// Display panel: Zustand for live preview. Shareable scene fields (additive, lensTint)
+// Display panel: Zustand for live preview. Shareable scene fields (additive)
 // also mirror to the URL once per toggle — not on every slider tick.
 export function PanelContent() {
   const { store } = useSimulator();
   const additive = useSimulatorState((s) => s.additive);
-  const lensTint = useSimulatorState((s) => s.lensTint);
   const backgroundBrightness = useSimulatorState((s) => s.backgroundBrightness);
   const backgroundBlur = useSimulatorState((s) => s.backgroundBlur);
   const displayBrightness = useSimulatorState((s) => s.displayBrightness);
   const [, setAdditiveParam] = useQueryState("additive", simulatorParsers.additive);
-  const [, setLensTintParam] = useQueryState("lensTint", simulatorParsers.lensTint);
 
   return (
     <>
@@ -82,18 +80,6 @@ export function PanelContent() {
                 void setAdditiveParam(next);
               }}
               aria-label="Display transparency"
-            />
-          </PanelRow>
-
-          <PanelRow label="Lens tint" htmlFor="lens-tint">
-            <Switch
-              id="lens-tint"
-              checked={lensTint}
-              onCheckedChange={(next) => {
-                store.getState().setLensTint(next);
-                void setLensTintParam(next);
-              }}
-              aria-label="Lens tint"
             />
           </PanelRow>
         </PanelRowGroup>

@@ -23,7 +23,7 @@ One owner per concern. Do not dual-write the same field to URL + store + cookie.
 
 | Concern | Owner | Examples |
 |---|---|---|
-| **Shareable scene** | URL (nuqs) | `url`, `mode` (store: `view`), `bg`, `additive`, `lensTint` |
+| **Shareable scene** | URL (nuqs) | `url`, `mode` (store: `view`), `bg`, `additive` |
 | **Session runtime** | Zustand (`lib/simulator/store.ts`) | sliders, screen/status, custom uploads, everything the UI needs this session |
 | **Personal chrome** | Cookie only (`lib/simulator/prefs.ts`) | `toolbarPlacement`, `displayPanelOpen` — SSR-seeded in `app/page.tsx` |
 

@@ -62,7 +62,6 @@
   --color-brand-dark-active: var(--brand-dark-active);
   --color-brand-dark-pressed: var(--brand-dark-pressed);
   --color-stage-fill: var(--stage-fill);
-  --color-lens-tint: var(--lens-tint);
   --color-frame: var(--frame);
   --color-frame-temple: var(--frame-temple);
   --color-frame-temple-dark: var(--frame-temple-dark);
@@ -134,7 +133,6 @@
   --bg-night-to: color-mix(in oklch, var(--bg-day-from) 38%, #25344b);
 
   /* glasses frame */
-  --lens-tint: oklch(0.18 0.02 155 / 0.5);
   --frame: oklch(0.145 0 0);
   --frame-temple: oklch(0.205 0 0);
   --frame-temple-dark: oklch(0.175 0 0);
