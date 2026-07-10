@@ -84,12 +84,7 @@ function Swatch({
       aria-label={label}
       onMouseDown={dropFocus}
       onClick={onSelect}
-      className={cn(
-        "relative shrink-0 p-0",
-        SWATCH,
-        selectChrome(selected),
-        className,
-      )}
+      className={cn("relative shrink-0 p-0", SWATCH, selectChrome(selected), className)}
     >
       {children}
     </button>

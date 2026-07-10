@@ -449,12 +449,8 @@ export default function Simulator({ seed }: { seed: Seed }) {
     const geometry = measureAdditiveBackdrop(stageRef.current, displayRef.current);
     if (geometry) displayScaleRef.current = geometry.displayScale;
     additiveSyncKeyRef.current =
-      syncHostAdditive(
-        displayRef.current,
-        additive,
-        geometry,
-        additiveSyncKeyRef.current,
-      ) ?? additiveSyncKeyRef.current;
+      syncHostAdditive(displayRef.current, additive, geometry, additiveSyncKeyRef.current) ??
+      additiveSyncKeyRef.current;
     clearIframeBodyBlend(iframeRef.current);
     applyFiltersNow();
   }, [applyFiltersNow, store]);

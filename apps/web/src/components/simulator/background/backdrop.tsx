@@ -17,7 +17,10 @@ export const BackgroundBackdrop = forwardRef<
     suppressMedia?: boolean;
     keepPlaying?: boolean;
   }
->(function BackgroundBackdrop({ preset, placeholder, suppressMedia = false, keepPlaying = false }, ref) {
+>(function BackgroundBackdrop(
+  { preset, placeholder, suppressMedia = false, keepPlaying = false },
+  ref,
+) {
   const usesMediaLayer = Boolean(preset.image || preset.video);
 
   if (usesMediaLayer) {

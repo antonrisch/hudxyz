@@ -26,12 +26,7 @@ export function applyBackgroundFilter(
   /** Additive blur scales with display zoom; stage backdrop uses 1. */
   blurScale = 1,
 ) {
-  const filter = backgroundBackdropFilter(
-    preset,
-    backgroundBrightness,
-    backgroundBlur,
-    blurScale,
-  );
+  const filter = backgroundBackdropFilter(preset, backgroundBrightness, backgroundBlur, blurScale);
 
   const backdrop = targets.stage?.querySelector<HTMLElement>('[data-capture="backdrop"]');
   if (backdrop) {

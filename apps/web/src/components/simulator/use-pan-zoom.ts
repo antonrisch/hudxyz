@@ -408,7 +408,11 @@ export function usePanZoom(view: View, onTransformCommit?: () => void): PanZoom 
 
             const originX = (a.x + b.x) / 2;
             const originY = (a.y + b.y) / 2;
-            setDeviceScaleAtRef.current(originX, originY, pinch.scale * (distance / pinch.distance));
+            setDeviceScaleAtRef.current(
+              originX,
+              originY,
+              pinch.scale * (distance / pinch.distance),
+            );
             return;
           }
 

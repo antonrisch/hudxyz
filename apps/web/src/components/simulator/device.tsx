@@ -12,15 +12,9 @@ import {
 import type { Status } from "@/lib/simulator/store";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { releaseChromeFocus } from "@/lib/simulator/input";
-import {
-  BackdropPhoto,
-  BackdropVideo,
-} from "@/components/simulator/background/backdrop-media";
+import { BackdropPhoto, BackdropVideo } from "@/components/simulator/background/backdrop-media";
 import { additiveBackdropContentStyle, additiveSliceStyle } from "@/lib/simulator/additive";
-import {
-  resolveBackground,
-  resolveBackdropPlaceholder,
-} from "@/lib/simulator/background";
+import { resolveBackground, resolveBackdropPlaceholder } from "@/lib/simulator/background";
 import { cn } from "@/lib/utils";
 import { useMountEffect } from "@/lib/use-mount-effect";
 

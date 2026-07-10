@@ -112,7 +112,9 @@ export function BackdropPhoto({
 
   return (
     <>
-      {showPlaceholder ? <PlaceholderLayers placeholder={placeholder} overscale={overscale} /> : null}
+      {showPlaceholder ? (
+        <PlaceholderLayers placeholder={placeholder} overscale={overscale} />
+      ) : null}
       <img
         src={src}
         alt=""

@@ -1,5 +1,9 @@
 import type { CSSProperties } from "react";
-import { BACKDROP_SCALE, backgroundBackdropStyle, type BackgroundPreset } from "@/lib/simulator/background";
+import {
+  BACKDROP_SCALE,
+  backgroundBackdropStyle,
+  type BackgroundPreset,
+} from "@/lib/simulator/background";
 
 export type AdditiveBackdropGeometry = {
   left: number;
@@ -15,7 +19,12 @@ function additiveGeometryKey(geometry: AdditiveBackdropGeometry | undefined): st
   return `${geometry.left}|${geometry.top}|${geometry.width}|${geometry.height}|${geometry.displayScale}`;
 }
 
-const GEOMETRY_PROPS = ["--hud-bg-left", "--hud-bg-top", "--hud-bg-width", "--hud-bg-height"] as const;
+const GEOMETRY_PROPS = [
+  "--hud-bg-left",
+  "--hud-bg-top",
+  "--hud-bg-width",
+  "--hud-bg-height",
+] as const;
 
 export function measureAdditiveBackdrop(
   stage: HTMLElement | null,
@@ -114,4 +123,3 @@ export function settleAdditiveSync(sync: () => void) {
     requestAnimationFrame(sync);
   });
 }
-
