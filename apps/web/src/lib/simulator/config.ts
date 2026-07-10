@@ -64,7 +64,7 @@ export const VIEWS = [
 
 // standardized device overlay chrome for welcome/loading states on the waveguide surface.
 export const DEVICE_OVERLAY = "bg-muted/20";
-export const DEVICE_OVERLAY_TEXT = "text-4xl font-medium leading-snug text-white/90";
+export const DEVICE_OVERLAY_TEXT = "text-4xl font-medium leading-snug tracking-tight text-white/90";
 
 // the device surface: clipped, rounded, black — consistent across every view (it's what
 // shows whenever an app isn't covering it). only the positioning differs, so device.tsx
@@ -95,11 +95,6 @@ export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURI
 export const DIRECTORY_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz app directory request")}`;
 
 export const SUGGESTED_APPS = [
-  {
-    name: "Snake game",
-    url: "https://hud.xyz/apps/snake",
-    iconUrl: "/icon.svg",
-  },
   {
     name: "Block Stack",
     url: "https://ikkou.jp/MRBD/apps/block-stack/",
