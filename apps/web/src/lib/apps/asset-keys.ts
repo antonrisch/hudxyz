@@ -18,11 +18,7 @@ function prefixForKind(appId: string, kind: AppAssetKind): string {
 }
 
 /** Kind prefixes must not overlap so assertObjectKeyForApp stays strict. */
-export function appAssetObjectKey(
-  appId: string,
-  kind: AppAssetKind,
-  filename: string,
-): string {
+export function appAssetObjectKey(appId: string, kind: AppAssetKind, filename: string): string {
   const safeName = sanitizeAssetFilename(filename);
   if (!safeName) {
     throw new Error("Invalid asset filename");

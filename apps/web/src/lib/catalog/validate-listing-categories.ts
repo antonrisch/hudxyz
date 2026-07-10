@@ -31,9 +31,7 @@ export function validateListingCategories(
   }
 
   if (primary.listingType !== assignment.listingType) {
-    throw new ListingCategoryValidationError(
-      "Primary category must belong to the listing type.",
-    );
+    throw new ListingCategoryValidationError("Primary category must belong to the listing type.");
   }
 
   if (!findCategoryDefinition(primary.listingType, primary.slug)) {
@@ -56,9 +54,7 @@ export function validateListingCategories(
   }
 
   if (secondary.listingType !== assignment.listingType) {
-    throw new ListingCategoryValidationError(
-      "Secondary category must belong to the listing type.",
-    );
+    throw new ListingCategoryValidationError("Secondary category must belong to the listing type.");
   }
 
   if (!findCategoryDefinition(secondary.listingType, secondary.slug)) {

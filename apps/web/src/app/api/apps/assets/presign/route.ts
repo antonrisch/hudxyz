@@ -31,10 +31,7 @@ export async function POST(request: Request) {
   }
 
   if (!appAssetKinds.includes(kind)) {
-    return NextResponse.json(
-      { error: "kind must be icon, screenshot, or video" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "kind must be icon, screenshot, or video" }, { status: 400 });
   }
 
   if (!isAllowedContentTypeForKind(kind, contentType)) {

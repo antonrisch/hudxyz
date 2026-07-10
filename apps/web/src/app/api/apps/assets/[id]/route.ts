@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 
 import { deleteAppAsset } from "@/lib/apps/assets";
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const deleted = await deleteAppAsset(id);
 

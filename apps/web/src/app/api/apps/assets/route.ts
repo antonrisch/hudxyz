@@ -1,17 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { appAssetKinds, type AppAssetKind } from "@/db/schema";
-import {
-  isValidPreviewDimensions,
-  isValidPreviewDurationMs,
-} from "@/lib/apps/asset-limits";
+import { isValidPreviewDimensions, isValidPreviewDurationMs } from "@/lib/apps/asset-limits";
 import { assertObjectKeyForApp } from "@/lib/apps/asset-keys";
-import {
-  canAddAsset,
-  deleteAppAssetsByKind,
-  getAppById,
-  insertAppAsset,
-} from "@/lib/apps/assets";
+import { canAddAsset, deleteAppAssetsByKind, getAppById, insertAppAsset } from "@/lib/apps/assets";
 import { publicUrl } from "@/lib/r2";
 
 type RegisterBody = {
@@ -35,17 +27,11 @@ export async function POST(request: Request) {
   const { appId, kind, objectKey, sortOrder, width, height, durationMs } = body;
 
   if (!appId || !kind || !objectKey) {
-    return NextResponse.json(
-      { error: "appId, kind, and objectKey are required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "appId, kind, and objectKey are required" }, { status: 400 });
   }
 
   if (!appAssetKinds.includes(kind)) {
-    return NextResponse.json(
-      { error: "kind must be icon, screenshot, or video" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "kind must be icon, screenshot, or video" }, { status: 400 });
   }
 
   if (!assertObjectKeyForApp(appId, objectKey, kind)) {
@@ -64,11 +50,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    if (
-      width !== undefined &&
-      height !== undefined &&
-      !isValidPreviewDimensions(width, height)
-    ) {
+    if (width !== undefined && height !== undefined && !isValidPreviewDimensions(width, height)) {
       return NextResponse.json(
         { error: "video dimensions must be between 1 and 1920 on each edge" },
         { status: 400 },

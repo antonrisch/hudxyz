@@ -33,9 +33,7 @@ export async function deleteAppAssetsByKind(appId: string, kind: AppAssetKind) {
   }
 
   if (existing.length > 0) {
-    await db
-      .delete(appAssets)
-      .where(and(eq(appAssets.appId, appId), eq(appAssets.kind, kind)));
+    await db.delete(appAssets).where(and(eq(appAssets.appId, appId), eq(appAssets.kind, kind)));
   }
 }
 

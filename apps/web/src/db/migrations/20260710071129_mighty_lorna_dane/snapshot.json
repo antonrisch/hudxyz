@@ -2,9 +2,7 @@
   "version": "7",
   "dialect": "sqlite",
   "id": "232908e4-6ea5-4601-b5e8-e3fea95b6950",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "ddl": [
     {
       "name": "app_assets",
@@ -373,13 +371,9 @@
       "table": "users"
     },
     {
-      "columns": [
-        "app_id"
-      ],
+      "columns": ["app_id"],
       "tableTo": "apps",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -388,13 +382,9 @@
       "table": "app_assets"
     },
     {
-      "columns": [
-        "primary_category_id"
-      ],
+      "columns": ["primary_category_id"],
       "tableTo": "categories",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -403,13 +393,9 @@
       "table": "apps"
     },
     {
-      "columns": [
-        "secondary_category_id"
-      ],
+      "columns": ["secondary_category_id"],
       "tableTo": "categories",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -418,13 +404,9 @@
       "table": "apps"
     },
     {
-      "columns": [
-        "submitted_by_user_id"
-      ],
+      "columns": ["submitted_by_user_id"],
       "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -433,36 +415,28 @@
       "table": "apps"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_assets_pk",
       "table": "app_assets",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "apps_pk",
       "table": "apps",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "categories_pk",
       "table": "categories",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "users_pk",
       "table": "users",
@@ -501,18 +475,14 @@
       "table": "categories"
     },
     {
-      "columns": [
-        "slug"
-      ],
+      "columns": ["slug"],
       "nameExplicit": false,
       "name": "apps_slug_unique",
       "entityType": "uniques",
       "table": "apps"
     },
     {
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nameExplicit": false,
       "name": "users_email_unique",
       "entityType": "uniques",

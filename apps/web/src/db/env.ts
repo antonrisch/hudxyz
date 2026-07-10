@@ -8,9 +8,7 @@ export function getTursoConfig(): TursoConfig {
   const authToken = process.env.TURSO_AUTH_TOKEN;
 
   if (!url || !authToken) {
-    throw new Error(
-      "Missing database env: set TURSO_CONNECTION_URL and TURSO_AUTH_TOKEN",
-    );
+    throw new Error("Missing database env: set TURSO_CONNECTION_URL and TURSO_AUTH_TOKEN");
   }
 
   return { url, authToken };
