@@ -17,6 +17,8 @@
     "db": "node scripts/db.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1084.0",
+    "@aws-sdk/s3-request-presigner": "^3.1084.0",
     "@base-ui/react": "^1.6.0",
     "@better-auth/drizzle-adapter": "^1.6.23",
     "@libsql/client": "^0.17.4",
