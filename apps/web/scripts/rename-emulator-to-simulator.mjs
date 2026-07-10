@@ -138,13 +138,13 @@ function phase1() {
 }
 
 function phase2() {
-  const libFrom = path.join(webRoot, "lib/emulator");
-  const libTo = path.join(webRoot, "lib/simulator");
-  const compFrom = path.join(webRoot, "components/emulator");
-  const compTo = path.join(webRoot, "components/simulator");
+  const libFrom = path.join(webRoot, "src/lib/emulator");
+  const libTo = path.join(webRoot, "src/lib/simulator");
+  const compFrom = path.join(webRoot, "src/components/emulator");
+  const compTo = path.join(webRoot, "src/components/simulator");
 
   if (!fs.existsSync(libFrom) || !fs.existsSync(compFrom)) {
-    console.error("expected lib/emulator and components/emulator to exist");
+    console.error("expected src/lib/emulator and src/components/emulator to exist");
     process.exit(1);
   }
 
