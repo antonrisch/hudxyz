@@ -41,6 +41,15 @@ const permissionsSimulator = [
 const corpSameOrigin = [{ key: "Cross-Origin-Resource-Policy", value: "same-origin" }];
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "assets.hudxyz.com",
+        pathname: "/**",
+      },
+    ],
+  },
   async headers() {
     return [
       {
