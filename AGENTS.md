@@ -19,14 +19,14 @@ The simulator reproduces the two things that make the device different from a no
 
 ## The simulator
 
-A single route, **`/`**, renders the `Simulator` component (`components/simulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
+A single route, **`/`**, renders the `Simulator` component (`src/components/simulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
 
-- **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`components/simulator/frames.tsx`).
+- **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`src/components/simulator/frames.tsx`).
 - **1:1** — the surface at its exact 600×600 size, no scaling (`pixel` in `?mode=`).
 
 Cosmetic chrome is `?mode=glasses|pixel` (url-only name; store field is `view`). Set client-side via nuqs, so switching never navigates. `?url=` deep-links a target.
 
-**Structure.** A UI-agnostic core — `lib/simulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `components/simulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, controls, view-switcher, zoom-controls), `header/` (app-header, url-bar, share, feedback), `toolbar/` (index, dpad, screenshot), plus root `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
+**Structure.** A UI-agnostic core — `src/lib/simulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `src/components/simulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, controls, view-switcher, zoom-controls), `header/` (app-header, url-bar, share, feedback), `toolbar/` (index, dpad, screenshot), plus root `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
 
 **Same-origin proxy.** Third-party sites set `frame-ancestors` / `X-Frame-Options` that scope framing to themselves. The simulator re-serves the target **from our own origin** through a **Scramjet v2** service-worker proxy, so the browser treats it as same-origin and renders it. Same-origin also lets the D-pad inject keystrokes straight into the frame.
 
@@ -34,7 +34,7 @@ Request path: `frame.go(url)` points the iframe at a same-origin proxied URL →
 
 Key files:
 
-- `lib/proxy.ts` — boots the Scramjet v2 controller, registers the SW, wires the libcurl/Wisp transport, and exposes `createFrame(iframe)`.
+- `src/lib/proxy.ts` — boots the Scramjet v2 controller, registers the SW, wires the libcurl/Wisp transport, and exposes `createFrame(iframe)`.
 - `public/sw.js` — the Scramjet v2 service worker; routes proxied requests and stamps COEP/CORP so the cross-origin-isolated host can embed them.
 - `scripts/copy-proxy-assets.mjs` — copies the Scramjet engine + controller bundles into `/public/scramjet` and `/public/controller` (runs on install/dev/build).
 - `scripts/wisp-server.mjs` — the dev Wisp egress server on `:4000`.
@@ -46,24 +46,26 @@ Key files:
 
 ## Layout (`apps/web`)
 
-- `app/` — App Router routes: `page.tsx` (simulator), `layout.tsx` (fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
-- `components/` — `simulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `toolbar/` + `device`), `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
-- `lib/` — `proxy.ts` (Scramjet proxy), `simulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
+Application code lives under `src/`. Config, `public/`, and `scripts/` stay at the app root.
+
+- `src/app/` — App Router routes: `page.tsx` (simulator), `layout.tsx` (fonts, react-grab dev overlay), `globals.css` (shadcn theme tokens).
+- `src/components/` — `simulator/*` (`index.tsx` shell + `background/` / `panel/` / `header/` / `toolbar/` + `device`), `theme-provider.tsx`, `layout/logo.tsx`, and `ui/*` (shadcn components; add with `pnpm dlx shadcn@latest add <name>`).
+- `src/lib/` — `proxy.ts` (Scramjet proxy), `simulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
 - `public/` — `sw.js` plus the generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`.
 
 ## Doc ownership
 
-| Doc | Owns |
-|---|---|
-| **`AGENTS.md` (this file)** | Product + monorepo: MRBD overview, proxy stack, workspace layout, commands, styling tokens, cross-app conventions |
-| **`apps/web/AGENTS.md`** | App-local only: Next.js 16 quirks, shadcn/button conventions, **simulator state ownership** (URL vs Zustand vs cookies), web perf rules |
+| Doc                         | Owns                                                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **`AGENTS.md` (this file)** | Product + monorepo: MRBD overview, proxy stack, workspace layout, commands, styling tokens, cross-app conventions                       |
+| **`apps/web/AGENTS.md`**    | App-local only: Next.js 16 quirks, shadcn/button conventions, **simulator state ownership** (URL vs Zustand vs cookies), web perf rules |
 
 Keep product architecture here. Keep Next/UI/state rules in `apps/web/AGENTS.md`. Do not duplicate either side.
 
 ## Styling
 
-Tailwind v4 + the shadcn theme tokens in `app/globals.css` (`@theme inline` maps `--color-*` to the `:root` values). Style with the **semantic tokens and shadcn defaults**, not hardcoded Tailwind colors:
+Tailwind v4 + the shadcn theme tokens in `src/app/globals.css` (`@theme inline` maps `--color-*` to the `:root` values). Style with the **semantic tokens and shadcn defaults**, not hardcoded Tailwind colors:
 
 - Surfaces, text, borders, accents: `bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-primary` — not `bg-white` / `border-black/15`.
 - Brand accent lives in `--brand` (`#0067ff`), exposed as `bg-brand` / `text-brand`. Add custom colors the same two-step way: raw value in `:root`, then `--color-<name>: var(--<name>)` in `@theme inline`.

@@ -8,10 +8,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Doc ownership (root vs `apps/web`)
 
-| Doc | Owns |
-|---|---|
-| **`/AGENTS.md` (repo root)** | Product + monorepo: what MRBD is, proxy/Scramjet overview, workspace layout, commands, styling tokens, cross-app conventions |
-| **`apps/web/AGENTS.md` (this file)** | App-local: Next.js 16 quirks, UI component conventions, **simulator state ownership**, web-only performance rules |
+| Doc                                  | Owns                                                                                                                         |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| **`/AGENTS.md` (repo root)**         | Product + monorepo: what MRBD is, proxy/Scramjet overview, workspace layout, commands, styling tokens, cross-app conventions |
+| **`apps/web/AGENTS.md` (this file)** | App-local: Next.js 16 quirks, UI component conventions, **simulator state ownership**, web-only performance rules            |
 
 Do not duplicate long product architecture here — link or one-line point to root. Do not put Next/shadcn/slider/state rules in root.
 
@@ -21,11 +21,11 @@ Do not duplicate long product architecture here — link or one-line point to ro
 
 One owner per concern. Do not dual-write the same field to URL + store + cookie.
 
-| Concern | Owner | Examples |
-|---|---|---|
-| **Shareable scene** | URL (nuqs) | `url`, `mode` (store: `view`), `bg`, `additive` |
-| **Session runtime** | Zustand (`lib/simulator/store.ts`) | sliders, screen/status, custom uploads, everything the UI needs this session |
-| **Personal chrome** | Cookie only (`lib/simulator/prefs.ts`) | `toolbarPlacement`, `displayPanelOpen` — SSR-seeded in `app/page.tsx` |
+| Concern             | Owner                                      | Examples                                                                     |
+| ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- |
+| **Shareable scene** | URL (nuqs)                                 | `url`, `mode` (store: `view`), `bg`, `additive`                              |
+| **Session runtime** | Zustand (`src/lib/simulator/store.ts`)     | sliders, screen/status, custom uploads, everything the UI needs this session |
+| **Personal chrome** | Cookie only (`src/lib/simulator/prefs.ts`) | `toolbarPlacement`, `displayPanelOpen` — SSR-seeded in `src/app/page.tsx`    |
 
 ### Rules
 
@@ -33,21 +33,21 @@ One owner per concern. Do not dual-write the same field to URL + store + cookie.
 - **Shareable toggles / bg / view / app url**: update Zustand for preview; mirror URL **once per commit** (toggle, select, navigate, Share) — not continuously.
 - **Chrome prefs**: Zustand + cookie write on change. Not in the URL. No long-term localStorage (legacy migrate once via `migrateLegacySimulatorPreferences`).
 - **Share button**: snapshot from Zustand / current app url at click time (`buildSimulatorShareUrl`). Do not rely on slider params in the query string.
-- **Filters (perf)**: slider ticks schedule `applyDisplayFilters` (`lib/simulator/display-filters.ts`) — CSS vars / host iframe `filter`. Do not re-render the stage tree or run additive geometry settle for brightness/blur. Geometry settle stays for additive / bg / pan-zoom only.
+- **Filters (perf)**: slider ticks schedule `applyDisplayFilters` (`src/lib/simulator/display-filters.ts`) — CSS vars / host iframe `filter`. Do not re-render the stage tree or run additive geometry settle for brightness/blur. Geometry settle stays for additive / bg / pan-zoom only.
 
 ### Key files
 
-- `lib/simulator/store.ts` — session state machine
-- `lib/simulator/prefs.ts` — cookie prefs
-- `lib/simulator/search-params.ts` — shareable URL parsers + seed
-- `lib/simulator/display-filters.ts` — imperative brightness/blur apply
-- `lib/simulator/additive.ts` — additive geometry CSS vars only
+- `src/lib/simulator/store.ts` — session state machine
+- `src/lib/simulator/prefs.ts` — cookie prefs
+- `src/lib/simulator/search-params.ts` — shareable URL parsers + seed
+- `src/lib/simulator/display-filters.ts` — imperative brightness/blur apply
+- `src/lib/simulator/additive.ts` — additive geometry CSS vars only
 
 ---
 
 ## Buttons with icons
 
-shadcn `Button` (`components/ui/button.tsx`) uses `data-icon` for icon + label layout. Same rules apply when composing `buttonVariants()` on other elements (e.g. links).
+shadcn `Button` (`src/components/ui/button.tsx`) uses `data-icon` for icon + label layout. Same rules apply when composing `buttonVariants()` on other elements (e.g. links).
 
 **Icon + text** — mark the icon, not the label:
 
