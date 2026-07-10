@@ -5,10 +5,18 @@
     "dev": "pnpm --filter @hudxyz/web dev",
     "build": "pnpm -r build",
     "lint": "oxlint",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
     "oxfmt": "^0.56.0",
     "oxlint": "^1.70.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx,mjs,cjs,json,jsonc,css,md}": "oxfmt --write",
+    "*.{js,ts,tsx,mjs,cjs}": "oxlint"
   }
 }
