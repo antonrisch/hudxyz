@@ -49,7 +49,7 @@ async function loadArchivo(weight: 400 | 600 | 700) {
 
 export default async function OpenGraphImage() {
   const [icon, archivoRegular, archivoSemibold, archivoBold] = await Promise.all([
-    readFile(join(process.cwd(), "app/icon.svg")),
+    readFile(join(process.cwd(), "src/app/icon.svg")),
     loadArchivo(400),
     loadArchivo(600),
     loadArchivo(700),

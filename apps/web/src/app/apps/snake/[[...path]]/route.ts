@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-const DIR = join(process.cwd(), "app/apps/snake");
+const DIR = join(process.cwd(), "src/app/apps/snake");
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
