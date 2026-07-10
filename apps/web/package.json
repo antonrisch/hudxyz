@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "node scripts/copy-proxy-assets.mjs",
     "optimize-backgrounds": "node scripts/optimize-backgrounds.mjs",
-    "optimize-background-video": "node scripts/optimize-background-video.mjs"
+    "optimize-background-video": "node scripts/optimize-background-video.mjs",
+    "db": "node scripts/db.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -30,7 +31,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
-    "drizzle-kit": "^0.31.10",
     "drizzle-orm": "1.0.0-rc.4",
     "lucide-react": "^1.21.0",
     "next": "16.2.6",
@@ -51,6 +51,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "concurrently": "^10.0.3",
+    "drizzle-kit": "1.0.0-rc.4",
     "sharp": "^0.34.3",
     "tailwindcss": "^4",
     "typescript": "^5"
