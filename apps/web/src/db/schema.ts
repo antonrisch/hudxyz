@@ -12,7 +12,9 @@ const timestampDefaultNow = sql`(cast((julianday('now') - 2440587.5)*86400000 as
  * launch analytics counters, votes/comments.
  */
 export const users = sqliteTable("users", {
-  id: text("id").primaryKey().$defaultFn(() => uuidv7()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => uuidv7()),
   email: text("email").notNull().unique(),
   displayName: text("display_name"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
@@ -34,7 +36,9 @@ export type ListingType = (typeof listingTypes)[number];
 export const categories = sqliteTable(
   "categories",
   {
-    id: text("id").primaryKey().$defaultFn(() => uuidv7()),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
     listingType: text("listing_type").notNull().$type<ListingType>(),
     slug: text("slug").notNull(),
     name: text("name").notNull(),
@@ -44,7 +48,9 @@ export const categories = sqliteTable(
 );
 
 export const apps = sqliteTable("apps", {
-  id: text("id").primaryKey().$defaultFn(() => uuidv7()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => uuidv7()),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description"),
@@ -68,7 +74,9 @@ export const apps = sqliteTable("apps", {
 export const appAssets = sqliteTable(
   "app_assets",
   {
-    id: text("id").primaryKey().$defaultFn(() => uuidv7()),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
     appId: text("app_id")
       .notNull()
       .references(() => apps.id, { onDelete: "cascade" }),
