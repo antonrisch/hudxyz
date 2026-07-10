@@ -25,7 +25,7 @@ export const appStatuses = ["draft", "pending", "published", "rejected", "archiv
 
 export type AppStatus = (typeof appStatuses)[number];
 
-export const appAssetKinds = ["icon", "screenshot"] as const;
+export const appAssetKinds = ["icon", "screenshot", "video"] as const;
 
 export type AppAssetKind = (typeof appAssetKinds)[number];
 
@@ -85,6 +85,8 @@ export const appAssets = sqliteTable(
     sortOrder: integer("sort_order").notNull().default(0),
     width: integer("width"),
     height: integer("height"),
+    /** Video length in ms (optional; validated when provided). */
+    durationMs: integer("duration_ms"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
   },
   (table) => [uniqueIndex("app_assets_object_key_unique").on(table.objectKey)],

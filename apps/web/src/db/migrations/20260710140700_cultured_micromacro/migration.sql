@@ -1,0 +1,1 @@
+ALTER TABLE `app_assets` ADD `duration_ms` integer;
