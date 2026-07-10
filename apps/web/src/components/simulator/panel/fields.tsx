@@ -35,7 +35,7 @@ export function PanelSection({
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-2 py-3 text-left"
       >
-        <span className="text-sm font-bold text-foreground">{title}</span>
+        <span className="text-sm font-semibold text-foreground">{title}</span>
         <ChevronDown
           className={cn("size-4 shrink-0 text-muted-foreground", open && "rotate-180")}
         />
@@ -69,7 +69,7 @@ export function PanelRow({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-9 items-center justify-between gap-3">
+    <div className="flex min-h-9 items-center justify-between gap-2">
       <div className="flex min-w-0 items-center gap-1.5">
         <Label htmlFor={htmlFor} className="truncate font-normal text-foreground">
           {label}
@@ -92,8 +92,8 @@ export function PanelField({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="w-fit text-sm leading-none font-normal text-foreground">{label}</span>
+    <div className="flex flex-col gap-1">
+      <span className="w-fit text-sm leading-snug font-normal text-foreground">{label}</span>
       <div className={cn(controlSlotClass, controlClassName ?? "w-full")}>{children}</div>
     </div>
   );

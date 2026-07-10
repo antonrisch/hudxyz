@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { Separator } from "@/components/ui/separator";
 import { SIMULATOR_SUMMARY } from "@/lib/simulator/config";
-import { AppLegalLinks } from "@/components/simulator/app-footer";
+import { LegalLinks } from "@/components/layout/legal-links";
 import { useSimulatorState } from "@/components/simulator";
 
 export function PanelFooter({
@@ -31,7 +31,7 @@ export function PanelFooter({
             {SIMULATOR_SUMMARY}
           </p>
           <p className="text-[10px]">
-            <AppLegalLinks />
+            <LegalLinks />
           </p>
         </div>
       </footer>
@@ -41,7 +41,7 @@ export function PanelFooter({
   return (
     <footer className="shrink-0 border-t p-3">
       <p className="text-xs text-muted-foreground">
-        <AppLegalLinks />
+        <LegalLinks />
       </p>
     </footer>
   );

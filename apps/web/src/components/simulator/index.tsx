@@ -38,12 +38,12 @@ import { normalizeWebUrl } from "@/lib/simulator/search-params";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createFrame } from "@/lib/proxy";
 import type { Frame } from "@mercuryworkshop/scramjet-controller";
-import { AppHeader } from "@/components/simulator/header/app-header";
+import { SimulatorHeader } from "@/components/simulator/header";
 import { Toolbar } from "@/components/simulator/toolbar";
 import { Device } from "@/components/simulator/device";
 import { Panel } from "@/components/simulator/panel";
 import { PanelSidebar } from "@/components/simulator/panel/sidebar";
-import { MobileAppFooter } from "@/components/simulator/app-footer";
+import { MobileFooter } from "@/components/simulator/mobile-footer";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadStage } from "@/lib/simulator/capture";
@@ -651,7 +651,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
       <TooltipProvider delay={1000}>
         <div className="flex min-h-0 flex-1 flex-col">
           <h1 className="sr-only">{SIMULATOR_TITLE}</h1>
-          <AppHeader />
+          <SimulatorHeader />
 
           <div
             className={cn(
@@ -686,7 +686,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
               </div>
             </div>
           </div>
-          <MobileAppFooter />
+          <MobileFooter />
         </div>
       </TooltipProvider>
     </SimulatorContext.Provider>

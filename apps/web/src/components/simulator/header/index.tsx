@@ -7,8 +7,8 @@ import { ScreenRecordButton } from "@/components/simulator/toolbar/screen-record
 import { PanelToggle } from "@/components/simulator/panel/sidebar";
 import { DesktopOnly } from "@/components/simulator/mobile-only";
 
-// simulator toolbar: logo + url bar + record/share (+ desktop display panel toggle).
-export function AppHeader() {
+/** Simulator toolbar: logo + url bar + record/share (+ desktop display panel toggle). */
+export function SimulatorHeader() {
   return (
     <header aria-label="Simulator toolbar" className="z-50 shrink-0">
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 p-2">
