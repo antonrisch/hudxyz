@@ -11,7 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { ListingType } from "@/db/schema";
 import { findCategoryDefinition } from "@/lib/category/categories";
 import { legal } from "@/lib/legal/config";
-import { DIRECTORY_MAILTO, DEVICE_MODEL, FEEDBACK_MAILTO } from "@/lib/simulator/config";
+import { DIRECTORY_MAILTO, FEEDBACK_MAILTO } from "@/lib/simulator/config";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
 type FooterLink = {
@@ -154,11 +154,11 @@ export function AppFooter() {
   return (
     <footer id="site-footer" className="mt-auto shrink-0 bg-muted">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="grid grid-cols-1 items-start gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 items-start gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-6">
           <div className="min-w-0 sm:col-span-2">
             <Logo className="text-lg sm:text-xl" />
             <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-              Wearable web apps and games for {DEVICE_MODEL}.
+              Dev tools and apps for Meta Ray-Ban Display.
             </p>
           </div>
 
