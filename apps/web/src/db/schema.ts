@@ -9,7 +9,7 @@ const timestampDefaultNow = sql`(cast((julianday('now') - 2440587.5)*86400000 as
 /**
  * Platform profile — auth identity tables come later with Better Auth.
  * Deferred: blog/news content, device/provider entities, simulator sessions,
- * launch analytics counters, votes/comments.
+ * launch event history, votes/comments.
  */
 export const users = sqliteTable("users", {
   id: text("id")
@@ -53,6 +53,7 @@ export const apps = sqliteTable("apps", {
     .$defaultFn(() => uuidv7()),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  subtitle: text("subtitle"),
   description: text("description"),
   launchUrl: text("launch_url").notNull(),
   listingType: text("listing_type").notNull().$type<ListingType>(),
@@ -67,6 +68,7 @@ export const apps = sqliteTable("apps", {
   submittedAt: integer("submitted_at", { mode: "timestamp" }),
   reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
   publishedAt: integer("published_at", { mode: "timestamp" }),
+  launchCount: integer("launch_count").notNull().default(0),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
 });

@@ -1,0 +1,2 @@
+ALTER TABLE `apps` ADD `subtitle` text;--> statement-breakpoint
+UPDATE `apps` SET `subtitle` = substr(`description`, 1, 30) WHERE `subtitle` IS NULL AND `description` IS NOT NULL AND length(trim(`description`)) > 0;
