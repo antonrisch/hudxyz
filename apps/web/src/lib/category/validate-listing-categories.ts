@@ -1,6 +1,6 @@
 import type { ListingType } from "@/db/schema";
 
-import { findCategoryDefinition } from "@/lib/catalog/categories";
+import { findCategoryDefinition } from "@/lib/category/categories";
 
 export type ListingCategoryAssignment = {
   listingType: ListingType;
