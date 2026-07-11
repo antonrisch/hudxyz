@@ -4,6 +4,7 @@ import { Archivo, JetBrains_Mono } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import { SIMULATOR_SUMMARY } from "@/lib/simulator/config";
 
@@ -16,8 +17,8 @@ export const metadata: Metadata = {
   description: SIMULATOR_SUMMARY,
   applicationName: "hud.xyz",
 };
-const archivo = Archivo({ subsets: ["latin"], variable: "--font-sans" });
 
+const archivo = Archivo({ subsets: ["latin"], variable: "--font-sans" });
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
@@ -32,11 +33,13 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", archivo.variable, jetbrainsMono.variable, "font-sans")}
+      className={cn("antialiased font-sans", archivo.variable, jetbrainsMono.variable)}
     >
       <body className="flex min-h-svh flex-col bg-background">
-        <NuqsAdapter>{children}</NuqsAdapter>
-        <Toaster />
+        <ThemeProvider>
+          <NuqsAdapter>{children}</NuqsAdapter>
+          <Toaster />
+        </ThemeProvider>
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
