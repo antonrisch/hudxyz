@@ -8,13 +8,6 @@ const isolation = [
   { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
 ];
 
-// first-party MRBD apps load in the simulator iframe (same-origin, el.src — not scramjet).
-const appHeaders = [
-  { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
-  { key: "X-Frame-Options", value: "SAMEORIGIN" },
-];
-
 const baseSecurity = [
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -53,10 +46,6 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/apps/:path*",
-        headers: [...baseSecurity, ...permissionsDenyMedia, ...appHeaders],
-      },
-      {
         // Simulator: isolation + display-capture. Do not also send camera=().
         source: "/",
         headers: [
@@ -67,8 +56,9 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Everything else (except /apps/* and exact /): deny framing + camera.
-        source: "/((?!apps(?:/|$)|$).*)",
+        // Directory, legal, and other non-simulator pages (no COEP — R2 images must load).
+        // `:path+` excludes `/` so simulator isolation headers are not diluted.
+        source: "/:path+",
         headers: [
           ...baseSecurity,
           ...permissionsDenyMedia,
@@ -81,12 +71,6 @@ const nextConfig: NextConfig = {
       { source: "/icon.svg", headers: corpSameOrigin },
       { source: "/apple-icon.png", headers: corpSameOrigin },
       { source: "/sw.js", headers: [{ key: "Service-Worker-Allowed", value: "/" }] },
-    ];
-  },
-  async redirects() {
-    return [
-      // index.html keeps relative asset paths under /apps/snake/
-      { source: "/apps/snake", destination: "/apps/snake/index.html", permanent: false },
     ];
   },
 };
