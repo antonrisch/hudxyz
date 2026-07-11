@@ -3,7 +3,8 @@ import { VIEWS } from "@/lib/simulator/config";
 import { DEFAULT_BACKGROUND, BACKGROUNDS } from "@/lib/simulator/background";
 import type { Seed, View } from "@/lib/simulator/store";
 
-export const SIMULATOR_SHARE_PATH = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
+const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
+export const SIMULATOR_SHARE_PATH = `${siteOrigin}/simulator`;
 
 export function buildSimulatorShareUrl(appUrl?: string, appName?: string): string {
   const params = new URLSearchParams();

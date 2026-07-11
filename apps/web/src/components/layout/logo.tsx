@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, "href">) {
   return (
     <Link
-      href="/"
+      href="/simulator"
       aria-label="hud.xyz home"
       className={cn(
         "inline-flex items-center gap-2 sm:text-2xl text-md font-bold tracking-tighter hover:underline",

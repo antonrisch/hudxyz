@@ -19,14 +19,14 @@ The simulator reproduces the two things that make the device different from a no
 
 ## The simulator
 
-A single route, **`/`**, renders the `Simulator` component (`src/components/simulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
+The simulator lives at **`/simulator`** (legacy **`/`** redirects there with query params preserved). It renders the `Simulator` component (`src/components/simulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
 
 - **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`src/components/simulator/frames.tsx`).
 - **1:1** — the surface at its exact 600×600 size, no scaling (`pixel` in `?mode=`).
 
 Cosmetic chrome is `?mode=glasses|pixel` (url-only name; store field is `view`). Set client-side via nuqs, so switching never navigates. `?url=` deep-links a target.
 
-**Structure.** A UI-agnostic core — `src/lib/simulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `src/components/simulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, controls, view-switcher, zoom-controls), `header/` (app-header, url-bar, share, feedback), `toolbar/` (index, dpad, screenshot), plus root `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
+**Structure.** A UI-agnostic core — `src/lib/simulator/store.ts` (a zustand state machine: `screen`, `view`, `url`, `status`) plus `config.ts` — drives a thin presentational shell in `src/components/simulator/`: `index.tsx` wires the proxy / input / url-sync behavior and provides the context; `background/` (backdrop + picker), `panel/` (sidebar, controls, view-switcher, zoom-controls), `header/` (`SimulatorHeader`, url-bar, share), `toolbar/` (index, dpad, screenshot), plus root `device`. The d-pad emits `Intent`s the shell routes by `screen` (keys inject into the proxied app only when `screen === "app"`). `screen` is the **baby MRBD OS** seam: `app` runs the proxied app, `settings` is a blurred control overlay over it, and `home` / `apps` are os screens (stubs) — all on the same persistent surface, so building out the OS is additive.
 
 **Same-origin proxy.** Third-party sites set `frame-ancestors` / `X-Frame-Options` that scope framing to themselves. The simulator re-serves the target **from our own origin** through a **Scramjet v2** service-worker proxy, so the browser treats it as same-origin and renders it. Same-origin also lets the D-pad inject keystrokes straight into the frame.
 
@@ -38,7 +38,7 @@ Key files:
 - `public/sw.js` — the Scramjet v2 service worker; routes proxied requests and stamps COEP/CORP so the cross-origin-isolated host can embed them.
 - `scripts/copy-proxy-assets.mjs` — copies the Scramjet engine + controller bundles into `/public/scramjet` and `/public/controller` (runs on install/dev/build).
 - `scripts/wisp-server.mjs` — the dev Wisp egress server on `:4000`.
-- `next.config.ts` — sets COOP/COEP on `/` (for Scramjet's wasm) and `Service-Worker-Allowed: /` on `/sw.js`.
+- `next.config.ts` — sets COOP/COEP on `/simulator` (for Scramjet's wasm) and `Service-Worker-Allowed: /` on `/sw.js`.
 
 **Stack pins:** Scramjet engine `2.0.67-alpha.2` (exact-pinned) + scramjet-controller `0.0.14` (the Controller/Frame API, which takes a ProxyTransport directly) + libcurl-transport `2.0.5` + wisp-js. The controller asserts the engine version at construction, so any version drift fails loudly. The v1 stack (Scramjet 1.1.0 + bare-mux + libcurl 1.5.2) lives on tag `scramjet-v1-reference` as a stable-engine reference.
 
@@ -53,6 +53,10 @@ Application code lives under `src/`. Config, `public/`, and `scripts/` stay at t
 - `src/lib/` — `proxy.ts` (Scramjet proxy), `simulator/*` (`store.ts` core state machine + `config.ts` + `background.ts`), `utils.ts`.
 - `public/` — `sw.js` plus the generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`.
+
+## Deferred
+
+- **App preview video normalize** — v1 accepts browser-ready `video/mp4` only (`src/lib/apps/asset-limits.ts`). Later: background worker with ffprobe/ffmpeg (not App Router) to probe real dimensions/duration, transcode to H.264 MP4 +faststart, optional 600×600 square for MRBD, then write the canonical object to R2.
 
 ## Doc ownership
 

@@ -21,11 +21,11 @@ Do not duplicate long product architecture here — link or one-line point to ro
 
 One owner per concern. Do not dual-write the same field to URL + store + cookie.
 
-| Concern             | Owner                                      | Examples                                                                     |
-| ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- |
-| **Shareable scene** | URL (nuqs)                                 | `url`, `mode` (store: `view`), `bg`, `additive`                              |
-| **Session runtime** | Zustand (`src/lib/simulator/store.ts`)     | sliders, screen/status, custom uploads, everything the UI needs this session |
-| **Personal chrome** | Cookie only (`src/lib/simulator/prefs.ts`) | `toolbarPlacement`, `displayPanelOpen` — SSR-seeded in `src/app/page.tsx`    |
+| Concern             | Owner                                      | Examples                                                                            |
+| ------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| **Shareable scene** | URL (nuqs)                                 | `url`, `mode` (store: `view`), `bg`, `additive`                                     |
+| **Session runtime** | Zustand (`src/lib/simulator/store.ts`)     | sliders, screen/status, custom uploads, everything the UI needs this session        |
+| **Personal chrome** | Cookie only (`src/lib/simulator/prefs.ts`) | `toolbarPlacement`, `displayPanelOpen` — SSR-seeded in `src/app/simulator/page.tsx` |
 
 ### Rules
 

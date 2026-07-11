@@ -14,8 +14,8 @@ const baseSecurity = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
 ];
 
-// Hard-deny camera on non-simulator routes. On `/`, omit camera=() — Chrome probes the
-// camera policy during getDisplayMedia and logs a Violation even though we only capture
+// Hard-deny camera on non-simulator routes. On `/simulator`, omit camera=() — Chrome probes
+// the camera policy during getDisplayMedia and logs a Violation even though we only capture
 // the tab (Region Capture). display-capture must be allowed for Path A recording.
 const permissionsDenyMedia = [
   {
@@ -30,7 +30,7 @@ const permissionsSimulator = [
   },
 ];
 
-// COEP require-corp on / needs CORP on embeddable first-party assets (fonts, images).
+// COEP require-corp on /simulator needs CORP on embeddable first-party assets (fonts, images).
 const corpSameOrigin = [{ key: "Cross-Origin-Resource-Policy", value: "same-origin" }];
 
 const nextConfig: NextConfig = {
@@ -47,7 +47,7 @@ const nextConfig: NextConfig = {
     return [
       {
         // Simulator: isolation + display-capture. Do not also send camera=().
-        source: "/",
+        source: "/simulator",
         headers: [
           ...baseSecurity,
           ...permissionsSimulator,
@@ -57,8 +57,47 @@ const nextConfig: NextConfig = {
       },
       {
         // Directory, legal, and other non-simulator pages (no COEP — R2 images must load).
-        // `:path+` excludes `/` so simulator isolation headers are not diluted.
-        source: "/:path+",
+        source: "/apps",
+        headers: [
+          ...baseSecurity,
+          ...permissionsDenyMedia,
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/apps/:path*",
+        headers: [
+          ...baseSecurity,
+          ...permissionsDenyMedia,
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/privacy",
+        headers: [
+          ...baseSecurity,
+          ...permissionsDenyMedia,
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/terms",
+        headers: [
+          ...baseSecurity,
+          ...permissionsDenyMedia,
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/dev",
+        headers: [
+          ...baseSecurity,
+          ...permissionsDenyMedia,
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/api/:path*",
         headers: [
           ...baseSecurity,
           ...permissionsDenyMedia,
