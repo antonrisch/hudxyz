@@ -1,0 +1,11 @@
+# Product requirements (apps)
+
+PRDs for the hudxyz **apps directory** workstream. Infra (Turso, R2, asset APIs) is largely in place; these docs define the next product slices.
+
+| #   | Doc                                                  | Status  |
+| --- | ---------------------------------------------------- | ------- |
+| 01  | [Create draft app API](./01-create-draft-app-api.md) | Next    |
+| 02  | [App submit flow](./02-app-submit-flow.md)           | Planned |
+| 03  | [App directory](./03-app-directory.md)               | Planned |
+
+**Deferred (see root `AGENTS.md`):** Better Auth, ffmpeg/ffprobe preview normalize, editorial feed, multi-device entities.
