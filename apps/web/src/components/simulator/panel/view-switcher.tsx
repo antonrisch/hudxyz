@@ -27,7 +27,6 @@ export function ViewSwitcher() {
         const next = vals[0];
         if (next) setView(next as View); // ignore deselect so a view is always active
       }}
-      className="gap-0.5 rounded-xl border bg-muted p-0.5"
     >
       {VIEWS.map((v) => (
         <ToggleGroupItem
@@ -35,7 +34,6 @@ export function ViewSwitcher() {
           value={v.key}
           onMouseDown={dropFocus}
           onClick={() => setView(v.key)}
-          className="hover:bg-background/60 border-muted aria-pressed:bg-background! aria-pressed:border-border!"
         >
           {v.label}
         </ToggleGroupItem>
