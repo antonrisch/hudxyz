@@ -53,6 +53,7 @@ export const apps = sqliteTable("apps", {
     .$defaultFn(() => uuidv7()),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  author: text("author").notNull(),
   subtitle: text("subtitle"),
   description: text("description"),
   launchUrl: text("launch_url").notNull(),
