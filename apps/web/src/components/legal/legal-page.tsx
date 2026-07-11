@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/layout/logo";
+
 import { legal } from "@/lib/legal/config";
 import { cn } from "@/lib/utils";
 
@@ -13,36 +13,30 @@ export function LegalPage({
   className?: string;
 }) {
   return (
-    <div className="flex min-h-svh flex-col bg-background text-foreground">
-      <header className="flex items-center border-b border-border px-4 h-(--header-h)">
-        <Logo />
-      </header>
+    <main className={cn("mx-auto w-full max-w-3xl flex-1 px-6 py-10", className)}>
+      <p className="text-muted-foreground text-sm">
+        Last updated {legal.lastUpdated} ·{" "}
+        <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+          Privacy
+        </Link>
+        {" · "}
+        <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
+          Terms
+        </Link>
+      </p>
 
-      <main className={cn("mx-auto w-full max-w-3xl flex-1 px-6 py-10", className)}>
-        <p className="text-muted-foreground text-sm">
-          Last updated {legal.lastUpdated} ·{" "}
-          <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
-            Privacy
-          </Link>
-          {" · "}
-          <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
-            Terms
-          </Link>
-        </p>
+      <h1 className="mt-4 font-bold text-3xl tracking-tight">{title}</h1>
 
-        <h1 className="mt-4 font-bold text-3xl tracking-tight">{title}</h1>
+      <div className="mt-8 space-y-4 text-base/relaxed [&_a]:underline [&_a]:underline-offset-4 [&_h2]:mt-8 [&_h2]:font-semibold [&_h2]:text-xl [&_li]:ml-4 [&_p+p]:mt-4 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5">
+        {children}
+      </div>
 
-        <div className="mt-8 space-y-4 text-base/relaxed [&_a]:underline [&_a]:underline-offset-4 [&_h2]:mt-8 [&_h2]:font-semibold [&_h2]:text-xl [&_li]:ml-4 [&_p+p]:mt-4 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5">
-          {children}
-        </div>
-
-        <p className="text-muted-foreground mt-12 border-t border-border pt-8 text-sm">
-          Questions?{" "}
-          <a href={`mailto:${legal.contactEmail}`} className="underline underline-offset-4">
-            {legal.contactEmail}
-          </a>
-        </p>
-      </main>
-    </div>
+      <p className="text-muted-foreground mt-12 border-t border-border pt-8 text-sm">
+        Questions?{" "}
+        <a href={`mailto:${legal.contactEmail}`} className="underline underline-offset-4">
+          {legal.contactEmail}
+        </a>
+      </p>
+    </main>
   );
 }
