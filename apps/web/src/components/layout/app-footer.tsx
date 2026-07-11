@@ -22,6 +22,7 @@ type FooterLink = {
 
 type FooterSection = {
   title: string;
+  href?: string;
   links: readonly FooterLink[];
 };
 
@@ -43,7 +44,7 @@ const FOOTER_APP_CATEGORY_SLUGS = [
 const FOOTER_GAME_CATEGORY_SLUGS = ["casual", "puzzle", "action", "strategy"] as const;
 
 const HOME_LINKS: readonly FooterLink[] = [
-  { href: "/", label: "Simulator" },
+  { href: "/simulator", label: "Simulator" },
   { href: "/apps", label: "All apps & games" },
   { href: "/apps?type=app", label: "Apps" },
   { href: "/apps?type=game", label: "Games" },
@@ -91,13 +92,19 @@ function FooterLinkItem({ href, label, external }: FooterLink) {
   );
 }
 
-function FooterNavSection({ title, links }: FooterSection) {
+function FooterNavSection({ title, href, links }: FooterSection) {
   const id = footerSectionId(title);
 
   return (
     <nav aria-labelledby={id} className="min-w-0">
       <h2 id={id} className="mb-2 text-sm font-medium">
-        {title}
+        {href ? (
+          <Link href={href} className={FOOTER_LINK_CLASS}>
+            {title}
+          </Link>
+        ) : (
+          title
+        )}
       </h2>
       <ul className="space-y-2 text-sm text-muted-foreground">
         {links.map((link) => (
@@ -146,8 +153,16 @@ function FooterThemeToggle() {
 export function AppFooter() {
   const sections: FooterSection[] = [
     { title: "Simulator & apps", links: HOME_LINKS },
-    { title: "Apps", links: buildCategoryLinks("app", FOOTER_APP_CATEGORY_SLUGS) },
-    { title: "Games", links: buildCategoryLinks("game", FOOTER_GAME_CATEGORY_SLUGS) },
+    {
+      title: "Apps",
+      href: "/apps?type=app",
+      links: buildCategoryLinks("app", FOOTER_APP_CATEGORY_SLUGS),
+    },
+    {
+      title: "Games",
+      href: "/apps?type=game",
+      links: buildCategoryLinks("game", FOOTER_GAME_CATEGORY_SLUGS),
+    },
     { title: "Support", links: SUPPORT_LINKS },
   ];
 
