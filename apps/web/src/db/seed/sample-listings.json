@@ -3,6 +3,7 @@
   "apps": [
     {
       "id": "e8c20a8f-a93e-7018-8d66-6637fc0aeb4b",
+      "public_id": "b10ckstack1",
       "slug": "block-stack",
       "name": "Block Stack",
       "author": "ikkou.jp/MRBD",
@@ -32,6 +33,7 @@
     },
     {
       "id": "14fa273f-0a50-7b3e-8e8c-dcc6602bb6ff",
+      "public_id": "a1phatabxx",
       "slug": "alpha-tab",
       "name": "Alpha Tab",
       "author": "awfullynice.app",
@@ -58,6 +60,7 @@
     },
     {
       "id": "fee0fcf0-06ca-778c-85a5-d3559dc12d9c",
+      "public_id": "vt11tyt00x",
       "slug": "utility-tools",
       "name": "Utility Tools",
       "author": "ascents.gg",
@@ -84,6 +87,7 @@
     },
     {
       "id": "e1fe2771-fc9f-78e5-8cc5-91b8e2f1c81d",
+      "public_id": "texash01dm",
       "slug": "texas-holdem-poker",
       "name": "Texas Holdem Poker",
       "author": "displayholdem.onrender.com",

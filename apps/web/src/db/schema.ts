@@ -51,7 +51,10 @@ export const apps = sqliteTable("apps", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => uuidv7()),
-  slug: text("slug").notNull().unique(),
+  /** Stable public id (10-char Crockford). Used in URLs and `?id=` draft links. */
+  publicId: text("public_id").notNull().unique(),
+  /** SEO crumb derived from name — not unique; pair with publicId in paths. */
+  slug: text("slug").notNull(),
   name: text("name").notNull(),
   author: text("author").notNull(),
   /** Private review contact — not shown on public directory pages. */
