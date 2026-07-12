@@ -15,6 +15,7 @@ export type ListingListItem = {
   listingType: ListingType;
   categoryName: string;
   iconUrl: string | null;
+  launchUrl: string;
   launchCount: number;
 };
 
@@ -33,7 +34,6 @@ export type ListingMediaVideo = {
 
 export type ListingDetail = ListingListItem & {
   author: string;
-  launchUrl: string;
   targetDevice: string;
   categorySlug: string;
   secondaryCategorySlug: string | null;
@@ -93,6 +93,7 @@ function sampleListItem(app: SampleApp): ListingListItem {
     listingType: app.listing_type as ListingType,
     categoryName: categoryNameFromRef(app.primary_category as SampleCategoryRef) ?? "Uncategorized",
     iconUrl: iconUrlForApp(app.id),
+    launchUrl: app.launch_url,
     launchCount: app.launch_count ?? 0,
   };
 }
@@ -149,7 +150,6 @@ function detailFromSample(publicId: string): ListingDetail | null {
     ...sampleListItem(app),
     iconUrl,
     author: app.author,
-    launchUrl: app.launch_url,
     targetDevice: app.target_device,
     categorySlug: (app.primary_category as SampleCategoryRef).slug,
     secondaryCategorySlug: (app.secondary_category as SampleCategoryRef | null)?.slug ?? null,
@@ -182,6 +182,7 @@ export async function listPublishedListings(filter?: {
       listingType: apps.listingType,
       categoryName: primaryCategory.name,
       iconObjectKey: appAssets.objectKey,
+      launchUrl: apps.launchUrl,
       launchCount: apps.launchCount,
     })
     .from(apps)
@@ -198,6 +199,7 @@ export async function listPublishedListings(filter?: {
     listingType: row.listingType,
     categoryName: row.categoryName,
     iconUrl: row.iconObjectKey ? publicUrl(row.iconObjectKey) : null,
+    launchUrl: row.launchUrl,
     launchCount: row.launchCount,
   }));
 }

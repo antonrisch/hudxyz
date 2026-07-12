@@ -3,6 +3,7 @@
 import { useState } from "react";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
+import type { VariantProps } from "class-variance-authority";
 
 import { ListingCopyLinkRow } from "@/components/listings/listing-copy-link-row";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -22,10 +23,14 @@ import { cn } from "@/lib/utils";
 export function ListingOpenDialog({
   name,
   launchUrl,
+  label = "Open on Glasses",
+  size = "lg",
   className,
 }: {
   name: string;
   launchUrl: string;
+  label?: string;
+  size?: NonNullable<VariantProps<typeof buttonVariants>["size"]>;
   className?: string;
 }) {
   const isMobile = useMobileLayout();
@@ -35,7 +40,7 @@ export function ListingOpenDialog({
   const title = name.trim() || "This app";
   const deviceDeepLink = buildDeviceSetupDeepLink(name, launchUrl);
   const triggerClassName = cn(
-    buttonVariants({ variant: "brand", size: "lg" }),
+    buttonVariants({ variant: "brand", size }),
     "min-w-0 flex-1 font-semibold sm:flex-none",
     className,
   );
@@ -45,12 +50,12 @@ export function ListingOpenDialog({
       <Button
         type="button"
         variant="brand"
-        size="lg"
+        size={size}
         className={triggerClassName}
         disabled
         onClick={() => toast.message("Could not generate install link")}
       >
-        Open on Glasses
+        {label}
       </Button>
     );
   }
@@ -58,7 +63,7 @@ export function ListingOpenDialog({
   if (isMobile) {
     return (
       <a href={deviceDeepLink} className={triggerClassName}>
-        Open on Glasses
+        {label}
       </a>
     );
   }
@@ -73,8 +78,8 @@ export function ListingOpenDialog({
     >
       <DialogTrigger
         render={
-          <Button type="button" variant="brand" size="lg" className={triggerClassName}>
-            Open on Glasses
+          <Button type="button" variant="brand" size={size} className={triggerClassName}>
+            {label}
           </Button>
         }
       />
