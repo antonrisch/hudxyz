@@ -10,6 +10,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import type { ListingMediaImage, ListingMediaVideo } from "@/lib/apps/queries";
+import { useMobileLayout } from "@/lib/use-mobile-layout";
 import { cn } from "@/lib/utils";
 
 type ListingMediaSlide =
@@ -38,16 +39,17 @@ export function ListingMedia({
   className?: string;
 }) {
   const slides = buildSlides(video, screenshots);
+  const isMobile = useMobileLayout();
+  const slidesPerView = isMobile ? 1 : 3;
+  const canScroll = slides.length > slidesPerView;
+
   if (slides.length === 0) return null;
 
   return (
-    <Carousel
-      className={cn("w-full", className)}
-      opts={{ align: "start", loop: slides.length > 3 }}
-    >
+    <Carousel className={cn("w-full", className)} opts={{ align: "start" }}>
       <CarouselContent>
         {slides.map((slide) => (
-          <CarouselItem key={slide.url} className="basis-1/3">
+          <CarouselItem key={slide.url} className="basis-full md:basis-1/3">
             {slide.kind === "video" ? (
               <video
                 src={slide.url}
@@ -70,7 +72,7 @@ export function ListingMedia({
           </CarouselItem>
         ))}
       </CarouselContent>
-      {slides.length > 3 ? (
+      {canScroll ? (
         <>
           <CarouselPrevious className="left-2 border-none bg-background/80 shadow-sm" />
           <CarouselNext className="right-2 border-none bg-background/80 shadow-sm" />
