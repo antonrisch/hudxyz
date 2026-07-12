@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Glasses } from "lucide-react";
+import { Check, Glasses } from "lucide-react";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 
+import { Copy } from "@/components/icons/copy";
 import { useSimulatorState } from "@/components/simulator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

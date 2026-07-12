@@ -1,7 +1,8 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { Check } from "lucide-react";
 
+import { Copy } from "@/components/icons/copy";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

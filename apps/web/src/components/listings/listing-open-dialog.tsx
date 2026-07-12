@@ -19,7 +19,7 @@ import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard";
 import { useMobileLayout } from "@/lib/use-mobile-layout";
 import { cn } from "@/lib/utils";
 
-export function ListingInstallDialog({
+export function ListingOpenDialog({
   name,
   launchUrl,
   className,
@@ -50,7 +50,7 @@ export function ListingInstallDialog({
         disabled
         onClick={() => toast.message("Could not generate install link")}
       >
-        Install on Glasses
+        Open on Glasses
       </Button>
     );
   }
@@ -58,7 +58,7 @@ export function ListingInstallDialog({
   if (isMobile) {
     return (
       <a href={deviceDeepLink} className={triggerClassName}>
-        Install on Glasses
+        Open on Glasses
       </a>
     );
   }
@@ -74,14 +74,14 @@ export function ListingInstallDialog({
       <DialogTrigger
         render={
           <Button type="button" variant="brand" size="lg" className={triggerClassName}>
-            Install on Glasses
+            Open on Glasses
           </Button>
         }
       />
       <DialogContent className="gap-5 sm:max-w-sm" showCloseButton>
         <DialogHeader className="gap-1.5 pr-8">
           <DialogTitle className="text-lg font-semibold tracking-tight">
-            Install {title} on your Ray-Ban Glasses
+            Open {title} on your Ray-Ban Glasses
           </DialogTitle>
           <DialogDescription>
             Scan the QR code with your phone or in the Meta AI app, or paste the link below to add{" "}

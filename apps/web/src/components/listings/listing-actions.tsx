@@ -3,7 +3,7 @@
 import { Check, ChevronDown, Glasses, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 
-import { ListingInstallDialog } from "@/components/listings/listing-install-dialog";
+import { ListingOpenDialog } from "@/components/listings/listing-open-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,7 +34,7 @@ export function ListingActions({
 
   return (
     <div className={cn("flex w-full items-stretch gap-2 sm:w-auto", className)}>
-      <ListingInstallDialog name={appName} launchUrl={launchUrl} />
+      <ListingOpenDialog name={appName} launchUrl={launchUrl} />
       <DropdownMenu>
         <DropdownMenuTrigger
           render={

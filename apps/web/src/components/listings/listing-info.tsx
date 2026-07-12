@@ -1,23 +1,32 @@
 import { SquareArrowOutUpRight } from "lucide-react";
 
 import { ListingSection } from "@/components/listings/listing-section";
-import { authorHref, formatOpenCount } from "@/lib/apps/listing-urls";
+import { authorSiteHref, formatOpenCount } from "@/lib/apps/listing-urls";
 import type { ListingDetail } from "@/lib/apps/queries";
 
 const DEVICE_LABELS: Record<string, string> = {
   mrbd: "Meta Ray-Ban Display",
 };
 
-function ExternalLinkIcon({ href, label }: { href: string; label: string }) {
+function ExternalLink({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children?: React.ReactNode;
+}) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={label}
-      className="inline-flex text-foreground hover:text-muted-foreground"
+      aria-label={children ? undefined : label}
+      className="inline-flex items-center gap-1.5 text-brand hover:underline"
     >
-      <SquareArrowOutUpRight className="size-4" aria-hidden />
+      {children}
+      <SquareArrowOutUpRight className="size-4 shrink-0" aria-hidden />
     </a>
   );
 }
@@ -32,7 +41,7 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 export function ListingInformation({ listing }: { listing: ListingDetail }) {
-  const developerHref = authorHref(listing.author);
+  const developerHref = authorSiteHref(listing.author);
   const categoryLabel = [listing.categoryName, listing.secondaryCategoryName]
     .filter(Boolean)
     .join(" · ");
@@ -48,7 +57,9 @@ export function ListingInformation({ listing }: { listing: ListingDetail }) {
           {listing.author.trim() ? (
             <InfoRow label="Developer website">
               {developerHref ? (
-                <ExternalLinkIcon href={developerHref} label="Open developer website" />
+                <ExternalLink href={developerHref} label="Open developer website">
+                  {listing.author}
+                </ExternalLink>
               ) : (
                 listing.author
               )}
@@ -62,7 +73,9 @@ export function ListingInformation({ listing }: { listing: ListingDetail }) {
           <InfoRow label="Opens">{formatOpenCount(listing.launchCount)}</InfoRow>
 
           <InfoRow label="App URL">
-            <ExternalLinkIcon href={listing.launchUrl} label="Open app URL" />
+            <ExternalLink href={listing.launchUrl} label="Open app URL">
+              {listing.launchUrl}
+            </ExternalLink>
           </InfoRow>
         </dl>
       </div>
