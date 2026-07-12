@@ -10,16 +10,16 @@ type ActiveFilter = "all" | ListingType;
 
 const PAGE_COPY: Record<ActiveFilter, { title: string; description: string }> = {
   all: {
-    title: "Apps & Games",
-    description: "Wearable web apps and games for smart glasses.",
+    title: "Apps and Games",
+    description: "Wearable web apps and games for Meta Ray-Ban Display.",
   },
   app: {
     title: "Apps",
-    description: "Wearable web apps for smart glasses.",
+    description: "Wearable web apps for Meta Ray-Ban Display.",
   },
   game: {
     title: "Games",
-    description: "Wearable games for smart glasses.",
+    description: "Wearable games for Meta Ray-Ban Display.",
   },
 };
 

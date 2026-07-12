@@ -1,4 +1,4 @@
-import { formatInstallCount } from "@/lib/apps/listing-urls";
+import { formatOpenCount } from "@/lib/apps/listing-urls";
 import type { ListingDetail } from "@/lib/apps/queries";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +10,7 @@ function MetaChip({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Taxonomy chips + install count below the page header. */
+/** Taxonomy chips + open count below the page header. */
 export function ListingMetaChips({
   listing,
   className,
@@ -28,7 +28,7 @@ export function ListingMetaChips({
       <MetaChip>{typeLabel}</MetaChip>
       {categoryLabel ? <MetaChip>{categoryLabel}</MetaChip> : null}
       <span className="tabular-nums text-base text-foreground">
-        {formatInstallCount(listing.launchCount)}
+        {formatOpenCount(listing.launchCount)}
       </span>
     </div>
   );

@@ -28,7 +28,7 @@ export function authorSiteHref(author: string): string | null {
   return authorHref(author) ?? `https://${hostname}`;
 }
 
-export function formatInstallCount(count: number): string {
+export function formatOpenCount(count: number): string {
   const formatted = count.toLocaleString();
-  return count === 1 ? `${formatted} install` : `${formatted} installs`;
+  return count === 1 ? `${formatted} open` : `${formatted} opens`;
 }

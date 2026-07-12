@@ -1,7 +1,7 @@
 import { SquareArrowOutUpRight } from "lucide-react";
 
 import { ListingSection } from "@/components/listings/listing-section";
-import { authorHref, formatInstallCount } from "@/lib/apps/listing-urls";
+import { authorHref, formatOpenCount } from "@/lib/apps/listing-urls";
 import type { ListingDetail } from "@/lib/apps/queries";
 
 const DEVICE_LABELS: Record<string, string> = {
@@ -25,8 +25,8 @@ function ExternalLinkIcon({ href, label }: { href: string; label: string }) {
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-1 gap-1 py-3.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:items-start sm:gap-4 sm:py-2.5">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 text-sm text-foreground">{children}</dd>
+      <dt className="text-base text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 text-base text-foreground">{children}</dd>
     </div>
   );
 }
@@ -59,7 +59,7 @@ export function ListingInformation({ listing }: { listing: ListingDetail }) {
 
           <InfoRow label="Compatibility">{compatibility}</InfoRow>
 
-          <InfoRow label="Installs">{formatInstallCount(listing.launchCount)}</InfoRow>
+          <InfoRow label="Opens">{formatOpenCount(listing.launchCount)}</InfoRow>
 
           <InfoRow label="App URL">
             <ExternalLinkIcon href={listing.launchUrl} label="Open app URL" />

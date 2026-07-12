@@ -12,20 +12,24 @@ export function Logo({
     <Link
       href="/"
       aria-label="hud.xyz home"
-      className={cn(
-        "inline-flex items-center gap-2 text-2xl font-bold tracking-tighter hover:underline",
-        className,
-      )}
+      className={cn("inline-flex items-center gap-2 hover:underline", className)}
       {...props}
     >
       <img
         src="/icon.svg"
         alt=""
-        width={40}
-        height={40}
-        className="size-9 shrink-0 sm:size-7.5 [image-rendering:pixelated]"
+        width={36}
+        height={36}
+        className="size-9 shrink-0 [image-rendering:pixelated] sm:size-7.5"
       />
-      <span className={cn(!showWordmarkOnMobile && "hidden sm:inline")}>hud.xyz</span>
+      <span
+        className={cn(
+          "text-2xl font-bold leading-none tracking-tighter",
+          !showWordmarkOnMobile && "hidden sm:inline",
+        )}
+      >
+        hud.xyz
+      </span>
     </Link>
   );
 }
