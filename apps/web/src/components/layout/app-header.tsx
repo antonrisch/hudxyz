@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/layout/logo";
-import { DIRECTORY_MAILTO } from "@/lib/simulator/config";
 import { cn } from "@/lib/utils";
 
 const link = "text-base font-medium text-foreground hover:underline";
@@ -9,7 +8,7 @@ const link = "text-base font-medium text-foreground hover:underline";
 const SITE_NAV = [
   { label: "Home", href: "/" },
   { label: "Simulator", href: "/simulator" },
-  { label: "Apps and Games", href: "/apps" },
+  { label: "Apps", href: "/apps" },
 ] as const;
 
 export function AppHeader() {
@@ -24,9 +23,9 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
-        <a href={DIRECTORY_MAILTO} className={cn(link, "ml-auto shrink-0")}>
+        <Link href="/apps/submit" className={cn(link, "ml-auto shrink-0")}>
           Submit
-        </a>
+        </Link>
       </div>
     </header>
   );

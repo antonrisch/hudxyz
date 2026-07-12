@@ -11,7 +11,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import type { ListingType } from "@/db/schema";
 import { findCategoryDefinition } from "@/lib/category/categories";
 import { legal } from "@/lib/legal/config";
-import { DIRECTORY_MAILTO, FEEDBACK_MAILTO } from "@/lib/simulator/config";
+import { FEEDBACK_MAILTO } from "@/lib/simulator/config";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +59,7 @@ const HOME_LINKS: readonly FooterLink[] = [
   { href: "/apps", label: "All apps & games" },
   { href: "/apps?type=app", label: "Apps" },
   { href: "/apps?type=game", label: "Games" },
-  { href: DIRECTORY_MAILTO, label: "Submit an app", external: true },
+  { href: "/apps/submit", label: "Submit a Web App" },
 ];
 
 const SUPPORT_LINKS: readonly FooterLink[] = [

@@ -1,4 +1,4 @@
-import { DIRECTORY_MAILTO } from "@/lib/simulator/config";
+import Link from "next/link";
 
 export function ListingsEmpty() {
   return (
@@ -6,9 +6,9 @@ export function ListingsEmpty() {
       <p className="text-muted-foreground">No published apps yet.</p>
       <p className="mt-2 text-sm text-muted-foreground">
         Building for smart glasses?{" "}
-        <a href={DIRECTORY_MAILTO} className="underline underline-offset-4 hover:text-foreground">
-          Submit an app
-        </a>
+        <Link href="/apps/submit" className="underline underline-offset-4 hover:text-foreground">
+          Submit a Web App
+        </Link>
       </p>
     </div>
   );
