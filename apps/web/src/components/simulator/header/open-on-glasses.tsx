@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Check, Copy, Glasses } from "lucide-react";
 import QRCode from "react-qr-code";
+import { toast } from "sonner";
+
+import { useSimulatorState } from "@/components/simulator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,12 +17,10 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useSimulatorState } from "@/components/simulator";
 import { SUGGESTED_APPS } from "@/lib/simulator/config";
 import { dropFocus } from "@/lib/simulator/input";
 import { buildDeviceSetupDeepLink, normalizeWebUrl } from "@/lib/simulator/search-params";
 import { useMobileLayout } from "@/lib/use-mobile-layout";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 function suggestedAppNameForUrl(rawUrl: string): string {
@@ -28,7 +29,7 @@ function suggestedAppNameForUrl(rawUrl: string): string {
   return SUGGESTED_APPS.find((app) => app.url === href)?.name ?? "";
 }
 
-export function ShareMenu({ className }: { className?: string }) {
+export function OpenOnGlasses({ className }: { className?: string }) {
   const isMobile = useMobileLayout();
   const url = useSimulatorState((s) => s.url);
   const [open, setOpen] = useState(false);
@@ -69,9 +70,9 @@ export function ShareMenu({ className }: { className?: string }) {
             type="button"
             variant="brand"
             size={isMobile ? "icon-lg" : "lg"}
-            aria-label="Share"
+            aria-label="Open on Glasses"
             onMouseDown={dropFocus}
-            className={cn("shrink-0", className)}
+            className={cn("shrink-0 font-semibold", className)}
           >
             <Glasses data-icon={isMobile ? undefined : "inline-start"} />
             {!isMobile ? <span>Open on Glasses</span> : null}
@@ -87,9 +88,9 @@ export function ShareMenu({ className }: { className?: string }) {
         </PopoverHeader>
 
         <div className="space-y-1.5">
-          <Label htmlFor="share-app-name">App name</Label>
+          <Label htmlFor="glasses-app-name">App name</Label>
           <Input
-            id="share-app-name"
+            id="glasses-app-name"
             value={appName}
             onChange={(e) => setAppName(e.target.value)}
             placeholder="My MRBD app"
