@@ -54,7 +54,9 @@ export const apps = sqliteTable("apps", {
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   author: text("author").notNull(),
-  description: text("description").notNull(),
+  /** Private review contact — not shown on public directory pages. */
+  contactEmail: text("contact_email").notNull(),
+  description: text("description"),
   launchUrl: text("launch_url").notNull(),
   listingType: text("listing_type").notNull().$type<ListingType>(),
   primaryCategoryId: text("primary_category_id")
