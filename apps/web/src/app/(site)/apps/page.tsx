@@ -72,7 +72,7 @@ export default async function AppsPage({
       ) : (
         <ul className="mt-8 grid list-none grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {listings.map((listing) => (
-            <ListingRow key={listing.slug} listing={listing} />
+            <ListingRow key={listing.publicId} listing={listing} />
           ))}
         </ul>
       )}

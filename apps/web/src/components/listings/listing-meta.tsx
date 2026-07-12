@@ -35,7 +35,7 @@ export function ListingMeta({
       <span className="mx-1 hidden text-border sm:inline" aria-hidden>
         ·
       </span>
-      <ListingShareDialog name={listing.name} slug={listing.slug} />
+      <ListingShareDialog name={listing.name} slug={listing.slug} publicId={listing.publicId} />
     </div>
   );
 }

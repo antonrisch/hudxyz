@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { ListingIcon } from "@/components/listings/listing-icon";
 import { buttonVariants } from "@/components/ui/button";
+import { listingPath } from "@/lib/apps/public-id";
 import type { ListingListItem } from "@/lib/apps/queries";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,9 @@ export function ListingRow({
   listing: ListingListItem;
   className?: string;
 }) {
-  const href = `/apps/${listing.slug}`;
+  const href = listingPath(listing.slug, listing.publicId);
+
+  const description = listing.description ?? `${listing.listingType} · ${listing.categoryName}`;
 
   return (
     <li>
@@ -29,11 +32,8 @@ export function ListingRow({
           <p className="line-clamp-1 text-base font-semibold text-foreground leading-none">
             {listing.name}
           </p>
-          <p
-            title={listing.description}
-            className="truncate text-sm text-muted-foreground leading-none"
-          >
-            {listing.description}
+          <p title={description} className="truncate text-sm text-muted-foreground leading-none">
+            {description}
           </p>
         </div>
         <span

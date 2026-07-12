@@ -2,12 +2,17 @@ import { and, count, eq } from "drizzle-orm";
 
 import { getDb } from "@/db";
 import { appAssets, apps, type AppAssetKind } from "@/db/schema";
+import { isPublicId } from "@/lib/apps/public-id";
 import { deleteObject } from "@/lib/r2";
 
 import { MAX_PREVIEWS_PER_APP, MAX_SCREENSHOTS_PER_APP } from "./asset-limits";
 
 export async function getAppById(appId: string) {
   const db = getDb();
+  if (isPublicId(appId)) {
+    const byPublic = await db.select().from(apps).where(eq(apps.publicId, appId)).limit(1);
+    return byPublic[0];
+  }
   const rows = await db.select().from(apps).where(eq(apps.id, appId)).limit(1);
   return rows[0];
 }

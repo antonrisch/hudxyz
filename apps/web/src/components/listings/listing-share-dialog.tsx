@@ -17,16 +17,19 @@ import {
   listingShareTitle,
   listingShareUrl,
 } from "@/lib/apps/share-targets";
+import { listingPath } from "@/lib/apps/public-id";
 import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
 
 export function ListingShareDialog({
   name,
   slug,
+  publicId,
   className,
 }: {
   name: string;
   slug: string;
+  publicId: string;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -42,7 +45,7 @@ export function ListingShareDialog({
       open={open}
       onOpenChange={(nextOpen) => {
         if (nextOpen) {
-          setListingPageUrl(`${window.location.origin}/apps/${slug}`);
+          setListingPageUrl(`${window.location.origin}${listingPath(slug, publicId)}`);
           resetCopied();
         }
         setOpen(nextOpen);

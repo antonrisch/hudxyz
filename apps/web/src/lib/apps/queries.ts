@@ -9,8 +9,9 @@ import { publicUrl } from "@/lib/r2";
 
 export type ListingListItem = {
   slug: string;
+  publicId: string;
   name: string;
-  description: string;
+  description: string | null;
   listingType: ListingType;
   categoryName: string;
   iconUrl: string | null;
@@ -86,6 +87,7 @@ function iconUrlForApp(appId: string): string | null {
 function sampleListItem(app: SampleApp): ListingListItem {
   return {
     slug: app.slug,
+    publicId: app.public_id,
     name: app.name,
     description: app.description,
     listingType: app.listing_type as ListingType,
@@ -104,10 +106,10 @@ function listFromSample(filter?: { listingType?: ListingType }): ListingListItem
     .map(sampleListItem);
 }
 
-function detailFromSample(slug: string): ListingDetail | null {
-  const app = sampleListings.apps.find((row) => row.slug === slug && row.status === "published") as
-    | SampleApp
-    | undefined;
+function detailFromSample(publicId: string): ListingDetail | null {
+  const app = sampleListings.apps.find(
+    (row) => row.public_id === publicId && row.status === "published",
+  ) as SampleApp | undefined;
   if (!app) return null;
 
   const assets = sampleListings.app_assets
@@ -174,6 +176,7 @@ export async function listPublishedListings(filter?: {
   const rows = await db
     .select({
       slug: apps.slug,
+      publicId: apps.publicId,
       name: apps.name,
       description: apps.description,
       listingType: apps.listingType,
@@ -189,6 +192,7 @@ export async function listPublishedListings(filter?: {
 
   return rows.map((row) => ({
     slug: row.slug,
+    publicId: row.publicId,
     name: row.name,
     description: row.description,
     listingType: row.listingType,
@@ -198,9 +202,11 @@ export async function listPublishedListings(filter?: {
   }));
 }
 
-export async function getPublishedListingBySlug(slug: string): Promise<ListingDetail | null> {
+export async function getPublishedListingByPublicId(
+  publicId: string,
+): Promise<ListingDetail | null> {
   if (useSampleListings()) {
-    return detailFromSample(slug);
+    return detailFromSample(publicId);
   }
 
   const db = getDb();
@@ -209,6 +215,7 @@ export async function getPublishedListingBySlug(slug: string): Promise<ListingDe
     .select({
       id: apps.id,
       slug: apps.slug,
+      publicId: apps.publicId,
       name: apps.name,
       description: apps.description,
       listingType: apps.listingType,
@@ -224,7 +231,7 @@ export async function getPublishedListingBySlug(slug: string): Promise<ListingDe
     .from(apps)
     .innerJoin(primaryCategory, eq(apps.primaryCategoryId, primaryCategory.id))
     .leftJoin(secondaryCategory, eq(apps.secondaryCategoryId, secondaryCategory.id))
-    .where(and(eq(apps.slug, slug), eq(apps.status, "published")))
+    .where(and(eq(apps.publicId, publicId), eq(apps.status, "published")))
     .limit(1);
 
   const row = rows[0];
@@ -269,6 +276,7 @@ export async function getPublishedListingBySlug(slug: string): Promise<ListingDe
 
   return {
     slug: row.slug,
+    publicId: row.publicId,
     name: row.name,
     description: row.description,
     listingType: row.listingType,
@@ -284,4 +292,25 @@ export async function getPublishedListingBySlug(slug: string): Promise<ListingDe
     screenshots,
     video,
   };
+}
+
+/** Legacy slug-only lookup — returns the listing when exactly one published row matches. */
+export async function getPublishedListingBySlug(slug: string): Promise<ListingDetail | null> {
+  if (useSampleListings()) {
+    const matches = sampleListings.apps.filter(
+      (row) => row.slug === slug && row.status === "published",
+    );
+    if (matches.length !== 1) return null;
+    return detailFromSample(matches[0]!.public_id);
+  }
+
+  const db = getDb();
+  const rows = await db
+    .select({ publicId: apps.publicId })
+    .from(apps)
+    .where(and(eq(apps.slug, slug), eq(apps.status, "published")))
+    .limit(2);
+
+  if (rows.length !== 1) return null;
+  return getPublishedListingByPublicId(rows[0]!.publicId);
 }
