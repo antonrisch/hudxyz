@@ -1,6 +1,3 @@
-/** Apple App Store subtitle limit — one-line hook under the app name. */
-export const SUBTITLE_MAX_LENGTH = 30;
-
 /**
  * Detail-page description. Apple/Google allow 4,000, but MRBD listings are short;
  * 500 fits a lead paragraph plus features/controls without essay-length copy.

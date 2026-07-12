@@ -12,9 +12,6 @@ export function ListingRow({
   listing: ListingListItem;
   className?: string;
 }) {
-  const typeLabel = listing.listingType === "game" ? "Game" : "App";
-  const meta = `${typeLabel} · ${listing.categoryName}`;
-  const subtitle = listing.subtitle ?? meta;
   const href = `/apps/${listing.slug}`;
 
   return (
@@ -33,10 +30,10 @@ export function ListingRow({
             {listing.name}
           </p>
           <p
-            title={listing.subtitle ?? undefined}
+            title={listing.description}
             className="truncate text-sm text-muted-foreground leading-none"
           >
-            {subtitle}
+            {listing.description}
           </p>
         </div>
         <span

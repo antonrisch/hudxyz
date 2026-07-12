@@ -10,8 +10,7 @@ import { publicUrl } from "@/lib/r2";
 export type ListingListItem = {
   slug: string;
   name: string;
-  subtitle: string | null;
-  description: string | null;
+  description: string;
   listingType: ListingType;
   categoryName: string;
   iconUrl: string | null;
@@ -88,7 +87,6 @@ function sampleListItem(app: SampleApp): ListingListItem {
   return {
     slug: app.slug,
     name: app.name,
-    subtitle: app.subtitle,
     description: app.description,
     listingType: app.listing_type as ListingType,
     categoryName: categoryNameFromRef(app.primary_category as SampleCategoryRef) ?? "Uncategorized",
@@ -177,7 +175,6 @@ export async function listPublishedListings(filter?: {
     .select({
       slug: apps.slug,
       name: apps.name,
-      subtitle: apps.subtitle,
       description: apps.description,
       listingType: apps.listingType,
       categoryName: primaryCategory.name,
@@ -193,7 +190,6 @@ export async function listPublishedListings(filter?: {
   return rows.map((row) => ({
     slug: row.slug,
     name: row.name,
-    subtitle: row.subtitle,
     description: row.description,
     listingType: row.listingType,
     categoryName: row.categoryName,
@@ -214,7 +210,6 @@ export async function getPublishedListingBySlug(slug: string): Promise<ListingDe
       id: apps.id,
       slug: apps.slug,
       name: apps.name,
-      subtitle: apps.subtitle,
       description: apps.description,
       listingType: apps.listingType,
       author: apps.author,
@@ -275,7 +270,6 @@ export async function getPublishedListingBySlug(slug: string): Promise<ListingDe
   return {
     slug: row.slug,
     name: row.name,
-    subtitle: row.subtitle,
     description: row.description,
     listingType: row.listingType,
     categoryName: row.categoryName,
