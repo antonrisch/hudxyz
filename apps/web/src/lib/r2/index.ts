@@ -20,6 +20,9 @@ function getR2Client(): S3Client {
       region: "auto",
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
       credentials: { accessKeyId, secretAccessKey },
+      // Browser PUTs only send Content-Type; flexible checksums embed
+      // x-amz-checksum-* on the presigned URL and break those uploads.
+      requestChecksumCalculation: "WHEN_REQUIRED",
     });
   }
 

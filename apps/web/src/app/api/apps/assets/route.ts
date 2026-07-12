@@ -34,13 +34,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "kind must be icon, screenshot, or video" }, { status: 400 });
   }
 
-  if (!assertObjectKeyForApp(appId, objectKey, kind)) {
-    return NextResponse.json({ error: "objectKey does not match app" }, { status: 400 });
-  }
-
   const app = await getAppById(appId);
   if (!app) {
     return NextResponse.json({ error: "App not found" }, { status: 404 });
+  }
+
+  if (!assertObjectKeyForApp(app.id, objectKey, kind)) {
+    return NextResponse.json({ error: "objectKey does not match app" }, { status: 400 });
   }
 
   if (kind === "video") {
@@ -59,13 +59,13 @@ export async function POST(request: Request) {
   }
 
   if (kind === "icon" || kind === "video") {
-    await deleteAppAssetsByKind(appId, kind);
-  } else if (!(await canAddAsset(appId, kind))) {
+    await deleteAppAssetsByKind(app.id, kind);
+  } else if (!(await canAddAsset(app.id, kind))) {
     return NextResponse.json({ error: "Screenshot limit reached" }, { status: 409 });
   }
 
   const asset = await insertAppAsset({
-    appId,
+    appId: app.id,
     kind,
     objectKey,
     sortOrder,

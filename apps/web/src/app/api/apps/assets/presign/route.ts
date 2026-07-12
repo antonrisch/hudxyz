@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "App not found" }, { status: 404 });
   }
 
-  const objectKey = appAssetObjectKey(appId, kind, filename);
+  const objectKey = appAssetObjectKey(app.id, kind, filename);
   const uploadUrl = await presignPut(objectKey, contentType);
 
   return NextResponse.json({
