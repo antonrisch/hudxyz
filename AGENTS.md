@@ -19,7 +19,7 @@ The simulator reproduces the two things that make the device different from a no
 
 ## The simulator
 
-The simulator lives at **`/simulator`** (legacy **`/`** redirects there with query params preserved). It renders the `Simulator` component (`src/components/simulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
+The simulator lives at **`/simulator`** (legacy **`/?…`** query links redirect there with params preserved). **`/`** is the site landing page. It renders the `Simulator` component (`src/components/simulator/`) as an SPA at `/simulator`. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
 
 - **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`src/components/simulator/frames.tsx`).
 - **1:1** — the surface at its exact 600×600 size, no scaling (`pixel` in `?mode=`).

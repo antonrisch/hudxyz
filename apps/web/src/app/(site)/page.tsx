@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
 import { permanentRedirect } from "next/navigation";
 
-/** Legacy `/` and `/?url=…` share links → `/simulator`. */
+export const metadata: Metadata = {
+  title: "hud.xyz",
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+};
+
+/** Legacy `/?url=…` (and other query) share links → `/simulator`. */
 export default async function HomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const qs = new URLSearchParams();
@@ -16,5 +23,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   }
 
   const query = qs.toString();
-  permanentRedirect(query ? `/simulator?${query}` : "/simulator");
+  if (query) permanentRedirect(`/simulator?${query}`);
+
+  return <main className="page-px mx-auto w-full max-w-6xl flex-1 py-10" />;
 }

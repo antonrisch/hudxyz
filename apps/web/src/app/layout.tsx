@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz"),
   title: {
     default: "hud.xyz",
-    template: "%s | hud.xyz",
+    template: "%s - hud.xyz",
   },
   description: SIMULATOR_SUMMARY,
   applicationName: "hud.xyz",
