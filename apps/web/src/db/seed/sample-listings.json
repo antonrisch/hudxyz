@@ -5,8 +5,7 @@
       "id": "e8c20a8f-a93e-7018-8d66-6637fc0aeb4b",
       "slug": "block-stack",
       "name": "Block Stack",
-      "author": "ikkou",
-      "subtitle": "Stack blocks on MRBD",
+      "author": "ikkou.jp/MRBD",
       "description": "Stack blocks as high as you can on the Meta Ray-Ban Display. D-pad to move, Enter to place.",
       "launch_url": "https://ikkou.jp/MRBD/apps/block-stack/",
       "listing_type": "game",
@@ -35,8 +34,7 @@
       "id": "14fa273f-0a50-7b3e-8e8c-dcc6602bb6ff",
       "slug": "alpha-tab",
       "name": "Alpha Tab",
-      "author": "Awfully Nice",
-      "subtitle": "Guitar tabs for glasses",
+      "author": "awfullynice.app",
       "description": "Guitar tablature viewer tuned for the 600×600 waveguide — follow charts with D-pad navigation.",
       "launch_url": "https://argustab.awfullynice.app",
       "listing_type": "app",
@@ -62,8 +60,7 @@
       "id": "fee0fcf0-06ca-778c-85a5-d3559dc12d9c",
       "slug": "utility-tools",
       "name": "Utility Tools",
-      "author": "Ascents",
-      "subtitle": "Glanceable glass utilities",
+      "author": "ascents.gg",
       "description": "Everyday utilities for smart glasses — quick tools designed for glanceable, D-pad-first use.",
       "launch_url": "https://herald.ascents.gg/a/tools/",
       "listing_type": "app",
@@ -89,8 +86,7 @@
       "id": "e1fe2771-fc9f-78e5-8cc5-91b8e2f1c81d",
       "slug": "texas-holdem-poker",
       "name": "Texas Holdem Poker",
-      "author": "Display Holdem",
-      "subtitle": "Heads-up poker on MRBD",
+      "author": "displayholdem.onrender.com",
       "description": "Heads-up Texas Hold'em on the Meta Ray-Ban Display. Play a hand with D-pad controls.",
       "launch_url": "https://displayholdem.onrender.com",
       "listing_type": "game",
@@ -168,13 +164,13 @@
       "kind": "screenshot",
       "object_key": "apps/e8c20a8f-a93e-7018-8d66-6637fc0aeb4b/screenshots/screenshot-01.jpg",
       "sort_order": 1,
-      "width": 4096,
-      "height": 4096,
+      "width": 3024,
+      "height": 3024,
       "duration_ms": null,
       "created_at": 1735862400000,
       "_source_path": "public/sample-media/block-stack/screenshot-01.jpg",
-      "_pexels_id": 11236643,
-      "_pexels_url": "https://www.pexels.com/photo/a-close-up-shot-of-a-brick-wall-11236643/"
+      "_pexels_id": 12950777,
+      "_pexels_url": "https://www.pexels.com/photo/city-buildings-rooftops-on-sky-background-12950777/"
     },
     {
       "id": "9016e4e7-38c0-7e6e-8a74-eba1e8315b43",
@@ -182,13 +178,13 @@
       "kind": "screenshot",
       "object_key": "apps/e8c20a8f-a93e-7018-8d66-6637fc0aeb4b/screenshots/screenshot-02.jpg",
       "sort_order": 2,
-      "width": 2992,
-      "height": 2992,
+      "width": 4000,
+      "height": 4000,
       "duration_ms": null,
       "created_at": 1735862400000,
       "_source_path": "public/sample-media/block-stack/screenshot-02.jpg",
-      "_pexels_id": 34658228,
-      "_pexels_url": "https://www.pexels.com/photo/elegant-glass-roof-in-shopping-arcade-bournemouth-34658228/"
+      "_pexels_id": 22624279,
+      "_pexels_url": "https://www.pexels.com/photo/memorial-to-the-murdered-jews-of-europe-in-berlin-22624279/"
     },
     {
       "id": "e0387f2d-7ee9-79e0-87f0-6e430f30e214",
@@ -196,13 +192,13 @@
       "kind": "screenshot",
       "object_key": "apps/e8c20a8f-a93e-7018-8d66-6637fc0aeb4b/screenshots/screenshot-03.jpg",
       "sort_order": 3,
-      "width": 3050,
-      "height": 3050,
+      "width": 4096,
+      "height": 4096,
       "duration_ms": null,
       "created_at": 1735862400000,
       "_source_path": "public/sample-media/block-stack/screenshot-03.jpg",
-      "_pexels_id": 23008,
-      "_pexels_url": "https://www.pexels.com/photo/person-s-hands-23008/"
+      "_pexels_id": 11254903,
+      "_pexels_url": "https://www.pexels.com/photo/a-brown-rough-concrete-surface-in-square-format-11254903/"
     },
     {
       "id": "fe31902f-2080-7d94-8646-a08a023c63e8",
@@ -210,13 +206,13 @@
       "kind": "video",
       "object_key": "apps/e8c20a8f-a93e-7018-8d66-6637fc0aeb4b/preview/preview.mp4",
       "sort_order": 4,
-      "width": 1080,
-      "height": 1920,
-      "duration_ms": 15000,
+      "width": 1280,
+      "height": 720,
+      "duration_ms": 22000,
       "created_at": 1735862400000,
       "_source_path": "public/sample-media/block-stack/preview.mp4",
-      "_pexels_id": 8044837,
-      "_pexels_url": "https://www.pexels.com/video/girl-playing-toys-8044837/"
+      "_pexels_id": 6337011,
+      "_pexels_url": "https://www.pexels.com/video/man-playing-with-the-kids-6337011/"
     }
   ]
 }

@@ -54,8 +54,7 @@ export const apps = sqliteTable("apps", {
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   author: text("author").notNull(),
-  subtitle: text("subtitle"),
-  description: text("description"),
+  description: text("description").notNull(),
   launchUrl: text("launch_url").notNull(),
   listingType: text("listing_type").notNull().$type<ListingType>(),
   primaryCategoryId: text("primary_category_id")
