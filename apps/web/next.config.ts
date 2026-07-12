@@ -33,6 +33,22 @@ const permissionsSimulator = [
 // COEP require-corp on /simulator needs CORP on embeddable first-party assets (fonts, images).
 const corpSameOrigin = [{ key: "Cross-Origin-Resource-Policy", value: "same-origin" }];
 
+const marketingHeaders = [
+  ...baseSecurity,
+  ...permissionsDenyMedia,
+  { key: "X-Frame-Options", value: "DENY" },
+];
+
+const marketingRoutes = [
+  "/",
+  "/apps",
+  "/apps/:path*",
+  "/privacy",
+  "/terms",
+  "/dev",
+  "/api/:path*",
+] as const;
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -55,55 +71,7 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
         ],
       },
-      {
-        // Directory, legal, and other non-simulator pages (no COEP — R2 images must load).
-        source: "/apps",
-        headers: [
-          ...baseSecurity,
-          ...permissionsDenyMedia,
-          { key: "X-Frame-Options", value: "DENY" },
-        ],
-      },
-      {
-        source: "/apps/:path*",
-        headers: [
-          ...baseSecurity,
-          ...permissionsDenyMedia,
-          { key: "X-Frame-Options", value: "DENY" },
-        ],
-      },
-      {
-        source: "/privacy",
-        headers: [
-          ...baseSecurity,
-          ...permissionsDenyMedia,
-          { key: "X-Frame-Options", value: "DENY" },
-        ],
-      },
-      {
-        source: "/terms",
-        headers: [
-          ...baseSecurity,
-          ...permissionsDenyMedia,
-          { key: "X-Frame-Options", value: "DENY" },
-        ],
-      },
-      {
-        source: "/dev",
-        headers: [
-          ...baseSecurity,
-          ...permissionsDenyMedia,
-          { key: "X-Frame-Options", value: "DENY" },
-        ],
-      },
-      {
-        source: "/api/:path*",
-        headers: [
-          ...baseSecurity,
-          ...permissionsDenyMedia,
-          { key: "X-Frame-Options", value: "DENY" },
-        ],
-      },
+      ...marketingRoutes.map((source) => ({ source, headers: marketingHeaders })),
       { source: "/_next/static/:path*", headers: corpSameOrigin },
       { source: "/backgrounds/:path*", headers: corpSameOrigin },
       { source: "/suggested-apps/:path*", headers: corpSameOrigin },

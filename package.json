@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @hudxyz/web dev",
+    "ngrok": "ngrok http --url=cheerful-python-carefully.ngrok-free.app 3000",
     "build": "pnpm -r build",
     "lint": "oxlint",
     "format": "oxfmt",
