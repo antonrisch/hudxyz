@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-
 import { ListingRow } from "@/components/listings/listing-row";
 import { ListingsEmpty } from "@/components/listings/listings-empty";
 import { type ListingType, listingTypes } from "@/db/schema";
@@ -11,15 +9,16 @@ type ActiveFilter = "all" | ListingType;
 const PAGE_COPY: Record<ActiveFilter, { title: string; description: string }> = {
   all: {
     title: "Apps and Games",
-    description: "Wearable web apps and games for Meta Ray-Ban Display.",
+    description:
+      "Discover the best web apps and games for Meta Ray-Ban Display made by the community.",
   },
   app: {
     title: "Apps",
-    description: "Wearable web apps for Meta Ray-Ban Display.",
+    description: "Discover the best web apps for Meta Ray-Ban Display made by the community.",
   },
   game: {
     title: "Games",
-    description: "Wearable games for Meta Ray-Ban Display.",
+    description: "Discover the best games for Meta Ray-Ban Display made by the community.",
   },
 };
 
@@ -60,12 +59,7 @@ export default async function AppsPage({
   return (
     <main className="page-px mx-auto w-full max-w-6xl flex-1 py-10">
       <h1 className="font-bold text-3xl tracking-tight">{title}</h1>
-      <p className="mt-2 text-muted-foreground text-sm">
-        {description}{" "}
-        <Link href="/simulator" className="underline underline-offset-4 hover:text-foreground">
-          Open the simulator
-        </Link>
-      </p>
+      <p className="mt-2 text-base text-muted-foreground">{description}</p>
 
       {listings.length === 0 ? (
         <ListingsEmpty />
