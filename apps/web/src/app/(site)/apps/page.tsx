@@ -58,7 +58,7 @@ export default async function AppsPage({
   const listings = await listPublishedListings(listingType ? { listingType } : undefined);
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-10">
+    <main className="page-px mx-auto w-full max-w-6xl flex-1 py-10">
       <h1 className="font-bold text-3xl tracking-tight">{title}</h1>
       <p className="mt-2 text-muted-foreground text-sm">
         {description}{" "}
@@ -70,7 +70,7 @@ export default async function AppsPage({
       {listings.length === 0 ? (
         <ListingsEmpty />
       ) : (
-        <ul className="mt-8 flex flex-col">
+        <ul className="mt-8 grid list-none grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {listings.map((listing) => (
             <ListingRow key={listing.slug} listing={listing} />
           ))}

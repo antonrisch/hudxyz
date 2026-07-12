@@ -72,7 +72,7 @@ export default function DevPage() {
   if (!isDevEnvironment()) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
+    <main className="page-px mx-auto w-full max-w-5xl flex-1 py-10">
       <h1 className="font-bold text-3xl tracking-tight">Primitives</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
         Local component and token reference. Not shipped in production builds.

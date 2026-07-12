@@ -13,7 +13,7 @@ export function LegalPage({
   className?: string;
 }) {
   return (
-    <main className={cn("mx-auto w-full max-w-3xl flex-1 px-6 py-10", className)}>
+    <main className={cn("page-px mx-auto w-full max-w-3xl flex-1 py-10", className)}>
       <p className="text-muted-foreground text-sm">
         Last updated {legal.lastUpdated} ·{" "}
         <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">

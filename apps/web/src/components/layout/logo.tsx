@@ -2,14 +2,18 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-// hud.xyz logo: pixel mark + wordmark; always routes to the simulator.
-export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, "href">) {
+// hud.xyz logo: pixel mark + wordmark; routes to the site home.
+export function Logo({
+  className,
+  showWordmarkOnMobile = false,
+  ...props
+}: Omit<ComponentProps<typeof Link>, "href"> & { showWordmarkOnMobile?: boolean }) {
   return (
     <Link
-      href="/simulator"
+      href="/"
       aria-label="hud.xyz home"
       className={cn(
-        "inline-flex items-center gap-2 sm:text-2xl text-md font-bold tracking-tighter hover:underline",
+        "inline-flex items-center gap-2 text-2xl font-bold tracking-tighter hover:underline",
         className,
       )}
       {...props}
@@ -21,7 +25,7 @@ export function Logo({ className, ...props }: Omit<ComponentProps<typeof Link>, 
         height={40}
         className="size-9 shrink-0 sm:size-7.5 [image-rendering:pixelated]"
       />
-      <span className="hidden sm:inline">hud.xyz</span>
+      <span className={cn(!showWordmarkOnMobile && "hidden sm:inline")}>hud.xyz</span>
     </Link>
   );
 }
