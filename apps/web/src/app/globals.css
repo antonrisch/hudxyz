@@ -4,9 +4,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Chromium-only: corner-shape + a large radius makes a squircle.
+   Without corner-shape, border-radius: 60% becomes a circle — so fall
+   back to a conventional rounded rect in Firefox / Safari. */
 @utility rounded-squircle {
-  border-radius: 60%;
-  corner-shape: squircle;
+  border-radius: 24%;
+
+  @supports (corner-shape: squircle) {
+    border-radius: 60%;
+    corner-shape: squircle;
+  }
 }
 
 /* Shared horizontal page gutter (header, main, footer). */
