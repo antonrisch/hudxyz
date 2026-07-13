@@ -50,30 +50,35 @@ Public catalog of MRBD (and later other) web apps, plus a form to list a new one
 
 **Routes**
 
-| Route                     | Purpose                                                                |
-| ------------------------- | ---------------------------------------------------------------------- |
-| `/apps`                   | Published listings (optional `?type=app` / `?type=game`)               |
-| `/apps/{slug}/{publicId}` | Canonical detail — resolve by **publicId**; slug is cosmetic SEO crumb |
-| `/apps/{slug}`            | Legacy → permanent redirect when exactly one published row matches     |
-| `/apps/submit`            | Draft → media upload → submit for review (`?id=` = publicId)           |
+| Route                     | Purpose                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `/apps`                   | Published listings (optional `?type=app` / `?type=game`)                       |
+| `/apps/{slug}/{publicId}` | Canonical detail — resolve by **publicId**; slug is cosmetic SEO crumb         |
+| `/apps/{slug}`            | Legacy → permanent redirect when exactly one published row matches             |
+| `/apps/submit`            | Draft → media upload → submit for review (`?id=` = publicId)                   |
+| `/padme`                  | Internal review queue — unlock with `/padme?secret=<REVIEW_SECRET>` (else 404) |
 
 **Identity.** Each app has a stable **publicId** (10-char Crockford Base32, `lib/apps/public-id.ts`) used in URLs and draft deep-links, plus a **slug** derived from `name` (not unique). Prefer `listingPath(slug, publicId)` over hand-rolled paths.
 
-**Lifecycle.** `draft` → `pending` (submit) → `published` (admin/out-of-band for now). Public directory queries only `published`. Contact email is private (review only).
+**Lifecycle.** `draft` → `pending` (submit) → `published` / `rejected` (via `/padme`). Public directory queries only `published`. Contact email is private (review only).
 
-**Submit (v1).** One page: details → media (icon required; ≤10 screenshots; optional MP4 preview) → submit. Client creates a **stub draft** on first save/upload (`POST /api/apps` `{ stub: true }`), then `PATCH /api/apps/[id]`, asset presign → R2 PUT → register, then `POST /api/apps/[id]/submit`. No auth yet (temporary — gate before public exposure). PRDs: `docs/prd/`.
+**Submit (v1).** One page: details → media (icon required; ≤10 screenshots; optional MP4 preview) → submit. Client creates a **stub draft** on first save/upload (`POST /api/apps` `{ stub: true }`), then `PATCH /api/apps/[id]`, asset presign → R2 PUT → register, then `POST /api/apps/[id]/submit`. Mutating `/api/apps/*` requires a submit-session cookie (minted by `src/proxy.ts` on `/apps/submit` via `SUBMIT_SESSION_SECRET`) plus Vercel BotID (`checkBotId`). PRDs: `docs/prd/`.
 
-**Key code.** `src/lib/apps/` (draft, schema, queries, upload-client, asset-limits), `src/components/listings/`, `src/components/submit/`, `src/app/api/apps/`, R2 helpers in `src/lib/r2/`.
+**Review (v1).** `(admin)/padme` — filtered queue + detail (edit metadata/media, approve/reject/send-back). Unlock once via `/padme?secret=<REVIEW_SECRET>` (sets signed cookie, redirects to `/padme`); missing/wrong secret → App Router **`notFound()`** on pages, **404** on `/api/padme/*`. Email notifications to submitters are **v1.1**.
+
+**Key code.** `src/lib/apps/` (draft, admin, schema, queries, upload-client, asset-limits, submit-session, botid), `src/components/listings/`, `src/components/submit/`, `src/components/padme/`, `src/app/api/apps/`, `src/app/api/padme/`, R2 helpers in `src/lib/r2/`.
 
 ## Layout (`apps/web`)
 
 Application code lives under `src/`. Config, `public/`, and `scripts/` stay at the app root.
 
 - `src/app/(site)/` — marketing + directory: `/`, `/apps`, `/apps/submit`, legal; shared site header/footer.
+- `src/app/(admin)/padme/` — internal review UI (`noindex`); queue + detail (`?secret=` unlock).
 - `src/app/simulator/` — simulator SPA (legacy `/?…` redirects here).
-- `src/app/api/apps/` — draft/submit + asset presign/register/delete.
-- `src/components/` — `simulator/*`, `listings/*`, `submit/*`, `layout/*`, `ui/*` (shadcn; add with `pnpm dlx shadcn@latest add <name>`).
-- `src/lib/` — `proxy.ts`, `simulator/*`, `apps/*` (directory + drafts + uploads), `r2/`, `utils.ts`.
+- `src/app/api/apps/` — draft/submit + asset presign/register/delete (submit-session + BotID on mutates).
+- `src/app/api/padme/` — review list/detail + asset CRUD (gated by review cookie via `src/proxy.ts`).
+- `src/components/` — `simulator/*`, `listings/*`, `submit/*`, `padme/*`, `layout/*`, `ui/*` (shadcn; add with `pnpm dlx shadcn@latest add <name>`).
+- `src/lib/` — `proxy.ts` (Scramjet), `simulator/*`, `apps/*` (directory + drafts + admin + uploads), `padme/*`, `r2/`, `utils.ts`.
 - `src/db/` — Drizzle schema + migrations (Turso).
 - `public/` — `sw.js` plus generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`, db helpers.
@@ -81,7 +86,7 @@ Application code lives under `src/`. Config, `public/`, and `scripts/` stay at t
 ## Deferred
 
 - **Auth + “my submissions”** — Better Auth; ownership on drafts before public exposure.
-- **Admin review UI** — approve `pending` → `published` (DB/studio is fine for now).
+- **Email on submit / approve / reject** — v1.1 (reviewer daily digest optional later).
 - **App preview video normalize** — v1 accepts browser-ready `video/mp4` only (`src/lib/apps/asset-limits.ts`). Later: background worker with ffprobe/ffmpeg (not App Router) to probe real dimensions/duration, transcode to H.264 MP4 +faststart, optional 600×600 square for MRBD, then write the canonical object to R2.
 - **Secondary category / multi-device catalog** — schema supports secondary category; submit UI is primary-only for v1. `targetDevice` stays a string.
 
