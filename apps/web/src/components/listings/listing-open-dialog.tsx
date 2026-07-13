@@ -25,12 +25,14 @@ export function ListingOpenDialog({
   launchUrl,
   label = "Open on Glasses",
   size = "lg",
+  variant = "outline",
   className,
 }: {
   name: string;
   launchUrl: string;
   label?: string;
   size?: NonNullable<VariantProps<typeof buttonVariants>["size"]>;
+  variant?: NonNullable<VariantProps<typeof buttonVariants>["variant"]>;
   className?: string;
 }) {
   const isMobile = useMobileLayout();
@@ -40,8 +42,8 @@ export function ListingOpenDialog({
   const title = name.trim() || "This app";
   const deviceDeepLink = buildDeviceSetupDeepLink(name, launchUrl);
   const triggerClassName = cn(
-    buttonVariants({ variant: "brand", size }),
-    "min-w-0 flex-1 font-semibold sm:flex-none",
+    buttonVariants({ variant, size }),
+    "min-w-0 font-semibold",
     className,
   );
 
@@ -49,7 +51,7 @@ export function ListingOpenDialog({
     return (
       <Button
         type="button"
-        variant="brand"
+        variant={variant}
         size={size}
         className={triggerClassName}
         disabled
@@ -78,7 +80,7 @@ export function ListingOpenDialog({
     >
       <DialogTrigger
         render={
-          <Button type="button" variant="brand" size={size} className={triggerClassName}>
+          <Button type="button" variant={variant} size={size} className={triggerClassName}>
             {label}
           </Button>
         }

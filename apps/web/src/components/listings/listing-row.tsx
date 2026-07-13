@@ -1,7 +1,6 @@
 import Link from "next/link";
-
 import { ListingIcon } from "@/components/listings/listing-icon";
-import { ListingOpenDialog } from "@/components/listings/listing-open-dialog";
+import { buttonVariants } from "@/components/ui/button";
 import { listingPath } from "@/lib/apps/public-id";
 import type { ListingListItem } from "@/lib/apps/queries";
 import { cn } from "@/lib/utils";
@@ -14,6 +13,7 @@ export function ListingRow({
   className?: string;
 }) {
   const href = listingPath(listing.slug, listing.publicId);
+  const simulatorHref = `/simulator?url=${encodeURIComponent(listing.launchUrl)}`;
 
   const description = listing.description ?? `${listing.listingType} · ${listing.categoryName}`;
 
@@ -36,13 +36,15 @@ export function ListingRow({
           </p>
         </div>
       </Link>
-      <ListingOpenDialog
-        name={listing.name}
-        launchUrl={listing.launchUrl}
-        label="Add"
-        size="default"
-        className="shrink-0 flex-none font-medium"
-      />
+      <Link
+        href={simulatorHref}
+        className={cn(
+          buttonVariants({ variant: "brand", size: "default" }),
+          "shrink-0 flex-none font-medium",
+        )}
+      >
+        Try
+      </Link>
     </li>
   );
 }

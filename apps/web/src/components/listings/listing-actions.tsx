@@ -1,18 +1,10 @@
 "use client";
 
-import { Check, ChevronDown, Glasses, Link as LinkIcon } from "lucide-react";
+import { Glasses } from "lucide-react";
 import Link from "next/link";
 
 import { ListingOpenDialog } from "@/components/listings/listing-open-dialog";
-import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLinkItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function ListingActions({
@@ -24,47 +16,26 @@ export function ListingActions({
   appName: string;
   className?: string;
 }) {
-  const { copied: appLinkCopied, copy: copyAppLink } = useCopyToClipboard();
-
   const simulatorHref = `/simulator?url=${encodeURIComponent(launchUrl)}`;
-  const dropdownActionClassName = cn(
-    buttonVariants({ variant: "ghost", size: "lg" }),
-    "w-full justify-start focus:bg-transparent focus:text-foreground data-highlighted:bg-muted data-highlighted:text-foreground dark:data-highlighted:bg-muted/50",
-  );
 
   return (
-    <div className={cn("flex w-full items-stretch gap-2 sm:w-auto", className)}>
-      <ListingOpenDialog name={appName} launchUrl={launchUrl} />
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button type="button" variant="outline" size="icon-lg" aria-label="More actions">
-              <ChevronDown />
-            </Button>
-          }
-        />
-        <DropdownMenuContent align="end" className="flex w-52 flex-col gap-0.5 p-1">
-          <DropdownMenuLinkItem
-            render={<Link href={simulatorHref} />}
-            closeOnClick
-            className={dropdownActionClassName}
-          >
-            <Glasses data-icon="inline-start" />
-            Try in Simulator
-          </DropdownMenuLinkItem>
-          <DropdownMenuItem
-            onClick={() => void copyAppLink(launchUrl)}
-            className={dropdownActionClassName}
-          >
-            {appLinkCopied ? (
-              <Check data-icon="inline-start" />
-            ) : (
-              <LinkIcon data-icon="inline-start" />
-            )}
-            {appLinkCopied ? "Copied" : "Copy link"}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className={cn("flex w-full flex-col gap-2 sm:w-auto sm:flex-row", className)}>
+      <Link
+        href={simulatorHref}
+        className={cn(
+          buttonVariants({ variant: "brand", size: "lg" }),
+          "min-w-0 w-full font-semibold sm:w-auto",
+        )}
+      >
+        <Glasses data-icon="inline-start" />
+        Try in Simulator
+      </Link>
+      <ListingOpenDialog
+        name={appName}
+        launchUrl={launchUrl}
+        variant="outline"
+        className="min-w-0 w-full sm:w-auto"
+      />
     </div>
   );
 }
