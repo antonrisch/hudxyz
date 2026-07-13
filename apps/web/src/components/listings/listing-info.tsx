@@ -47,7 +47,7 @@ export function ListingInformation({ listing }: { listing: ListingDetail }) {
     .join(" · ");
   const compatibility =
     listing.targetDevice === "mrbd"
-      ? "Works on Meta Ray-Ban Display"
+      ? "Meta Ray-Ban Display"
       : (DEVICE_LABELS[listing.targetDevice] ?? listing.targetDevice.toUpperCase());
 
   return (
