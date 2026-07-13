@@ -68,6 +68,11 @@ Optional later: `/apps?type=game`, category filters.
 
 ## Deferred
 
+Filters, search, sort, and editorial shelves are superseded by
+[Directory shelves and browse](./04-directory-shelves.md),
+[Directory search](./05-directory-search.md), and
+[Collections admin](./06-collections-admin.md).
+
 - Filters, search, sort popularity
 - OG images per app
 - “Try on glasses” deep links with mode/bg prefs
