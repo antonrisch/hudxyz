@@ -25,7 +25,7 @@ export function ListingHeader({
       publicId={listing.publicId}
       appearance={isMobile ? "button" : "link"}
       preferNativeShare={isMobile}
-      className={isMobile ? "min-w-0 flex-1" : undefined}
+      className={isMobile ? "shrink-0" : undefined}
     />
   );
 

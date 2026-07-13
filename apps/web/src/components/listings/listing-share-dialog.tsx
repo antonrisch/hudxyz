@@ -100,7 +100,7 @@ export function ListingShareDialog({
           onClick={() => void share()}
           aria-label="Share"
         >
-          <Share />
+          <Share className="size-6" />
         </Button>
       )}
 
