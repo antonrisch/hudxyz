@@ -4,6 +4,23 @@ import * as React from "react";
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
+// next-themes injects an inline <script> to prevent theme flicker (FOUC).
+// React 19 warns about <script> inside components on the client; the script still
+// runs correctly during SSR. Filter that known false positive in development.
+// https://github.com/pacocoursey/next-themes/issues/387
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  const originalError = console.error;
+  console.error = (...args: unknown[]) => {
+    const text = args
+      .map((arg) => (typeof arg === "string" ? arg : arg instanceof Error ? arg.message : ""))
+      .join(" ");
+    if (text.includes("Encountered a script tag while rendering React component")) {
+      return;
+    }
+    originalError.apply(console, args);
+  };
+}
+
 function ThemeProvider({ children, ...props }: React.ComponentProps<typeof NextThemesProvider>) {
   return (
     <NextThemesProvider
