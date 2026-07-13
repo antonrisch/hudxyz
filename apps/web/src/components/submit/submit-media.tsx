@@ -40,16 +40,11 @@ async function runUpload(input: {
   ensureAppId: EnsureAppId;
   kind: AppAssetKind;
   file: File;
-  media: MediaState;
+  sortOrder: number;
   onChange: OnMediaChange;
   apiBase?: string;
 }) {
-  const { ensureAppId, kind, file, media, onChange, apiBase } = input;
-  const sortOrder =
-    kind === "screenshot"
-      ? media.screenshots.reduce((max, item) => Math.max(max, item.sortOrder), -1) + 1
-      : 0;
-
+  const { ensureAppId, kind, file, sortOrder, onChange, apiBase } = input;
   const pending = createPendingItem(kind, file, sortOrder);
 
   onChange((prev) => {
@@ -98,6 +93,53 @@ async function runUpload(input: {
         error: message,
       })),
     );
+  }
+}
+
+/** Always takes a File[]; icon/video use length 1, screenshots may be many. */
+function queueUploads(input: {
+  ensureAppId: EnsureAppId;
+  kind: AppAssetKind;
+  files: File[];
+  media: MediaState;
+  onChange: OnMediaChange;
+  apiBase?: string;
+}) {
+  const { ensureAppId, kind, files, media, onChange, apiBase } = input;
+  if (files.length === 0) return;
+
+  switch (kind) {
+    case "icon":
+    case "video": {
+      const file = files[0];
+      if (!file) return;
+      void runUpload({ ensureAppId, kind, file, sortOrder: 0, onChange, apiBase });
+      return;
+    }
+    case "screenshot": {
+      const used = media.screenshots.filter((item) => item.status !== "error").length;
+      const room = Math.max(0, MAX_SCREENSHOTS_PER_APP - used);
+      const batch = files.slice(0, room);
+      let nextOrder =
+        media.screenshots.reduce((max, item) => Math.max(max, item.sortOrder), -1) + 1;
+
+      for (const file of batch) {
+        void runUpload({
+          ensureAppId,
+          kind: "screenshot",
+          file,
+          sortOrder: nextOrder,
+          onChange,
+          apiBase,
+        });
+        nextOrder += 1;
+      }
+      return;
+    }
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
   }
 }
 
@@ -240,6 +282,7 @@ function MediaSection({
   accept,
   disabled,
   showUpload,
+  multiple,
   onPick,
   children,
 }: {
@@ -250,7 +293,9 @@ function MediaSection({
   accept: string;
   disabled?: boolean;
   showUpload: boolean;
-  onPick: (file: File) => void;
+  /** Screenshots default to multi-select; a single pick is still `files.length === 1`. */
+  multiple?: boolean;
+  onPick: (files: File[]) => void;
   children?: React.ReactNode;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -284,12 +329,13 @@ function MediaSection({
         ref={inputRef}
         type="file"
         accept={accept}
+        multiple={multiple}
         className="sr-only"
         disabled={disabled}
         onChange={(event) => {
-          const file = event.target.files?.[0];
+          const files = event.target.files ? Array.from(event.target.files) : [];
           event.target.value = "";
-          if (file) onPick(file);
+          if (files.length > 0) onPick(files);
         }}
       />
     </section>
@@ -321,8 +367,8 @@ export function SubmitIconField({
     inputRef.current?.click();
   }
 
-  function upload(file: File) {
-    void runUpload({ ensureAppId, kind: "icon", file, media, onChange, apiBase });
+  function upload(files: File[]) {
+    queueUploads({ ensureAppId, kind: "icon", files, media, onChange, apiBase });
   }
 
   const tileClassName = cn(
@@ -426,9 +472,9 @@ export function SubmitIconField({
         className="sr-only"
         disabled={disabled || uploading}
         onChange={(event) => {
-          const file = event.target.files?.[0];
+          const files = event.target.files ? Array.from(event.target.files) : [];
           event.target.value = "";
-          if (file) upload(file);
+          if (files.length > 0) upload(files);
         }}
       />
     </section>
@@ -449,8 +495,8 @@ export function SubmitMedia({
   /** Defaults to `/api/apps`. Admin uses `/api/padme`. */
   apiBase?: string;
 }) {
-  function upload(kind: AppAssetKind, file: File) {
-    void runUpload({ ensureAppId, kind, file, media, onChange, apiBase });
+  function upload(kind: AppAssetKind, files: File[]) {
+    queueUploads({ ensureAppId, kind, files, media, onChange, apiBase });
   }
 
   return (
@@ -461,9 +507,10 @@ export function SubmitMedia({
         optional
         uploadLabel="Upload"
         accept={IMAGE_ACCEPT}
+        multiple
         showUpload={canAddScreenshot(media.screenshots)}
         disabled={disabled}
-        onPick={(file) => upload("screenshot", file)}
+        onPick={(files) => upload("screenshot", files)}
       >
         {media.screenshots.length > 0 ? (
           <AttachmentGroup className="w-full">
@@ -495,7 +542,7 @@ export function SubmitMedia({
         accept="video/mp4"
         showUpload={media.video?.status !== "uploading"}
         disabled={disabled}
-        onPick={(file) => upload("video", file)}
+        onPick={(files) => upload("video", files)}
       >
         {media.video ? (
           <AttachmentGroup className="w-full">

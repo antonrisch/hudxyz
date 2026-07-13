@@ -4,7 +4,27 @@ import {
   isAllowedContentTypeForKind,
   maxBytesForAssetKind,
   MAX_SCREENSHOTS_PER_APP,
+  sanitizeAssetFilename,
 } from "@/lib/apps/asset-limits";
+
+const EXT_BY_CONTENT_TYPE: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "video/mp4": "mp4",
+};
+
+/** Safe, unique object-key filename derived from the browser File. */
+export function uploadObjectFilename(file: File): string {
+  const fallbackExt = EXT_BY_CONTENT_TYPE[file.type] ?? "bin";
+  const sanitized = sanitizeAssetFilename(file.name) ?? `upload.${fallbackExt}`;
+  const id = crypto.randomUUID().slice(0, 8);
+  const lastDot = sanitized.lastIndexOf(".");
+  if (lastDot > 0) {
+    return `${sanitized.slice(0, lastDot)}-${id}${sanitized.slice(lastDot)}`;
+  }
+  return `${sanitized}-${id}.${fallbackExt}`;
+}
 
 export type UploadStatus = "idle" | "uploading" | "ready" | "error";
 
@@ -171,13 +191,15 @@ export async function uploadAppAsset(input: {
 
   const meta = kind === "video" ? await readVideoMeta(file) : await readImageDimensions(file);
 
+  const filename = uploadObjectFilename(file);
+
   const presignRes = await fetch(`${apiBase}/assets/presign`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       appId,
       kind,
-      filename: file.name,
+      filename,
       contentType: file.type,
     }),
   });
