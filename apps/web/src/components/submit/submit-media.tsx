@@ -1,6 +1,6 @@
 "use client";
 
-import { UploadIcon, XIcon } from "lucide-react";
+import { ImageIcon, PlusIcon, UploadIcon, XIcon } from "lucide-react";
 import { useId, useRef } from "react";
 
 import { OptionalMark } from "@/components/submit/optional-mark";
@@ -28,6 +28,7 @@ import {
   type MediaState,
   uploadAppAsset,
 } from "@/lib/apps/upload-client";
+import { cn } from "@/lib/utils";
 
 type MediaUpdater = (prev: MediaState) => MediaState;
 type EnsureAppId = () => Promise<string>;
@@ -41,8 +42,9 @@ async function runUpload(input: {
   file: File;
   media: MediaState;
   onChange: OnMediaChange;
+  apiBase?: string;
 }) {
-  const { ensureAppId, kind, file, media, onChange } = input;
+  const { ensureAppId, kind, file, media, onChange, apiBase } = input;
   const sortOrder =
     kind === "screenshot"
       ? media.screenshots.reduce((max, item) => Math.max(max, item.sortOrder), -1) + 1
@@ -63,6 +65,7 @@ async function runUpload(input: {
       kind,
       file,
       sortOrder,
+      apiBase,
       onProgress: (progress) => {
         onChange((prev) =>
           mapItem(prev, kind, pending.localId, (item) => ({
@@ -103,8 +106,9 @@ function removeItem(input: {
   localId: string;
   assetId: string | undefined;
   onChange: OnMediaChange;
+  apiBase?: string;
 }) {
-  const { kind, localId, assetId, onChange } = input;
+  const { kind, localId, assetId, onChange, apiBase } = input;
 
   onChange((prev) => {
     if (kind === "icon") return { ...prev, icon: null };
@@ -116,7 +120,7 @@ function removeItem(input: {
   });
 
   if (assetId) {
-    void deleteAppAsset(assetId).catch(() => {
+    void deleteAppAsset(assetId, apiBase).catch(() => {
       // Best-effort; UI already dropped the item.
     });
   }
@@ -292,50 +296,165 @@ function MediaSection({
   );
 }
 
-export function SubmitMedia({
+export function SubmitIconField({
   media,
   onChange,
   ensureAppId,
   disabled,
+  apiBase,
 }: {
   media: MediaState;
   onChange: OnMediaChange;
   ensureAppId: EnsureAppId;
   disabled?: boolean;
+  /** Defaults to `/api/apps`. Admin uses `/api/padme`. */
+  apiBase?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
+  const icon = media.icon;
+  const ready = Boolean(icon?.publicUrl && icon.status === "ready");
+  const uploading = icon?.status === "uploading";
+  const errored = icon?.status === "error";
+
+  function pick() {
+    inputRef.current?.click();
+  }
+
+  function upload(file: File) {
+    void runUpload({ ensureAppId, kind: "icon", file, media, onChange, apiBase });
+  }
+
+  const tileClassName = cn(
+    "relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-squircle outline-none transition-colors sm:size-24",
+    "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+    disabled && "pointer-events-none opacity-60",
+  );
+
+  const preview = ready ? (
+    <Dialog>
+      <DialogTrigger
+        disabled={disabled}
+        className={cn(tileClassName, "bg-muted hover:opacity-90")}
+        aria-label="Preview icon"
+      >
+        <img src={icon!.publicUrl} alt="" className="size-full object-cover" />
+      </DialogTrigger>
+      <DialogContent className="gap-0 overflow-hidden p-2 sm:max-w-md" showCloseButton>
+        <DialogTitle className="sr-only">Icon preview</DialogTitle>
+        <img
+          src={icon!.publicUrl}
+          alt="Icon"
+          className="max-h-[min(80vh,512px)] w-full rounded-xl bg-muted object-contain"
+        />
+      </DialogContent>
+    </Dialog>
+  ) : (
+    <button
+      type="button"
+      disabled={disabled || uploading}
+      onClick={pick}
+      aria-label="Upload icon"
+      className={cn(
+        tileClassName,
+        "border border-dashed border-border bg-muted/40 text-muted-foreground",
+        "hover:border-foreground/30 hover:bg-muted hover:text-foreground",
+        errored && "border-destructive/40 text-destructive",
+        uploading && "pointer-events-none opacity-60",
+      )}
+    >
+      {uploading ? (
+        <span className="px-2 text-center text-xs tabular-nums">{icon!.progress}%</span>
+      ) : (
+        <PlusIcon className="size-6" strokeWidth={1.5} />
+      )}
+    </button>
+  );
+
+  return (
+    <section className="flex items-start gap-4">
+      {preview}
+
+      <div className="min-w-0 flex-1 space-y-3 pt-0.5">
+        <div className="space-y-1">
+          <FieldTitle>Icon</FieldTitle>
+          <FieldDescription>
+            JPEG, PNG, or WebP. Best at 256×256 or larger. Max 256 KB.
+          </FieldDescription>
+          {errored ? <p className="text-destructive text-sm">{icon!.error}</p> : null}
+        </div>
+
+        {!uploading ? (
+          ready ? (
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" disabled={disabled} onClick={pick}>
+                <ImageIcon data-icon="inline-start" />
+                Replace
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={disabled}
+                onClick={() =>
+                  removeItem({
+                    kind: "icon",
+                    localId: icon!.localId,
+                    assetId: icon!.assetId,
+                    onChange,
+                    apiBase,
+                  })
+                }
+              >
+                <XIcon data-icon="inline-start" />
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" disabled={disabled} onClick={pick}>
+              <UploadIcon data-icon="inline-start" />
+              Upload
+            </Button>
+          )
+        ) : null}
+      </div>
+
+      <input
+        id={inputId}
+        ref={inputRef}
+        type="file"
+        accept={IMAGE_ACCEPT}
+        className="sr-only"
+        disabled={disabled || uploading}
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) upload(file);
+        }}
+      />
+    </section>
+  );
+}
+
+export function SubmitMedia({
+  media,
+  onChange,
+  ensureAppId,
+  disabled,
+  apiBase,
+}: {
+  media: MediaState;
+  onChange: OnMediaChange;
+  ensureAppId: EnsureAppId;
+  disabled?: boolean;
+  /** Defaults to `/api/apps`. Admin uses `/api/padme`. */
+  apiBase?: string;
 }) {
   function upload(kind: AppAssetKind, file: File) {
-    void runUpload({ ensureAppId, kind, file, media, onChange });
+    void runUpload({ ensureAppId, kind, file, media, onChange, apiBase });
   }
 
   return (
     <div className="space-y-8">
-      <MediaSection
-        title="Icon"
-        description="JPEG, PNG, or WebP. Best at 256×256 or larger. Max 256 KB."
-        uploadLabel={media.icon ? "Replace" : "Upload"}
-        accept={IMAGE_ACCEPT}
-        showUpload={media.icon?.status !== "uploading"}
-        disabled={disabled}
-        onPick={(file) => upload("icon", file)}
-      >
-        {media.icon ? (
-          <AttachmentGroup className="w-full">
-            <MediaAttachment
-              item={media.icon}
-              disabled={disabled}
-              onRemove={() =>
-                removeItem({
-                  kind: "icon",
-                  localId: media.icon!.localId,
-                  assetId: media.icon!.assetId,
-                  onChange,
-                })
-              }
-            />
-          </AttachmentGroup>
-        ) : null}
-      </MediaSection>
-
       <MediaSection
         title="Screenshots"
         description={`Up to ${MAX_SCREENSHOTS_PER_APP}. Helps people see your Web App before they open it.`}
@@ -359,6 +478,7 @@ export function SubmitMedia({
                     localId: item.localId,
                     assetId: item.assetId,
                     onChange,
+                    apiBase,
                   })
                 }
               />
@@ -388,6 +508,7 @@ export function SubmitMedia({
                   localId: media.video!.localId,
                   assetId: media.video!.assetId,
                   onChange,
+                  apiBase,
                 })
               }
             />

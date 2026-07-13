@@ -75,17 +75,16 @@ export const draftAppPatchSchema = draftAppFieldsSchema.partial();
 export type DraftAppPatch = z.infer<typeof draftAppPatchSchema>;
 
 /** Client form values before optional fields are normalized to null. */
-export const submitFormValuesSchema = draftAppFieldsSchema
-  .omit({ targetDevice: true, secondaryCategoryId: true })
-  .extend({
-    description: z
-      .string()
-      .trim()
-      .max(
-        DESCRIPTION_MAX_LENGTH,
-        `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters.`,
-      ),
-  });
+export const submitFormValuesSchema = draftAppFieldsSchema.omit({ targetDevice: true }).extend({
+  description: z
+    .string()
+    .trim()
+    .max(
+      DESCRIPTION_MAX_LENGTH,
+      `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters.`,
+    ),
+  secondaryCategoryId: z.string(),
+});
 
 export type SubmitFormValues = z.infer<typeof submitFormValuesSchema>;
 

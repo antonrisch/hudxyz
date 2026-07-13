@@ -159,8 +159,10 @@ export async function uploadAppAsset(input: {
   file: File;
   sortOrder?: number;
   onProgress?: (progress: number) => void;
+  /** Defaults to `/api/apps`. Admin uses `/api/padme`. */
+  apiBase?: string;
 }): Promise<RegisterResponse> {
-  const { appId, kind, file, sortOrder, onProgress } = input;
+  const { appId, kind, file, sortOrder, onProgress, apiBase = "/api/apps" } = input;
 
   const validationError = validateClientFile(kind, file);
   if (validationError) {
@@ -169,7 +171,7 @@ export async function uploadAppAsset(input: {
 
   const meta = kind === "video" ? await readVideoMeta(file) : await readImageDimensions(file);
 
-  const presignRes = await fetch("/api/apps/assets/presign", {
+  const presignRes = await fetch(`${apiBase}/assets/presign`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -205,7 +207,7 @@ export async function uploadAppAsset(input: {
 
   onProgress?.(95);
 
-  const registerRes = await fetch("/api/apps/assets", {
+  const registerRes = await fetch(`${apiBase}/assets`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -226,8 +228,8 @@ export async function uploadAppAsset(input: {
   return (await registerRes.json()) as RegisterResponse;
 }
 
-export async function deleteAppAsset(assetId: string) {
-  const response = await fetch(`/api/apps/assets/${assetId}`, { method: "DELETE" });
+export async function deleteAppAsset(assetId: string, apiBase = "/api/apps") {
+  const response = await fetch(`${apiBase}/assets/${assetId}`, { method: "DELETE" });
   if (!response.ok) {
     throw new Error(await parseApiError(response));
   }

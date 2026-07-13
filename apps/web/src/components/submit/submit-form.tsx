@@ -13,7 +13,7 @@ import {
   type SubmitCategoryOption,
   type SubmitFormApi,
 } from "@/components/submit/submit-details-fields";
-import { SubmitMedia } from "@/components/submit/submit-media";
+import { SubmitIconField, SubmitMedia } from "@/components/submit/submit-media";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { parseApiError } from "@/lib/apps/api-error";
 import {
@@ -32,6 +32,7 @@ const emptyValues: SubmitFormValues = {
   launchUrl: "",
   listingType: "app",
   primaryCategoryId: "",
+  secondaryCategoryId: "",
   description: "",
 };
 
@@ -52,6 +53,7 @@ function valuesFromDetail(detail: DraftDetailDto): SubmitFormValues {
     launchUrl: detail.launchUrl,
     listingType: detail.listingType,
     primaryCategoryId: detail.primaryCategoryId,
+    secondaryCategoryId: detail.secondaryCategoryId ?? "",
     description: detail.description ?? "",
   };
 }
@@ -148,6 +150,7 @@ export function SubmitForm({
     const body = {
       ...values,
       description: values.description.trim() || null,
+      secondaryCategoryId: values.secondaryCategoryId?.trim() || null,
     };
 
     const response = await fetch(`/api/apps/${id}`, {
@@ -217,12 +220,20 @@ export function SubmitForm({
           void handleSubmitForReview();
         }}
       >
+        <SubmitIconField
+          media={media}
+          onChange={setMedia}
+          ensureAppId={ensureAppId}
+          disabled={submitting}
+        />
+
         <form.Subscribe selector={(state) => state.values.listingType}>
           {(listingType) => (
             <SubmitDetailsFields
               form={form}
               categories={categories}
               listingType={listingType}
+              initialSecondaryCategoryId={initialDetail?.secondaryCategoryId}
               onBlurSave={() => void autosaveIfValid()}
             />
           )}
@@ -253,7 +264,7 @@ export function SubmitForm({
             }}
           </form.Subscribe>
           <Button type="submit" variant="brand" disabled={submitting || mediaBusy || !mediaReady}>
-            {submitting ? "Submitting…" : "Submit for review"}
+            {submitting ? "Submitting…" : "Submit app 🚀"}
           </Button>
         </div>
       </form>
