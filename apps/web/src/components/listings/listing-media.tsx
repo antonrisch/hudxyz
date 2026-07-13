@@ -58,15 +58,15 @@ export function ListingMedia({
                 autoPlay
                 loop
                 preload="metadata"
-                className="h-120 w-full rounded-2xl bg-black object-contain"
+                className="aspect-4/5 w-full rounded-2xl bg-black object-fill"
               />
             ) : (
               <Image
                 src={slide.url}
                 alt=""
-                width={slide.width ?? 600}
-                height={slide.height ?? 600}
-                className="h-120 w-full rounded-2xl bg-muted object-cover"
+                width={slide.width ?? 864}
+                height={slide.height ?? 1080}
+                className="aspect-4/5 w-full rounded-2xl bg-muted object-fill"
               />
             )}
           </CarouselItem>
