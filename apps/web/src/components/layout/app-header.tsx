@@ -2,13 +2,12 @@ import Link from "next/link";
 
 import { Logo } from "@/components/layout/logo";
 import { cn } from "@/lib/utils";
-
-const link = "text-base font-medium text-foreground hover:underline";
+import { buttonVariants } from "@/components/ui/button";
 
 const SITE_NAV = [
   { label: "Home", href: "/" },
   { label: "Simulator", href: "/simulator" },
-  { label: "Apps", href: "/apps" },
+  { label: "Apps and games", href: "/apps" },
 ] as const;
 
 export function AppHeader() {
@@ -18,12 +17,19 @@ export function AppHeader() {
         <Logo />
         <nav className="ml-8 flex gap-6 pt-0.5">
           {SITE_NAV.map((item) => (
-            <Link key={item.href} href={item.href} className={link}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className="text-base font-medium text-foreground hover:underline"
+            >
               {item.label}
             </Link>
           ))}
         </nav>
-        <Link href="/apps/submit" className={cn(link, "ml-auto shrink-0")}>
+        <Link
+          href="/apps/submit"
+          className={cn(buttonVariants({ variant: "brand" }), "ml-auto shrink-0")}
+        >
           Submit
         </Link>
       </div>
