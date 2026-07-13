@@ -28,6 +28,7 @@
       "reviewed_at": 1735776000000,
       "published_at": 1735862400000,
       "launch_count": 128,
+      "sim_count": 64,
       "created_at": 1735689600000,
       "updated_at": 1735862400000
     },
@@ -55,6 +56,7 @@
       "reviewed_at": 1735776000000,
       "published_at": 1735948800000,
       "launch_count": 42,
+      "sim_count": 21,
       "created_at": 1735689600000,
       "updated_at": 1735948800000
     },
@@ -82,6 +84,7 @@
       "reviewed_at": 1735776000000,
       "published_at": 1736035200000,
       "launch_count": 17,
+      "sim_count": 9,
       "created_at": 1735689600000,
       "updated_at": 1736035200000
     },
@@ -109,6 +112,7 @@
       "reviewed_at": 1735776000000,
       "published_at": 1736121600000,
       "launch_count": 203,
+      "sim_count": 97,
       "created_at": 1735689600000,
       "updated_at": 1736121600000
     }

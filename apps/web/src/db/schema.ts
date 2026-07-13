@@ -73,7 +73,10 @@ export const apps = sqliteTable("apps", {
   submittedAt: integer("submitted_at", { mode: "timestamp" }),
   reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
   publishedAt: integer("published_at", { mode: "timestamp" }),
+  /** Opens via “Open on Glasses” (device install / deep link). */
   launchCount: integer("launch_count").notNull().default(0),
+  /** Opens via “Try in Simulator”. */
+  simCount: integer("sim_count").notNull().default(0),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
 });
