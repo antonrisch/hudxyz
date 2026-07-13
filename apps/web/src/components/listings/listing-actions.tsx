@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Glasses } from "lucide-react";
 import Link from "next/link";
 
@@ -10,10 +11,12 @@ import { cn } from "@/lib/utils";
 export function ListingActions({
   launchUrl,
   appName,
+  share,
   className,
 }: {
   launchUrl: string;
   appName: string;
+  share?: ReactNode;
   className?: string;
 }) {
   const simulatorHref = `/simulator?url=${encodeURIComponent(launchUrl)}`;
@@ -30,12 +33,15 @@ export function ListingActions({
         <Glasses data-icon="inline-start" />
         Try in Simulator
       </Link>
-      <ListingOpenDialog
-        name={appName}
-        launchUrl={launchUrl}
-        variant="outline"
-        className="min-w-0 w-full sm:w-auto"
-      />
+      <div className="flex w-full items-stretch gap-2 sm:contents">
+        <ListingOpenDialog
+          name={appName}
+          launchUrl={launchUrl}
+          variant="outline"
+          className="min-w-0 flex-1 sm:flex-none sm:w-auto"
+        />
+        {share}
+      </div>
     </div>
   );
 }

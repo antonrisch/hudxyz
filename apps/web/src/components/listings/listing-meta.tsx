@@ -1,14 +1,17 @@
-import { ListingShareDialog } from "@/components/listings/listing-share-dialog";
+import type { ReactNode } from "react";
+
 import { authorSiteHref, authorSiteLabel } from "@/lib/apps/listing-urls";
 import type { ListingDetail } from "@/lib/apps/queries";
 import { cn } from "@/lib/utils";
 
-/** Quiet byline under the title — developer site + share. */
+/** Quiet byline under the title — developer site + share (desktop). */
 export function ListingMeta({
   listing,
+  share,
   className,
 }: {
   listing: ListingDetail;
+  share?: ReactNode;
   className?: string;
 }) {
   const href = authorSiteHref(listing.author);
@@ -32,10 +35,14 @@ export function ListingMeta({
           {label}
         </a>
       ) : null}
-      <span className="mx-1 hidden text-border sm:inline" aria-hidden>
-        ·
-      </span>
-      <ListingShareDialog name={listing.name} slug={listing.slug} publicId={listing.publicId} />
+      {share ? (
+        <>
+          <span className="mx-1 text-border" aria-hidden>
+            ·
+          </span>
+          {share}
+        </>
+      ) : null}
     </div>
   );
 }
