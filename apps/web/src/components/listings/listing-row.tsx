@@ -44,7 +44,7 @@ export function ListingRow({
         onClick={() => trackListingOpen(listing.publicId, "sim")}
         className={cn(
           buttonVariants({ variant: "brand", size: "default" }),
-          "shrink-0 flex-none font-medium",
+          "shrink-0 flex-none font-medium px-3",
         )}
       >
         Try
