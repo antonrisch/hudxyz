@@ -6,6 +6,8 @@ import {
   serializeDraftApp,
   submitDraftApp,
 } from "@/lib/apps/draft";
+import { requireHumanOrNull } from "@/lib/apps/botid";
+import { requireSubmitSession } from "@/lib/apps/submit-guard";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -14,10 +16,14 @@ type RouteContext = {
 /**
  * Submit a draft for review: draft → pending.
  * POST /api/apps/[id]/submit
- *
- * Requires icon + required listing fields. No auth in v1 (temporary).
  */
-export async function POST(_request: Request, context: RouteContext) {
+export async function POST(request: Request, context: RouteContext) {
+  const bot = await requireHumanOrNull();
+  if (bot) return bot;
+
+  const gated = await requireSubmitSession(request);
+  if (gated) return gated;
+
   const { id } = await context.params;
 
   try {

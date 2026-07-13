@@ -9,6 +9,8 @@ import {
   updateDraftApp,
 } from "@/lib/apps/draft";
 import { draftAppPatchSchema } from "@/lib/apps/draft-schema";
+import { requireHumanOrNull } from "@/lib/apps/botid";
+import { requireSubmitSession } from "@/lib/apps/submit-guard";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -17,8 +19,6 @@ type RouteContext = {
 /**
  * Read a listing by id (any status) for form hydration.
  * GET /api/apps/[id]
- *
- * No auth in v1 (temporary).
  */
 export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
@@ -32,10 +32,14 @@ export async function GET(_request: Request, context: RouteContext) {
 /**
  * Update a draft listing. Only `status === "draft"`.
  * PATCH /api/apps/[id]
- *
- * No auth in v1 (temporary).
  */
 export async function PATCH(request: Request, context: RouteContext) {
+  const bot = await requireHumanOrNull();
+  if (bot) return bot;
+
+  const gated = await requireSubmitSession(request);
+  if (gated) return gated;
+
   const { id } = await context.params;
 
   let body: unknown;

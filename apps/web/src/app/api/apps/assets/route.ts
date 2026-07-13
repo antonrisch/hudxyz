@@ -4,6 +4,8 @@ import { appAssetKinds, type AppAssetKind } from "@/db/schema";
 import { isValidPreviewDimensions, isValidPreviewDurationMs } from "@/lib/apps/asset-limits";
 import { assertObjectKeyForApp } from "@/lib/apps/asset-keys";
 import { canAddAsset, deleteAppAssetsByKind, getAppById, insertAppAsset } from "@/lib/apps/assets";
+import { requireHumanOrNull } from "@/lib/apps/botid";
+import { requireSubmitSession } from "@/lib/apps/submit-guard";
 import { publicUrl } from "@/lib/r2";
 
 type RegisterBody = {
@@ -17,6 +19,12 @@ type RegisterBody = {
 };
 
 export async function POST(request: Request) {
+  const bot = await requireHumanOrNull();
+  if (bot) return bot;
+
+  const gated = await requireSubmitSession(request);
+  if (gated) return gated;
+
   let body: RegisterBody;
   try {
     body = (await request.json()) as RegisterBody;

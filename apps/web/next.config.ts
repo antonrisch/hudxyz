@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withBotId } from "botid/next/config";
 import { withSentryConfig } from "@sentry/nextjs";
 
 // cross-origin isolation for the scramjet wasm rewriter (SharedArrayBuffer).
@@ -43,6 +44,8 @@ const marketingRoutes = [
   "/",
   "/apps",
   "/apps/:path*",
+  "/padme",
+  "/padme/:path*",
   "/privacy",
   "/terms",
   "/dev",
@@ -51,10 +54,11 @@ const marketingRoutes = [
 
 const nextConfig: NextConfig = {
   images: {
+    // Prod `assets.hudxyz.com` plus env hosts like `assets-kenobi.hudxyz.com`.
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "assets.hudxyz.com",
+        hostname: "**.hudxyz.com",
         pathname: "/**",
       },
     ],
@@ -82,9 +86,11 @@ const nextConfig: NextConfig = {
   },
 };
 
+const withBot = withBotId(nextConfig);
+
 export default process.env.NODE_ENV === "development"
-  ? nextConfig
-  : withSentryConfig(nextConfig, {
+  ? withBot
+  : withSentryConfig(withBot, {
       org: "hudxyz",
       project: "web",
       authToken: process.env.SENTRY_AUTH_TOKEN,

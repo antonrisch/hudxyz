@@ -6,15 +6,23 @@ import {
   DraftValidationError,
   serializeDraftApp,
 } from "@/lib/apps/draft";
+import { clientIp, rateLimitOrNull, requireSubmitSession } from "@/lib/apps/submit-guard";
+import { requireHumanOrNull } from "@/lib/apps/botid";
 
 /**
  * Create a silent placeholder draft so media can upload before details are filled.
  * POST /api/apps  body: `{ "stub": true }`
- *
- * No auth in v1 (temporary — gate before public exposure).
- * Full create is not exposed; clients PATCH `/api/apps/[id]` after the stub exists.
  */
 export async function POST(request: Request) {
+  const bot = await requireHumanOrNull();
+  if (bot) return bot;
+
+  const gated = await requireSubmitSession(request);
+  if (gated) return gated;
+
+  const limited = rateLimitOrNull(`stub:${clientIp(request)}`, 20, 60_000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await request.json();

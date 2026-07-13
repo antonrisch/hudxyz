@@ -4,6 +4,8 @@ import { appAssetKinds, type AppAssetKind } from "@/db/schema";
 import { isAllowedContentTypeForKind, sanitizeAssetFilename } from "@/lib/apps/asset-limits";
 import { appAssetObjectKey } from "@/lib/apps/asset-keys";
 import { getAppById } from "@/lib/apps/assets";
+import { clientIp, rateLimitOrNull, requireSubmitSession } from "@/lib/apps/submit-guard";
+import { requireHumanOrNull } from "@/lib/apps/botid";
 import { presignPut, publicUrl } from "@/lib/r2";
 
 type PresignBody = {
@@ -14,6 +16,15 @@ type PresignBody = {
 };
 
 export async function POST(request: Request) {
+  const bot = await requireHumanOrNull();
+  if (bot) return bot;
+
+  const gated = await requireSubmitSession(request);
+  if (gated) return gated;
+
+  const limited = rateLimitOrNull(`presign:${clientIp(request)}`, 60, 60_000);
+  if (limited) return limited;
+
   let body: PresignBody;
   try {
     body = (await request.json()) as PresignBody;
