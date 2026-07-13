@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { GlobalBannerDevPreview } from "@/components/layout/global-banner-dev-preview";
 import { ListingIcon } from "@/components/listings/listing-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +97,9 @@ export default function DevPage() {
         </a>
         <a href="#listings" className="hover:text-foreground">
           Listings
+        </a>
+        <a href="#global-banner" className="hover:text-foreground">
+          Global banner
         </a>
       </nav>
 
@@ -327,6 +331,18 @@ export default function DevPage() {
               </Button>
             </div>,
           )}
+        </section>
+
+        <section id="global-banner" className="scroll-mt-24 space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold tracking-tight">Global banner</h2>
+            <p className="text-sm text-muted-foreground">
+              Non-modal corner promo (Raycast/Glaze-style). Reusable via{" "}
+              <code className="font-mono text-xs">GlobalBanner</code> /{" "}
+              <code className="font-mono text-xs">HudGlobalBanner</code>.
+            </p>
+          </div>
+          {frame("hud-global-banner", <GlobalBannerDevPreview />)}
         </section>
       </div>
     </main>
