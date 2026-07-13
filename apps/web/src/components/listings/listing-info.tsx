@@ -1,7 +1,7 @@
 import { SquareArrowOutUpRight } from "lucide-react";
 
 import { ListingSection } from "@/components/listings/listing-section";
-import { authorSiteHref, formatOpenCount } from "@/lib/apps/listing-urls";
+import { authorSiteHref, formatOpenCount, totalOpenCount } from "@/lib/apps/listing-urls";
 import type { ListingDetail } from "@/lib/apps/queries";
 
 const DEVICE_LABELS: Record<string, string> = {
@@ -70,7 +70,7 @@ export function ListingInformation({ listing }: { listing: ListingDetail }) {
 
           <InfoRow label="Compatibility">{compatibility}</InfoRow>
 
-          <InfoRow label="Opens">{formatOpenCount(listing.launchCount)}</InfoRow>
+          <InfoRow label="Opens">{formatOpenCount(totalOpenCount(listing))}</InfoRow>
 
           <InfoRow label="App URL">
             <ExternalLink href={listing.launchUrl} label="Open app URL">

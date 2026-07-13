@@ -1,4 +1,4 @@
-import { formatOpenCount } from "@/lib/apps/listing-urls";
+import { formatOpenCount, totalOpenCount } from "@/lib/apps/listing-urls";
 import type { ListingDetail } from "@/lib/apps/queries";
 import { cn } from "@/lib/utils";
 
@@ -27,8 +27,8 @@ export function ListingMetaChips({
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
       <MetaChip>{typeLabel}</MetaChip>
       {categoryLabel ? <MetaChip>{categoryLabel}</MetaChip> : null}
-      <span className="tabular-nums text-base text-foreground">
-        {formatOpenCount(listing.launchCount)}
+      <span className="hidden tabular-nums text-base text-foreground sm:inline">
+        {formatOpenCount(totalOpenCount(listing))}
       </span>
     </div>
   );

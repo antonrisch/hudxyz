@@ -15,12 +15,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { trackListingOpen } from "@/lib/apps/track-open";
 import { buildDeviceSetupDeepLink } from "@/lib/simulator/search-params";
 import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard";
 import { useMobileLayout } from "@/lib/use-mobile-layout";
 import { cn } from "@/lib/utils";
 
 export function ListingOpenDialog({
+  publicId,
   name,
   launchUrl,
   label = "Open on Glasses",
@@ -28,6 +30,7 @@ export function ListingOpenDialog({
   variant = "outline",
   className,
 }: {
+  publicId: string;
   name: string;
   launchUrl: string;
   label?: string;
@@ -47,6 +50,8 @@ export function ListingOpenDialog({
     className,
   );
 
+  const trackLaunch = () => trackListingOpen(publicId, "launch");
+
   if (!deviceDeepLink) {
     return (
       <Button
@@ -64,7 +69,7 @@ export function ListingOpenDialog({
 
   if (isMobile) {
     return (
-      <a href={deviceDeepLink} className={triggerClassName}>
+      <a href={deviceDeepLink} className={triggerClassName} onClick={trackLaunch}>
         {label}
       </a>
     );
@@ -74,7 +79,10 @@ export function ListingOpenDialog({
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (nextOpen) resetCopied();
+        if (nextOpen) {
+          resetCopied();
+          trackLaunch();
+        }
         setOpen(nextOpen);
       }}
     >

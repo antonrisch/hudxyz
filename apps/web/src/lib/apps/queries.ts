@@ -17,6 +17,7 @@ export type ListingListItem = {
   iconUrl: string | null;
   launchUrl: string;
   launchCount: number;
+  simCount: number;
 };
 
 export type ListingMediaImage = {
@@ -95,6 +96,7 @@ function sampleListItem(app: SampleApp): ListingListItem {
     iconUrl: iconUrlForApp(app.id),
     launchUrl: app.launch_url,
     launchCount: app.launch_count ?? 0,
+    simCount: app.sim_count ?? 0,
   };
 }
 
@@ -184,6 +186,7 @@ export async function listPublishedListings(filter?: {
       iconObjectKey: appAssets.objectKey,
       launchUrl: apps.launchUrl,
       launchCount: apps.launchCount,
+      simCount: apps.simCount,
     })
     .from(apps)
     .innerJoin(primaryCategory, eq(apps.primaryCategoryId, primaryCategory.id))
@@ -201,6 +204,7 @@ export async function listPublishedListings(filter?: {
     iconUrl: row.iconObjectKey ? publicUrl(row.iconObjectKey) : null,
     launchUrl: row.launchUrl,
     launchCount: row.launchCount,
+    simCount: row.simCount,
   }));
 }
 
@@ -229,6 +233,7 @@ export async function getPublishedListingByPublicId(
       secondaryCategoryName: secondaryCategory.name,
       secondaryCategorySlug: secondaryCategory.slug,
       launchCount: apps.launchCount,
+      simCount: apps.simCount,
     })
     .from(apps)
     .innerJoin(primaryCategory, eq(apps.primaryCategoryId, primaryCategory.id))
@@ -291,6 +296,7 @@ export async function getPublishedListingByPublicId(
     launchUrl: row.launchUrl,
     targetDevice: row.targetDevice,
     launchCount: row.launchCount,
+    simCount: row.simCount,
     screenshots,
     video,
   };

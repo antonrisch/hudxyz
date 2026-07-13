@@ -32,3 +32,8 @@ export function formatOpenCount(count: number): string {
   const formatted = count.toLocaleString();
   return count === 1 ? `${formatted} open` : `${formatted} opens`;
 }
+
+/** Glasses launches + simulator tries. */
+export function totalOpenCount(listing: { launchCount: number; simCount: number }): number {
+  return listing.launchCount + listing.simCount;
+}

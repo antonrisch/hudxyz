@@ -1,10 +1,15 @@
 import type { ReactNode } from "react";
 
-import { authorSiteHref, authorSiteLabel } from "@/lib/apps/listing-urls";
+import {
+  authorSiteHref,
+  authorSiteLabel,
+  formatOpenCount,
+  totalOpenCount,
+} from "@/lib/apps/listing-urls";
 import type { ListingDetail } from "@/lib/apps/queries";
 import { cn } from "@/lib/utils";
 
-/** Quiet byline under the title — developer site + share (desktop). */
+/** Quiet byline under the title — developer site + share (desktop); opens on mobile. */
 export function ListingMeta({
   listing,
   share,
@@ -35,6 +40,9 @@ export function ListingMeta({
           {label}
         </a>
       ) : null}
+      <span className="tabular-nums text-muted-foreground sm:hidden">
+        {formatOpenCount(totalOpenCount(listing))}
+      </span>
       {share ? (
         <>
           <span className="mx-1 text-border" aria-hidden>

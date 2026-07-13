@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { ListingIcon } from "@/components/listings/listing-icon";
 import { buttonVariants } from "@/components/ui/button";
 import { listingPath } from "@/lib/apps/public-id";
 import type { ListingListItem } from "@/lib/apps/queries";
+import { trackListingOpen } from "@/lib/apps/track-open";
 import { cn } from "@/lib/utils";
 
 export function ListingRow({
@@ -38,6 +41,7 @@ export function ListingRow({
       </Link>
       <Link
         href={simulatorHref}
+        onClick={() => trackListingOpen(listing.publicId, "sim")}
         className={cn(
           buttonVariants({ variant: "brand", size: "default" }),
           "shrink-0 flex-none font-medium",

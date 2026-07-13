@@ -45,6 +45,7 @@ export function ListingHeader({
           </div>
         </div>
         <ListingActions
+          publicId={listing.publicId}
           launchUrl={listing.launchUrl}
           appName={listing.name}
           share={isMobile ? share : undefined}
