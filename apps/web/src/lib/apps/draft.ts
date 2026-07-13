@@ -92,7 +92,7 @@ export async function listCategoriesForForm(): Promise<
     .orderBy(asc(categories.listingType), asc(categories.sortOrder), asc(categories.name));
 }
 
-async function assertCategoriesForListing(input: {
+export async function assertCategoriesForListing(input: {
   listingType: ListingType;
   primaryCategoryId: string;
   secondaryCategoryId: string | null;
