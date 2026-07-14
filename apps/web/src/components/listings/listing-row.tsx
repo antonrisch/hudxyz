@@ -23,8 +23,8 @@ export function ListingRow({
   return (
     <li
       className={cn(
-        "flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm transition-colors duration-100",
-        "hover:bg-muted has-[a:focus-visible]:border-ring has-[a:focus-visible]:ring-[3px] has-[a:focus-visible]:ring-ring/50",
+        "flex items-center gap-3 rounded-xl border border-transparent py-2.5 text-sm",
+        "has-[a:focus-visible]:border-ring has-[a:focus-visible]:ring-[3px] has-[a:focus-visible]:ring-ring/50",
         className,
       )}
     >
