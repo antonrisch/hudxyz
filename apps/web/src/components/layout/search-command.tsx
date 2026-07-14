@@ -202,10 +202,10 @@ export function SearchCommand() {
         onOpenChange={onOpenChange}
         title="Search apps"
         description="Find apps and games in the directory."
-        className="sm:max-w-lg"
+        className="sm:max-w-lg rounded-2xl!"
         showCloseButton={false}
       >
-        <Command shouldFilter={false} className="rounded-xl!">
+        <Command shouldFilter={false}>
           <CommandInput
             value={query}
             onValueChange={onQueryChange}
