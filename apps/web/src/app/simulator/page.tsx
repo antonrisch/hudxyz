@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
 import { cookies } from "next/headers";
 import Simulator from "@/components/simulator";
+import { listPublishedListings } from "@/lib/apps/queries";
 import { legal } from "@/lib/legal/config";
-import { SIMULATOR_TAGLINE, SIMULATOR_TITLE } from "@/lib/simulator/config";
+import { SIMULATOR_TAGLINE, SIMULATOR_TITLE, type SuggestedApp } from "@/lib/simulator/config";
 import { backgroundPreloadHref, DEFAULT_BACKGROUND } from "@/lib/simulator/background";
 import { loadSimulatorSearchParams, seedFromParams } from "@/lib/simulator/search-params";
 import {
@@ -12,6 +13,21 @@ import {
   parseDisplayPanelOpenCookie,
   parseToolbarPlacementCookie,
 } from "@/lib/simulator/store";
+
+async function loadSuggestedApps(): Promise<SuggestedApp[]> {
+  try {
+    const listings = await listPublishedListings({ sort: "popular", limit: 5 });
+    return listings.map((listing) => ({
+      name: listing.name,
+      url: listing.launchUrl,
+      iconUrl: listing.iconUrl ?? "",
+    }));
+  } catch (error) {
+    // Simulator should still load if Turso is unreachable.
+    console.error("Simulator suggested apps unavailable", error);
+    return [];
+  }
+}
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hudxyz.com";
 
@@ -59,6 +75,7 @@ export default async function SimulatorPage({
 }) {
   const params = await loadSimulatorSearchParams(searchParams);
   const cookieStore = await cookies();
+  const suggestedApps = await loadSuggestedApps();
   const preloadBackground =
     backgroundPreloadHref(params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg) ?? null;
   return (
@@ -86,6 +103,7 @@ export default async function SimulatorPage({
             cookieStore.get(TOOLBAR_PLACEMENT_COOKIE)?.value,
           ),
         }}
+        suggestedApps={suggestedApps}
       />
     </main>
   );

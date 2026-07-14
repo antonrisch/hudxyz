@@ -21,7 +21,7 @@ import {
   type ToolbarPlacement,
   type View,
 } from "@/lib/simulator/store";
-import { INTENT_BY_KEY, SIMULATOR_TITLE } from "@/lib/simulator/config";
+import { INTENT_BY_KEY, SIMULATOR_TITLE, type SuggestedApp } from "@/lib/simulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
 import { releaseChromeFocus } from "@/lib/simulator/input";
 import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
@@ -86,7 +86,13 @@ export function useSimulatorState<T>(selector: (s: SimulatorState) => T): T {
 }
 
 // -- root ---------------------------------------------------
-export default function Simulator({ seed }: { seed: Seed }) {
+export default function Simulator({
+  seed,
+  suggestedApps = [],
+}: {
+  seed: Seed;
+  suggestedApps?: SuggestedApp[];
+}) {
   const storeRef = useRef<SimulatorStore>(undefined);
   const store = (storeRef.current ??= createSimulatorStore(seed));
   const [, setModeParam] = useQueryState("mode", simulatorParsers.mode);
@@ -651,7 +657,7 @@ export default function Simulator({ seed }: { seed: Seed }) {
       <TooltipProvider delay={1000}>
         <div className="flex min-h-0 flex-1 flex-col">
           <h1 className="sr-only">{SIMULATOR_TITLE}</h1>
-          <SimulatorHeader />
+          <SimulatorHeader suggestedApps={suggestedApps} />
 
           <div
             className={cn(

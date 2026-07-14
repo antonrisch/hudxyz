@@ -3,7 +3,7 @@
 **Status:** Planned  
 **Owner:** apps/web  
 **Depends on:** Published apps in Turso (+ assets in R2)  
-**Related:** Submit flow PRD; simulator `SUGGESTED_APPS` migration
+**Related:** Submit flow PRD; simulator URL-bar uses published listings
 
 ## Problem
 
@@ -55,8 +55,7 @@ Optional later: `/apps?type=game`, category filters.
 
 ## Migration from simulator
 
-- Keep `SUGGESTED_APPS` until ≥N published apps exist, **or**
-- Seed published rows for current suggested apps and point the simulator picker at `GET` published list (follow-up)
+- Simulator URL-bar picker loads top 5 popular published listings via `listPublishedListings({ sort: "popular", limit: 5 })` (R2 `iconUrl`s); footer links to `/apps`.
 
 ## Acceptance
 

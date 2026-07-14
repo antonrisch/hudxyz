@@ -83,39 +83,15 @@ export const INTENT_BY_KEY: Record<string, Intent> = {
   Escape: "back",
 };
 
+/** Top published apps shown in the simulator URL-bar dropdown. */
 export type SuggestedApp = {
   name: string;
   url: string;
+  /** R2 public URL; may be empty when the listing has no icon. */
   iconUrl: string;
 };
 
-// icons are same-origin (/public) — the simulator route sets COEP require-corp, which blocks
-// cross-origin images without CORP.
 export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hudxyz.com simulator feedback")}`;
-export const DIRECTORY_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hudxyz.com app directory request")}`;
-
-export const SUGGESTED_APPS = [
-  {
-    name: "Block Stack",
-    url: "https://ikkou.jp/MRBD/apps/block-stack/",
-    iconUrl: "/suggested-apps/block-stack.png",
-  },
-  {
-    name: "Alpha Tab",
-    url: "https://argustab.awfullynice.app",
-    iconUrl: "/suggested-apps/alpha-tab.png",
-  },
-  {
-    name: "Utility Tools",
-    url: "https://herald.ascents.gg/a/tools/",
-    iconUrl: "/suggested-apps/tools.svg",
-  },
-  {
-    name: "Texas Holdem Poker",
-    url: "https://displayholdem.onrender.com",
-    iconUrl: "/suggested-apps/texas-holdem.png",
-  },
-] as const satisfies ReadonlyArray<SuggestedApp>;
 
 // reverse: the key we inject into the proxied app for each intent (app mode).
 export const KEY_BY_INTENT: Record<Intent, string> = {

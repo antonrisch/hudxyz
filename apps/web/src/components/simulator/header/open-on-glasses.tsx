@@ -18,19 +18,25 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { SUGGESTED_APPS } from "@/lib/simulator/config";
+import type { SuggestedApp } from "@/lib/simulator/config";
 import { dropFocus } from "@/lib/simulator/input";
 import { buildDeviceSetupDeepLink, normalizeWebUrl } from "@/lib/simulator/search-params";
 import { useMobileLayout } from "@/lib/use-mobile-layout";
 import { cn } from "@/lib/utils";
 
-function suggestedAppNameForUrl(rawUrl: string): string {
+function suggestedAppNameForUrl(rawUrl: string, suggestedApps: SuggestedApp[]): string {
   const href = normalizeWebUrl(rawUrl);
   if (!href) return "";
-  return SUGGESTED_APPS.find((app) => app.url === href)?.name ?? "";
+  return suggestedApps.find((app) => normalizeWebUrl(app.url) === href)?.name ?? "";
 }
 
-export function OpenOnGlasses({ className }: { className?: string }) {
+export function OpenOnGlasses({
+  className,
+  suggestedApps,
+}: {
+  className?: string;
+  suggestedApps: SuggestedApp[];
+}) {
   const isMobile = useMobileLayout();
   const url = useSimulatorState((s) => s.url);
   const [open, setOpen] = useState(false);
@@ -59,7 +65,7 @@ export function OpenOnGlasses({ className }: { className?: string }) {
       open={open}
       onOpenChange={(nextOpen) => {
         if (nextOpen) {
-          setAppName(suggestedAppNameForUrl(url));
+          setAppName(suggestedAppNameForUrl(url, suggestedApps));
           setCopied(false);
         }
         setOpen(nextOpen);

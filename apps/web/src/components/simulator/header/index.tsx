@@ -6,19 +6,23 @@ import { UrlBar } from "@/components/simulator/header/url-bar";
 import { ScreenRecordButton } from "@/components/simulator/toolbar/screen-record-button";
 import { PanelToggle } from "@/components/simulator/panel/sidebar";
 import { DesktopOnly } from "@/components/simulator/mobile-only";
+import type { SuggestedApp } from "@/lib/simulator/config";
 
 /** Simulator toolbar: logo + url bar + record/open-on-glasses (+ desktop display panel toggle). */
-export function SimulatorHeader() {
+export function SimulatorHeader({ suggestedApps }: { suggestedApps: SuggestedApp[] }) {
   return (
     <header aria-label="Simulator toolbar" className="z-50 shrink-0">
       <div className="page-px grid h-(--header-h) grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
         <Logo className="justify-self-start" />
-        <UrlBar className="min-w-0 w-full max-w-full sm:max-w-96 sm:justify-self-center" />
+        <UrlBar
+          className="min-w-0 w-full max-w-full sm:max-w-96 sm:justify-self-center"
+          suggestedApps={suggestedApps}
+        />
         <div className="flex items-center gap-2 justify-self-end">
           <DesktopOnly>
             <ScreenRecordButton size="lg" showLabel className="shrink-0" />
           </DesktopOnly>
-          <OpenOnGlasses />
+          <OpenOnGlasses suggestedApps={suggestedApps} />
           <DesktopOnly>
             <PanelToggle />
           </DesktopOnly>
