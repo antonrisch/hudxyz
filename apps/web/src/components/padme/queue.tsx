@@ -1,6 +1,15 @@
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemSeparator,
+  ItemTitle,
+} from "@/components/ui/item";
 import type { AdminListItem, AdminListStatus } from "@/lib/apps/admin";
 import { cn } from "@/lib/utils";
 
@@ -63,27 +72,31 @@ export function PadmeQueue({
       {items.length === 0 ? (
         <p className="mt-10 text-muted-foreground">No apps in this view.</p>
       ) : (
-        <ul className="mt-8 divide-y divide-border border-y border-border">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={`/padme/${item.publicId}`}
-                className="flex flex-col gap-1 py-4 transition-colors hover:bg-muted/40 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{item.name}</p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {item.author} · {item.categoryName} · {item.listingType}
-                  </p>
-                </div>
-                <div className="shrink-0 text-sm text-muted-foreground sm:text-right">
+        <ItemGroup className="mt-8 gap-0">
+          {items.flatMap((item, index) => [
+            <Item
+              key={item.id}
+              variant="default"
+              render={<Link href={`/padme/${item.publicId}`} />}
+            >
+              <ItemContent>
+                <ItemTitle>{item.name}</ItemTitle>
+                <ItemDescription>
+                  {item.author} · {item.categoryName} · {item.listingType}
+                </ItemDescription>
+              </ItemContent>
+              <ItemActions>
+                <div className="text-right text-sm text-muted-foreground">
                   <p className="capitalize">{item.status}</p>
                   <p>{rowMeta(item, active)}</p>
                 </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+              </ItemActions>
+            </Item>,
+            ...(index < items.length - 1
+              ? [<ItemSeparator key={`${item.id}-sep`} className="my-0" />]
+              : []),
+          ])}
+        </ItemGroup>
       )}
     </main>
   );

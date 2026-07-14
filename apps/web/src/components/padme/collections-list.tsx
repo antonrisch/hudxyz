@@ -8,6 +8,15 @@ import { toast } from "sonner";
 
 import { ConfirmAlertDialog } from "@/components/padme/confirm-alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemSeparator,
+  ItemTitle,
+} from "@/components/ui/item";
 import { parseApiError } from "@/lib/apps/api-error";
 import type { AdminCollectionListItem } from "@/lib/collections/admin";
 import { cn, moveItem } from "@/lib/utils";
@@ -129,51 +138,49 @@ export function CollectionsList({ initial }: { initial: AdminCollectionListItem[
       {items.length === 0 ? (
         <p className="mt-10 text-muted-foreground">No collections yet.</p>
       ) : (
-        <ul className="mt-8 divide-y divide-border border-y border-border">
-          {items.map((item, index) => {
+        <ItemGroup className="mt-8 gap-0">
+          {items.flatMap((item, index) => {
             const busy = busyId === item.id || busyId === "reorder";
-            return (
-              <li
-                key={item.id}
-                className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start sm:justify-between"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <Link
-                      href={`/padme/collections/${item.id}`}
-                      className="truncate font-medium hover:underline"
-                    >
-                      {item.name}
-                    </Link>
-                    <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                      {item.kind}
-                    </span>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-xs capitalize",
-                        item.status === "published"
-                          ? "bg-brand/10 text-brand"
-                          : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {item.status}
-                    </span>
-                  </div>
-                  <p className="mt-1 truncate text-sm text-muted-foreground">
-                    /apps/collections/{item.slug} · {item.itemCount}{" "}
-                    {item.itemCount === 1 ? "item" : "items"} · Updated {formatWhen(item.updatedAt)}
-                  </p>
-                  {item.publishedButEmpty ? (
-                    <p className="mt-1 text-sm text-destructive">
-                      Published but empty — omitted from the public hub.
-                    </p>
-                  ) : null}
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-1">
+            return [
+              <Item key={item.id} variant="default">
+                <ItemContent className="min-w-0">
+                  <Link
+                    href={`/padme/collections/${item.id}`}
+                    className="-my-2.5 -ml-3 flex min-w-0 flex-col gap-1 rounded-lg py-2.5 pr-2 pl-3 outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  >
+                    <div className="flex max-w-full flex-wrap items-center gap-2">
+                      <ItemTitle className="min-w-0">{item.name}</ItemTitle>
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                        {item.kind}
+                      </span>
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs capitalize",
+                          item.status === "published"
+                            ? "bg-brand/10 text-brand"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+                    <ItemDescription>
+                      /apps/collections/{item.slug} · {item.itemCount}{" "}
+                      {item.itemCount === 1 ? "item" : "items"} · Updated{" "}
+                      {formatWhen(item.updatedAt)}
+                    </ItemDescription>
+                    {item.publishedButEmpty ? (
+                      <ItemDescription className="text-destructive">
+                        Published but empty — omitted from the public hub.
+                      </ItemDescription>
+                    ) : null}
+                  </Link>
+                </ItemContent>
+                <ItemActions>
                   <Button
                     type="button"
                     variant="outline"
-                    size="icon"
+                    size="icon-sm"
                     aria-label="Move up"
                     disabled={busy || index === 0}
                     onClick={() => move(index, -1)}
@@ -183,7 +190,7 @@ export function CollectionsList({ initial }: { initial: AdminCollectionListItem[
                   <Button
                     type="button"
                     variant="outline"
-                    size="icon"
+                    size="icon-sm"
                     aria-label="Move down"
                     disabled={busy || index === items.length - 1}
                     onClick={() => move(index, 1)}
@@ -230,11 +237,14 @@ export function CollectionsList({ initial }: { initial: AdminCollectionListItem[
                       Delete
                     </Button>
                   ) : null}
-                </div>
-              </li>
-            );
+                </ItemActions>
+              </Item>,
+              ...(index < items.length - 1
+                ? [<ItemSeparator key={`${item.id}-sep`} className="my-0" />]
+                : []),
+            ];
           })}
-        </ul>
+        </ItemGroup>
       )}
 
       <ConfirmAlertDialog

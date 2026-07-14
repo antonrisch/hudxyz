@@ -7,6 +7,15 @@ import { toast } from "sonner";
 import { ListingIcon } from "@/components/listings/listing-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
 import { parseApiError } from "@/lib/apps/api-error";
 import { normalizeSearchInput } from "@/lib/apps/search";
 import type { AdminCollectionDetail, AdminCollectionMember } from "@/lib/collections/admin";
@@ -156,53 +165,61 @@ export function EditorialMembersEditor({
         />
         {searching ? <p className="mt-1 text-xs text-muted-foreground">Searching…</p> : null}
         {hits.length > 0 ? (
-          <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-border bg-popover shadow-md">
+          <ItemGroup className="absolute z-10 mt-1 max-h-64 w-full gap-0 overflow-auto rounded-lg border border-border bg-popover p-1 shadow-md">
             {hits.map((hit) => {
               const already = memberIds.has(hit.id);
               return (
-                <li key={hit.id}>
-                  <button
-                    type="button"
-                    disabled={already || busy}
-                    className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-muted disabled:opacity-50"
-                    onClick={() => addMember(hit)}
-                  >
+                <Item
+                  key={hit.id}
+                  size="sm"
+                  className="rounded-md disabled:opacity-50"
+                  render={
+                    <button
+                      type="button"
+                      disabled={already || busy}
+                      onClick={() => addMember(hit)}
+                    />
+                  }
+                >
+                  <ItemMedia variant="image">
                     <ListingIcon src={hit.iconUrl} alt="" size={32} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-medium">{hit.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {hit.author} · {hit.listingType === "game" ? "Game" : "App"} ·{" "}
-                        {hit.categoryName}
-                        {already ? " · already added" : ""}
-                      </span>
-                    </span>
-                  </button>
-                </li>
+                  </ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>{hit.name}</ItemTitle>
+                    <ItemDescription>
+                      {hit.author} · {hit.listingType === "game" ? "Game" : "App"} ·{" "}
+                      {hit.categoryName}
+                      {already ? " · already added" : ""}
+                    </ItemDescription>
+                  </ItemContent>
+                </Item>
               );
             })}
-          </ul>
+          </ItemGroup>
         ) : null}
       </div>
 
       {members.length === 0 ? (
         <p className="text-sm text-muted-foreground">No members yet.</p>
       ) : (
-        <ul className="divide-y divide-border rounded-lg border border-border">
+        <ItemGroup>
           {members.map((member, index) => (
-            <li key={member.id} className="flex items-center gap-3 px-3 py-2">
-              <ListingIcon src={member.iconUrl} alt="" size={40} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{member.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
+            <Item key={member.id} variant="outline" size="sm">
+              <ItemMedia variant="image">
+                <ListingIcon src={member.iconUrl} alt="" size={32} />
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>{member.name}</ItemTitle>
+                <ItemDescription>
                   {member.listingType === "game" ? "Game" : "App"} · {member.categoryName} ·{" "}
                   {member.status}
-                </p>
-              </div>
-              <div className="flex shrink-0 gap-1">
+                </ItemDescription>
+              </ItemContent>
+              <ItemActions>
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon"
+                  size="icon-sm"
                   aria-label="Move up"
                   disabled={busy || index === 0}
                   onClick={() => moveMember(index, -1)}
@@ -212,7 +229,7 @@ export function EditorialMembersEditor({
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon"
+                  size="icon-sm"
                   aria-label="Move down"
                   disabled={busy || index === members.length - 1}
                   onClick={() => moveMember(index, 1)}
@@ -222,17 +239,17 @@ export function EditorialMembersEditor({
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon"
+                  size="icon-sm"
                   aria-label="Remove"
                   disabled={busy}
                   onClick={() => removeMember(member.id)}
                 >
                   <X />
                 </Button>
-              </div>
-            </li>
+              </ItemActions>
+            </Item>
           ))}
-        </ul>
+        </ItemGroup>
       )}
     </section>
   );
