@@ -1,6 +1,6 @@
 # PRD: Collections admin
 
-**Status:** Planned  
+**Status:** Implemented  
 **Owner:** apps/web  
 **Depends on:** Directory shelves and browse schema  
 **Related:** Padme review queue; R2 asset helpers
@@ -55,7 +55,7 @@ The create action asks for kind, name, and slug, then creates a draft and naviga
 - Name: required, 1–80 characters
 - Slug: required, lowercase URL-safe, unique, 1–80 characters
 - Description: optional, maximum 300 characters
-- Cover: optional JPEG/PNG/WebP, maximum 5 MB
+- Cover: **deferred** (schema column exists; not editable in Padme v1 — covers are not rendered on public shelves yet)
 - Status: draft or published
 - Hub order
 
@@ -90,7 +90,8 @@ A collection can be published only when:
 - shared metadata is valid and its slug is unique
 - an editorial collection has at least one currently published member
 - a smart collection has a valid sort/filter combination and resolves at least one published app
-- any configured cover upload is finalized
+
+Cover finalization is not required in v1 (cover uploads deferred).
 
 Publishing sets `publishedAt` the first time. Unpublishing returns status to draft but preserves membership, filters, order, and the original timestamp for history. Re-publishing does not reorder the hub.
 
@@ -107,9 +108,8 @@ Add:
 - `DELETE /api/padme/collections/[id]` — draft collections only
 - `PUT /api/padme/collections/[id]/members` — replace ordered editorial membership
 - `POST /api/padme/collections/reorder` — replace ordered hub IDs
-- `POST /api/padme/collections/[id]/cover/presign`
-- `POST /api/padme/collections/[id]/cover/finalize`
-- `DELETE /api/padme/collections/[id]/cover`
+- `GET /api/padme/apps/search` — published-app search for membership (includes internal id)
+- Cover presign/finalize/delete — **deferred** (see Deferred)
 
 Use Zod schemas in a shared `src/lib/collections/admin.ts` module for request validation and invariants. Route handlers stay thin and follow existing Padme error/status conventions.
 
@@ -117,11 +117,14 @@ Use Zod schemas in a shared `src/lib/collections/admin.ts` module for request va
 
 ## Cover storage
 
+**Deferred for v1.** `cover_object_key` remains on the schema for later. When revived:
+
 - Reuse the existing R2 presign → client PUT → finalize pattern.
-- Use collection-scoped object keys, generated server-side.
+- Use collection-scoped object keys (`collections/{id}/cover/…`), generated server-side.
 - Finalize only an expected, successfully uploaded object key.
 - Replacing/removing a cover deletes the previous object after the database update; failed cleanup is logged and does not roll back valid collection data.
-- No image transforms or collection-specific OG generation in v1.
+- No image transforms or collection-specific OG generation in the first cover slice.
+- Also render covers on public shelf/detail UI before investing in the upload path.
 
 ## UI and save behavior
 
@@ -133,20 +136,21 @@ Use Zod schemas in a shared `src/lib/collections/admin.ts` module for request va
 
 ## Acceptance
 
-- [ ] Unauthorized collection pages and APIs return the existing Padme 404 behavior.
-- [ ] Editors can create and edit either collection kind without deploying.
-- [ ] Collection kind cannot be changed after creation.
-- [ ] Editorial membership is unique, ordered, and restricted to published apps.
-- [ ] Smart filters are schema-validated and preview the public resolver.
-- [ ] Hub order can be changed with accessible controls.
-- [ ] Invalid or empty collections cannot be published.
-- [ ] Publish/unpublish changes public shelves after revalidation.
-- [ ] Cover upload/replace/delete uses collection-scoped R2 keys.
-- [ ] Public shelf rendering still excludes unpublished apps.
-- [ ] API mutations are transactional where multiple order rows change.
+- [x] Unauthorized collection pages and APIs return the existing Padme 404 behavior.
+- [x] Editors can create and edit either collection kind without deploying.
+- [x] Collection kind cannot be changed after creation.
+- [x] Editorial membership is unique, ordered, and restricted to published apps.
+- [x] Smart filters are schema-validated and preview the public resolver.
+- [x] Hub order can be changed with accessible controls.
+- [x] Invalid or empty collections cannot be published.
+- [x] Publish/unpublish changes public shelves after revalidation.
+- [ ] Cover upload/replace/delete uses collection-scoped R2 keys. _(deferred)_
+- [x] Public shelf rendering still excludes unpublished apps.
+- [x] API mutations are transactional where multiple order rows change.
 
 ## Deferred
 
+- Cover upload / replace / delete (and public cover rendering)
 - Drag-and-drop ordering
 - Adding pending apps to a collection before publication
 - Publication scheduling

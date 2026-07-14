@@ -59,6 +59,8 @@ Public catalog of MRBD (and later other) web apps, plus a form to list a new one
 | `/apps/{slug}`             | Legacy → permanent redirect when exactly one published row matches             |
 | `/apps/submit`             | Draft → media upload → submit for review (`?id=` = publicId)                   |
 | `/padme`                   | Internal review queue — unlock with `/padme?secret=<REVIEW_SECRET>` (else 404) |
+| `/padme/collections`       | Collections list, hub order, create                                            |
+| `/padme/collections/[id]`  | Collection editor (editorial membership or smart filters)                      |
 
 **Identity.** Each app has a stable **publicId** (10-char Crockford Base32, `lib/apps/public-id.ts`) used in URLs and draft deep-links, plus a **slug** derived from `name` (not unique). Prefer `listingPath(slug, publicId)` over hand-rolled paths.
 
@@ -68,19 +70,21 @@ Public catalog of MRBD (and later other) web apps, plus a form to list a new one
 
 **Review (v1).** `(admin)/padme` — filtered queue + detail (edit metadata/media, approve/reject/send-back). Unlock once via `/padme?secret=<REVIEW_SECRET>` (sets signed cookie, redirects to `/padme`); missing/wrong secret → App Router **`notFound()`** on pages, **404** on `/api/padme/*`. Email notifications to submitters are **v1.1**.
 
-**Key code.** `src/lib/apps/` (draft, admin, schema, queries, browse-params, search, search-index, upload-client, asset-limits, submit-session, botid), `src/lib/collections/` (shelf resolution), `src/components/listings/`, `src/components/submit/`, `src/components/padme/`, `src/app/api/apps/` (incl. `search`), `src/app/api/padme/`, R2 helpers in `src/lib/r2/`. Directory keyword search uses an FTS5 virtual table `app_search` (synced from `updateAppForAdmin`; rebuild with `pnpm db --rebuild-search`).
+**Collections admin (v1).** `/padme/collections` — create/reorder/publish editorial and smart shelves without a deploy. Kind is immutable after create. Membership and hub reorder use full ordered ID arrays in one transaction. Cover uploads are deferred (column exists; not rendered publicly yet). Mutations call `revalidatePath` on `/apps` and the collection detail route.
+
+**Key code.** `src/lib/apps/` (draft, admin, schema, queries, browse-params, search, search-index, upload-client, asset-limits, submit-session, botid), `src/lib/collections/` (`queries.ts` public resolver + `admin.ts` Padme CRUD), `src/components/listings/`, `src/components/submit/`, `src/components/padme/` (queue, detail, collections list/editor), `src/app/api/apps/` (incl. `search`), `src/app/api/padme/` (apps + collections), R2 helpers in `src/lib/r2/`. Directory keyword search uses an FTS5 virtual table `app_search` (synced from `updateAppForAdmin`; rebuild with `pnpm db --rebuild-search`).
 
 ## Layout (`apps/web`)
 
 Application code lives under `src/`. Config, `public/`, and `scripts/` stay at the app root.
 
 - `src/app/(site)/` — marketing + directory: `/`, `/apps`, `/apps/submit`, legal; shared site header/footer.
-- `src/app/(admin)/padme/` — internal review UI (`noindex`); queue + detail (`?secret=` unlock).
+- `src/app/(admin)/padme/` — internal review UI (`noindex`); Apps queue + Collections admin (`?secret=` unlock).
 - `src/app/simulator/` — simulator SPA (legacy `/?…` redirects here).
 - `src/app/api/apps/` — draft/submit + asset presign/register/delete (submit-session + BotID on mutates); public `GET /api/apps/search` for header palette.
-- `src/app/api/padme/` — review list/detail + asset CRUD (gated by review cookie via `src/proxy.ts`).
-- `src/components/` — `simulator/*`, `listings/*`, `submit/*`, `padme/*`, `layout/*` (incl. `search-command`), `ui/*` (shadcn; add with `pnpm dlx shadcn@latest add <name>`).
-- `src/lib/` — `proxy.ts` (Scramjet), `simulator/*`, `apps/*` (directory + drafts + admin + uploads + search), `collections/*` (shelves), `padme/*`, `r2/`, `utils.ts`.
+- `src/app/api/padme/` — review list/detail + asset CRUD + collections CRUD (gated by review cookie via `src/proxy.ts`).
+- `src/components/` — `simulator/*`, `listings/*`, `submit/*`, `padme/*` (incl. collections list/editor), `layout/*` (incl. `search-command`), `ui/*` (shadcn; add with `pnpm dlx shadcn@latest add <name>`).
+- `src/lib/` — `proxy.ts` (Scramjet), `simulator/*`, `apps/*` (directory + drafts + admin + uploads + search), `collections/*` (public shelves + admin), `padme/*`, `r2/`, `utils.ts`.
 - `src/db/` — Drizzle schema + migrations (Turso); FTS5 `app_search` via custom migration (not in `schema.ts`).
 - `public/` — `sw.js` plus generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`, db helpers (`--rebuild-search` backfills FTS).
