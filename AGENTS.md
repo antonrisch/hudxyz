@@ -52,8 +52,8 @@ Public catalog of MRBD (and later other) web apps, plus a form to list a new one
 
 | Route                      | Purpose                                                                        |
 | -------------------------- | ------------------------------------------------------------------------------ |
-| `/apps`                    | Shelves-only hub; flat results when `?type=` / `?sort=`                        |
-| `/apps/category/{slug}`    | Category browse (primary or secondary; optional `?type=` / `?sort=`)           |
+| `/apps`                    | Shelves-only hub; flat results when `?type=` / `?sort=` / `?q=`                |
+| `/apps/category/{slug}`    | Category browse (primary or secondary; optional `?type=` / `?sort=` / `?q=`)   |
 | `/apps/collections/{slug}` | Published collection / shelf detail                                            |
 | `/apps/{slug}/{publicId}`  | Canonical listing detail — resolve by **publicId**; slug is cosmetic SEO crumb |
 | `/apps/{slug}`             | Legacy → permanent redirect when exactly one published row matches             |
@@ -68,7 +68,7 @@ Public catalog of MRBD (and later other) web apps, plus a form to list a new one
 
 **Review (v1).** `(admin)/padme` — filtered queue + detail (edit metadata/media, approve/reject/send-back). Unlock once via `/padme?secret=<REVIEW_SECRET>` (sets signed cookie, redirects to `/padme`); missing/wrong secret → App Router **`notFound()`** on pages, **404** on `/api/padme/*`. Email notifications to submitters are **v1.1**.
 
-**Key code.** `src/lib/apps/` (draft, admin, schema, queries, browse-params, upload-client, asset-limits, submit-session, botid), `src/lib/collections/` (shelf resolution), `src/components/listings/`, `src/components/submit/`, `src/components/padme/`, `src/app/api/apps/`, `src/app/api/padme/`, R2 helpers in `src/lib/r2/`.
+**Key code.** `src/lib/apps/` (draft, admin, schema, queries, browse-params, search, search-index, upload-client, asset-limits, submit-session, botid), `src/lib/collections/` (shelf resolution), `src/components/listings/`, `src/components/submit/`, `src/components/padme/`, `src/app/api/apps/` (incl. `search`), `src/app/api/padme/`, R2 helpers in `src/lib/r2/`. Directory keyword search uses an FTS5 virtual table `app_search` (synced from `updateAppForAdmin`; rebuild with `pnpm db --rebuild-search`).
 
 ## Layout (`apps/web`)
 
@@ -77,13 +77,13 @@ Application code lives under `src/`. Config, `public/`, and `scripts/` stay at t
 - `src/app/(site)/` — marketing + directory: `/`, `/apps`, `/apps/submit`, legal; shared site header/footer.
 - `src/app/(admin)/padme/` — internal review UI (`noindex`); queue + detail (`?secret=` unlock).
 - `src/app/simulator/` — simulator SPA (legacy `/?…` redirects here).
-- `src/app/api/apps/` — draft/submit + asset presign/register/delete (submit-session + BotID on mutates).
+- `src/app/api/apps/` — draft/submit + asset presign/register/delete (submit-session + BotID on mutates); public `GET /api/apps/search` for header palette.
 - `src/app/api/padme/` — review list/detail + asset CRUD (gated by review cookie via `src/proxy.ts`).
-- `src/components/` — `simulator/*`, `listings/*`, `submit/*`, `padme/*`, `layout/*`, `ui/*` (shadcn; add with `pnpm dlx shadcn@latest add <name>`).
-- `src/lib/` — `proxy.ts` (Scramjet), `simulator/*`, `apps/*` (directory + drafts + admin + uploads), `collections/*` (shelves), `padme/*`, `r2/`, `utils.ts`.
-- `src/db/` — Drizzle schema + migrations (Turso).
+- `src/components/` — `simulator/*`, `listings/*`, `submit/*`, `padme/*`, `layout/*` (incl. `search-command`), `ui/*` (shadcn; add with `pnpm dlx shadcn@latest add <name>`).
+- `src/lib/` — `proxy.ts` (Scramjet), `simulator/*`, `apps/*` (directory + drafts + admin + uploads + search), `collections/*` (shelves), `padme/*`, `r2/`, `utils.ts`.
+- `src/db/` — Drizzle schema + migrations (Turso); FTS5 `app_search` via custom migration (not in `schema.ts`).
 - `public/` — `sw.js` plus generated `scramjet/` + `controller/` bundles.
-- `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`, db helpers.
+- `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`, db helpers (`--rebuild-search` backfills FTS).
 
 ## Deferred
 

@@ -1,6 +1,6 @@
 # PRD: Directory search
 
-**Status:** Planned  
+**Status:** Implemented  
 **Owner:** apps/web  
 **Depends on:** Directory shelves and browse PRD  
 **Related:** Published app lifecycle; category catalog
@@ -93,7 +93,7 @@ Suggested weights: name `10`, categories `5`, author `3`, description `1`. Keep 
 - Default `limit = 5`; clamp to `1..20`.
 - Empty/short queries return `{ results: [] }` without querying FTS.
 - Invalid query parameters return 400; internal/FTS failures return the shared safe API error shape.
-- Return the minimum listing result shape needed by both surfaces: `publicId`, `slug`, `name`, `author`, `listingType`, primary category name, icon URL, and canonical detail path.
+- Return the minimum listing result shape needed by the header palette: `publicId`, `name`, `listingType`, primary category name, icon URL, and canonical detail path (`href`).
 - Set short public cache headers suitable for directory data; do not cache error responses.
 
 The full results page may call the search query directly as a Server Component rather than round-tripping through the HTTP endpoint. The endpoint primarily serves interactive header search.
@@ -102,7 +102,7 @@ The full results page may call the search query directly as a Server Component r
 
 Add a search affordance to `src/components/layout/app-header.tsx`.
 
-- Opens a command-palette-style dialog built with the existing Dialog and Input primitives; no new command-menu dependency is required.
+- Opens a command-palette-style dialog via `cmdk` (`Command` / `CommandDialog` in `src/components/ui/command.tsx`) for keyboard navigation and filtering control (`shouldFilter={false}` — we filter server-side).
 - Search input is focused when opened and has an accessible label.
 - Debounce requests briefly (about 150 ms) and cancel superseded requests.
 - Show up to five rows with icon, app name, listing type, and category.
@@ -129,16 +129,16 @@ Add a search affordance to `src/components/layout/app-header.tsx`.
 
 ## Acceptance
 
-- [ ] Only currently published apps are searchable.
-- [ ] Name, author, description, and both category names contribute to matches.
-- [ ] Name matches rank above equivalent description matches.
-- [ ] Multi-word and prefix searches work without exposing raw FTS syntax.
-- [ ] Publishing/updating/unpublishing an app updates the index transactionally.
-- [ ] The rebuild script produces one document per published app.
-- [ ] Header search shows at most five keyboard-navigable results.
-- [ ] “View all” opens `/apps?q=` and preserves the query.
-- [ ] Full results support type/category refinement and remain `noindex`.
-- [ ] Search does not expose private listing fields.
+- [x] Only currently published apps are searchable.
+- [x] Name, author, description, and both category names contribute to matches.
+- [x] Name matches rank above equivalent description matches.
+- [x] Multi-word and prefix searches work without exposing raw FTS syntax.
+- [x] Publishing/updating/unpublishing an app updates the index transactionally.
+- [x] The rebuild script produces one document per published app.
+- [x] Header search shows at most five keyboard-navigable results.
+- [x] “View all” opens `/apps?q=` and preserves the query.
+- [x] Full results support type/category refinement and remain `noindex`.
+- [x] Search does not expose private listing fields.
 
 ## Deferred
 

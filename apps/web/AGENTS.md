@@ -29,7 +29,7 @@ Canonical detail path is `/apps/{slug}/{publicId}` via `listingPath` in `src/lib
 | **Legacy links**    | `/apps/[slug]`           | Redirect only when exactly one published row matches; otherwise 404.                                                     |
 | **Draft deep-link** | `?id=` on `/apps/submit` | Public id (Crockford), not internal uuid. Asset/draft APIs accept either and resolve to internal `apps.id` for R2 keys.  |
 
-Directory UI: `src/components/listings/`. Listing queries: `src/lib/apps/queries.ts`. Shelves: `src/lib/collections/queries.ts`. Browse URL helpers: `src/lib/apps/browse-params.ts`.
+Directory UI: `src/components/listings/`. Listing queries: `src/lib/apps/queries.ts`. Search: `src/lib/apps/search.ts` + FTS `app_search` (`search-index.ts`; `pnpm db --rebuild-search`). Shelves: `src/lib/collections/queries.ts`. Browse URL helpers: `src/lib/apps/browse-params.ts`. Header palette: `src/components/layout/search-command.tsx`.
 
 ---
 
