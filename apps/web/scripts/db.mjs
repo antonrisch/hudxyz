@@ -39,6 +39,13 @@ if (flag === "--seed-collections") {
   process.exit(result.status ?? 1);
 }
 
+if (flag === "--rebuild-search") {
+  const result = spawnSync(process.execPath, [join(here, "rebuild-search-index.mjs")], {
+    stdio: "inherit",
+  });
+  process.exit(result.status ?? 1);
+}
+
 const command = flag ? commands[flag] : undefined;
 
 if (!command) {
@@ -49,7 +56,8 @@ if (!command) {
   --push, -p              Push schema to the database
   --studio, -s            Open Drizzle Studio
   --seed                  Seed categories, then collections
-  --seed-collections      Seed New / Popular / Featured collections only`);
+  --seed-collections      Seed New / Popular / Featured collections only
+  --rebuild-search        Clear and backfill the app_search FTS index`);
   process.exit(1);
 }
 

@@ -15,6 +15,7 @@ import {
   type DraftAppRow,
 } from "./draft";
 import { draftAppPatchSchema, slugifyName } from "./draft-schema";
+import { rebuildAppSearchDocument } from "./search-index";
 
 const primaryCategory = alias(categories, "primary_category");
 
@@ -271,19 +272,23 @@ export async function updateAppForAdmin(appId: string, patch: AdminAppPatch): Pr
       : null;
 
   const db = getDb();
-  const rows = await db
-    .update(apps)
-    .set({
-      ...nextFields,
-      ...statusColumns,
-      updatedAt: now,
-    })
-    .where(eq(apps.id, existing.id))
-    .returning();
+  return db.transaction(async (tx) => {
+    const rows = await tx
+      .update(apps)
+      .set({
+        ...nextFields,
+        ...statusColumns,
+        updatedAt: now,
+      })
+      .where(eq(apps.id, existing.id))
+      .returning();
 
-  const row = rows[0];
-  if (!row) {
-    throw new DraftNotFoundError();
-  }
-  return row;
+    const row = rows[0];
+    if (!row) {
+      throw new DraftNotFoundError();
+    }
+
+    await rebuildAppSearchDocument(tx, row.id);
+    return row;
+  });
 }
