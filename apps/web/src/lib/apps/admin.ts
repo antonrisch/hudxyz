@@ -1,9 +1,12 @@
-import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getDb } from "@/db";
-import { apps, categories, type AppStatus, type ListingType } from "@/db/schema";
+import { appAssets, apps, categories, type AppStatus, type ListingType } from "@/db/schema";
+import { listingPath } from "@/lib/apps/public-id";
+import { deleteObject } from "@/lib/r2";
 
 import {
   DraftNotFoundError,
@@ -291,4 +294,38 @@ export async function updateAppForAdmin(appId: string, patch: AdminAppPatch): Pr
     await rebuildAppSearchDocument(tx, row.id);
     return row;
   });
+}
+
+/**
+ * Permanently delete an app listing: R2 objects, FTS row, and the apps row
+ * (cascades app_assets + collection_apps). Any Padme-viewable status.
+ */
+export async function deleteAppForAdmin(appId: string): Promise<void> {
+  const existing = await getDraftAppById(appId);
+  if (!existing) {
+    throw new DraftNotFoundError();
+  }
+  if (!isAdminViewableStatus(existing.status)) {
+    throw new DraftValidationError(
+      "Only draft, pending, published, or rejected apps can be deleted.",
+    );
+  }
+
+  const db = getDb();
+  const assets = await db.select().from(appAssets).where(eq(appAssets.appId, existing.id));
+
+  for (const asset of assets) {
+    await deleteObject(asset.objectKey).catch(() => undefined);
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.run(sql`DELETE FROM app_search WHERE app_id = ${existing.id}`);
+    await tx.delete(apps).where(eq(apps.id, existing.id));
+  });
+
+  revalidatePath("/apps");
+  revalidatePath("/padme");
+  if (existing.status === "published") {
+    revalidatePath(listingPath(existing.slug, existing.publicId));
+  }
 }

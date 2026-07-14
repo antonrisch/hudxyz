@@ -139,10 +139,7 @@ export function CollectionEditor({
   return (
     <main className="page-px mx-auto w-full max-w-3xl flex-1 space-y-10 py-10 min-h-[calc(100svh-12rem)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Link
-          href="/padme/collections"
-          className={buttonVariants({ variant: "secondary", size: "sm" })}
-        >
+        <Link href="/padme/collections" className={buttonVariants({ variant: "secondary" })}>
           <ArrowLeft data-icon="inline-start" />
           Collections
         </Link>
@@ -150,7 +147,7 @@ export function CollectionEditor({
           {detail.status === "published" ? (
             <Link
               href={`/apps/collections/${detail.slug}`}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
+              className={buttonVariants({ variant: "outline" })}
             >
               View public page
             </Link>
@@ -159,19 +156,13 @@ export function CollectionEditor({
             <Button
               type="button"
               variant="outline"
-              size="sm"
               disabled={saving}
               onClick={() => setPending("unpublish")}
             >
               Unpublish
             </Button>
           ) : (
-            <Button
-              type="button"
-              size="sm"
-              disabled={saving}
-              onClick={() => void setStatus("published")}
-            >
+            <Button type="button" disabled={saving} onClick={() => void setStatus("published")}>
               Publish
             </Button>
           )}
@@ -179,7 +170,6 @@ export function CollectionEditor({
             <Button
               type="button"
               variant="outline"
-              size="sm"
               disabled={saving}
               onClick={() => setPending("delete")}
             >

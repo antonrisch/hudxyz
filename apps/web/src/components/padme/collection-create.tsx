@@ -58,10 +58,7 @@ export function CollectionCreate() {
 
   return (
     <main className="page-px mx-auto w-full max-w-3xl flex-1 py-10 min-h-[calc(100svh-12rem)]">
-      <Link
-        href="/padme/collections"
-        className={buttonVariants({ variant: "secondary", size: "sm" })}
-      >
+      <Link href="/padme/collections" className={buttonVariants({ variant: "secondary" })}>
         <ArrowLeft data-icon="inline-start" />
         Collections
       </Link>

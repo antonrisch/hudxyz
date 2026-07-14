@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   adminAppPatchSchema,
+  deleteAppForAdmin,
   getAppForAdmin,
   serializeAdminDetail,
   updateAppForAdmin,
@@ -60,6 +61,27 @@ export async function PUT(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "App not found" }, { status: 404 });
     }
     return NextResponse.json(serializeAdminDetail(detail));
+  } catch (error) {
+    if (error instanceof DraftNotFoundError) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+    if (error instanceof DraftValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    throw error;
+  }
+}
+
+/**
+ * Permanently delete an app listing and its assets.
+ * DELETE /api/padme/apps/[id]
+ */
+export async function DELETE(_request: Request, context: RouteContext) {
+  const { id } = await context.params;
+
+  try {
+    await deleteAppForAdmin(id);
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
     if (error instanceof DraftNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 });

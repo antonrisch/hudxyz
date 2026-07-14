@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { ConfirmAlertDialog } from "@/components/padme/confirm-alert-dialog";
 import {
   SubmitDetailsFields,
   type SubmitCategoryOption,
@@ -74,6 +75,7 @@ export function PadmeDetail({
   const [media, setMedia] = useState<MediaState>(() => mediaFromAssets(initial.assets));
   const [reviewerNotes, setReviewerNotes] = useState(initial.reviewerNotes ?? "");
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const form = useForm({
     defaultValues: valuesFromDetail(initial),
@@ -143,6 +145,22 @@ export function PadmeDetail({
     }
   }
 
+  async function remove() {
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/padme/apps/${detail.publicId}`, { method: "DELETE" });
+      if (!response.ok && response.status !== 204) {
+        throw new Error(await parseApiError(response));
+      }
+      toast.success("Deleted");
+      router.push("/padme");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Delete failed");
+      setSaving(false);
+    }
+  }
+
   const sim = simulatorHref(detail.launchUrl);
   const listingHref =
     detail.status === "published" ? listingPath(detail.slug, detail.publicId) : null;
@@ -150,26 +168,19 @@ export function PadmeDetail({
   return (
     <main className="page-px mx-auto w-full max-w-3xl flex-1 py-10 min-h-[calc(100svh-12rem)]">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-        <Link href="/padme" className={buttonVariants({ variant: "secondary", size: "sm" })}>
+        <Link href="/padme" className={buttonVariants({ variant: "secondary" })}>
           <ArrowLeft data-icon="inline-start" />
           Queue
         </Link>
         <div className="flex flex-wrap gap-2">
           {sim ? (
-            <Link
-              href={sim}
-              target="_blank"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
+            <Link href={sim} target="_blank" className={buttonVariants({ variant: "outline" })}>
               <Glasses data-icon="inline-start" />
               Preview in simulator
             </Link>
           ) : null}
           {listingHref ? (
-            <Link
-              href={listingHref}
-              className={buttonVariants({ variant: "secondary", size: "sm" })}
-            >
+            <Link href={listingHref} className={buttonVariants({ variant: "secondary" })}>
               View in directory
             </Link>
           ) : null}
@@ -222,60 +233,83 @@ export function PadmeDetail({
               />
             </Field>
           </FieldGroup>
-          <div className="flex flex-wrap gap-2">
-            {detail.status === "draft" ? (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                variant="secondary"
+                variant="brand"
                 disabled={saving}
-                onClick={() => void setStatus("pending")}
+                onClick={() => void saveFields()}
               >
-                Send to pending
+                Save details
               </Button>
-            ) : (
-              <>
-                {detail.status !== "published" ? (
-                  <Button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => void setStatus("published")}
-                  >
-                    Approve
-                  </Button>
-                ) : null}
-                {detail.status !== "rejected" ? (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    disabled={saving}
-                    onClick={() => void setStatus("rejected")}
-                  >
-                    Reject
-                  </Button>
-                ) : null}
-                {detail.status !== "pending" ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={saving}
-                    onClick={() => void setStatus("pending")}
-                  >
-                    Send to pending
-                  </Button>
-                ) : null}
-              </>
-            )}
-            <Button
-              type="button"
-              variant="brand"
-              disabled={saving}
-              onClick={() => void saveFields()}
-            >
-              Save details
-            </Button>
+              {detail.status === "draft" ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={saving}
+                  onClick={() => void setStatus("pending")}
+                >
+                  Send to pending
+                </Button>
+              ) : (
+                <>
+                  {detail.status !== "published" ? (
+                    <Button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => void setStatus("published")}
+                    >
+                      Approve
+                    </Button>
+                  ) : null}
+                  {detail.status !== "rejected" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={saving}
+                      onClick={() => void setStatus("rejected")}
+                    >
+                      Reject
+                    </Button>
+                  ) : null}
+                  {detail.status !== "pending" ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={saving}
+                      onClick={() => void setStatus("pending")}
+                    >
+                      Send to pending
+                    </Button>
+                  ) : null}
+                </>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={saving}
+                onClick={() => setConfirmDelete(true)}
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         </section>
       </div>
+
+      <ConfirmAlertDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Delete listing?"
+        description={`Delete “${detail.name}”? This removes the listing and all media. This cannot be undone.`}
+        actionLabel="Delete"
+        actionVariant="destructive"
+        busy={saving}
+        onConfirm={() => void remove()}
+      />
     </main>
   );
 }
