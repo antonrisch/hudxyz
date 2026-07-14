@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import type { ListingType } from "@/db/schema";
 import { appsBrowsePath } from "@/lib/apps/browse-params";
-import type { CategoryCount, ListingSort } from "@/lib/apps/queries";
+import type { CategoryCount } from "@/lib/apps/queries";
+import type { SearchSort } from "@/lib/apps/search";
 import { cn } from "@/lib/utils";
 
 export type ResultsHeaderState = {
@@ -11,8 +12,10 @@ export type ResultsHeaderState = {
   count: number;
   listingType?: ListingType;
   categorySlug?: string;
-  sort: ListingSort;
+  sort: SearchSort;
   categories: CategoryCount[];
+  /** When set, header is in search mode (Relevance sort + preserve q). */
+  query?: string;
 };
 
 function FilterLink({
@@ -46,10 +49,23 @@ export function ListingsResultsHeader({ state }: { state: ResultsHeaderState }) 
     { value: "game", label: "Games" },
   ];
 
-  const sortOptions: Array<{ value: ListingSort; label: string }> = [
-    { value: "new", label: "New" },
-    { value: "popular", label: "Popular" },
-  ];
+  const sortOptions: Array<{ value: SearchSort; label: string }> = state.query
+    ? [
+        { value: "relevance", label: "Relevance" },
+        { value: "new", label: "New" },
+        { value: "popular", label: "Popular" },
+      ]
+    : [
+        { value: "new", label: "New" },
+        { value: "popular", label: "Popular" },
+      ];
+
+  const pathBase = {
+    listingType: state.listingType,
+    categorySlug: state.categorySlug,
+    sort: state.sort,
+    query: state.query,
+  };
 
   return (
     <header className="space-y-4">
@@ -68,9 +84,8 @@ export function ListingsResultsHeader({ state }: { state: ResultsHeaderState }) 
           <FilterLink
             key={option.label}
             href={appsBrowsePath({
+              ...pathBase,
               listingType: option.value,
-              categorySlug: state.categorySlug,
-              sort: state.sort,
             })}
             active={state.listingType === option.value}
           >
@@ -84,8 +99,7 @@ export function ListingsResultsHeader({ state }: { state: ResultsHeaderState }) 
           <FilterLink
             key={option.value}
             href={appsBrowsePath({
-              listingType: state.listingType,
-              categorySlug: state.categorySlug,
+              ...pathBase,
               sort: option.value,
             })}
             active={state.sort === option.value}
@@ -98,7 +112,11 @@ export function ListingsResultsHeader({ state }: { state: ResultsHeaderState }) 
       {state.categories.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           <FilterLink
-            href={appsBrowsePath({ listingType: state.listingType, sort: state.sort })}
+            href={appsBrowsePath({
+              listingType: state.listingType,
+              sort: state.sort,
+              query: state.query,
+            })}
             active={!state.categorySlug}
           >
             All categories
@@ -110,6 +128,7 @@ export function ListingsResultsHeader({ state }: { state: ResultsHeaderState }) 
                 listingType: state.listingType,
                 categorySlug: category.slug,
                 sort: state.sort,
+                query: state.query,
               })}
               active={state.categorySlug === category.slug}
             >
@@ -117,6 +136,20 @@ export function ListingsResultsHeader({ state }: { state: ResultsHeaderState }) 
             </FilterLink>
           ))}
         </div>
+      ) : null}
+
+      {state.query && state.count === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No matches. Try browsing{" "}
+          <Link href="/apps" className="underline underline-offset-4 hover:text-foreground">
+            categories
+          </Link>{" "}
+          or{" "}
+          <Link href="/apps/submit" className="underline underline-offset-4 hover:text-foreground">
+            submit an app
+          </Link>
+          .
+        </p>
       ) : null}
     </header>
   );

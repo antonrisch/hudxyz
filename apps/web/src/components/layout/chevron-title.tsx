@@ -47,7 +47,7 @@ export function ChevronTitle({
           />
         </Link>
       </h2>
-      {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+      {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
     </div>
   );
 }

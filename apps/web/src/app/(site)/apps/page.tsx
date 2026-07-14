@@ -8,9 +8,12 @@ import {
   hasBrowseFilters,
   parseListingSort,
   parseListingType,
+  parseSearchQuery,
+  parseSearchSort,
   type BrowseParams,
 } from "@/lib/apps/browse-params";
 import { listPublishedCategoryCounts, listPublishedListings } from "@/lib/apps/queries";
+import { searchPublishedListings } from "@/lib/apps/search";
 import { listPublishedShelves } from "@/lib/collections/queries";
 
 const HUB_COPY = {
@@ -36,8 +39,18 @@ export async function generateMetadata({
   searchParams: Promise<BrowseParams>;
 }): Promise<Metadata> {
   const params = await searchParams;
+  const query = parseSearchQuery(params.q);
   const listingType = parseListingType(params.type);
   const filtered = hasBrowseFilters(params);
+
+  if (query) {
+    return {
+      title: `Search: ${query}`,
+      description: `Search results for “${query}” in the Meta Ray-Ban Display app directory.`,
+      robots: { index: false, follow: true },
+      alternates: { canonical: "/apps" },
+    };
+  }
 
   if (!filtered) {
     return {
@@ -57,7 +70,31 @@ export async function generateMetadata({
 
 export default async function AppsPage({ searchParams }: { searchParams: Promise<BrowseParams> }) {
   const params = await searchParams;
+  const query = parseSearchQuery(params.q);
   const listingType = parseListingType(params.type);
+
+  if (query) {
+    const sort = parseSearchSort(params.sort);
+    const [listings, categories] = await Promise.all([
+      searchPublishedListings({ query, listingType, sort }),
+      listPublishedCategoryCounts({ listingType }),
+    ]);
+
+    return (
+      <ListingsBrowseView
+        header={{
+          title: `Results for “${query}”`,
+          count: listings.length,
+          listingType,
+          sort,
+          categories,
+          query,
+        }}
+        listings={listings}
+      />
+    );
+  }
+
   const sort = parseListingSort(params.sort);
   const filtered = hasBrowseFilters(params);
 

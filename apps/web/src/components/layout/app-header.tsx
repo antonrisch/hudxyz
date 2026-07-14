@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/layout/logo";
+import { SearchCommand } from "@/components/layout/search-command";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -13,9 +14,9 @@ const SITE_NAV = [
 export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 w-full bg-background">
-      <div className="page-px mx-auto flex h-(--header-h) w-full max-w-6xl items-center">
+      <div className="page-px mx-auto flex h-(--header-h) w-full max-w-6xl items-center gap-3">
         <Logo />
-        <nav className="ml-8 flex gap-6 pt-0.5">
+        <nav className="ml-5 hidden items-center gap-6 pt-0.5 sm:flex">
           {SITE_NAV.map((item) => (
             <Link
               key={item.href}
@@ -26,12 +27,15 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
-        <Link
-          href="/apps/submit"
-          className={cn(buttonVariants({ variant: "brand" }), "ml-auto shrink-0")}
-        >
-          Submit
-        </Link>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <SearchCommand />
+          <Link
+            href="/apps/submit"
+            className={cn(buttonVariants({ variant: "brand" }), "shrink-0")}
+          >
+            Submit App
+          </Link>
+        </div>
       </div>
     </header>
   );
