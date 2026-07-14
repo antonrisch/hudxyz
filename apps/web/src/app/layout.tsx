@@ -9,13 +9,13 @@ import { cn } from "@/lib/utils";
 import { SIMULATOR_SUMMARY } from "@/lib/simulator/config";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://hudxyz.com"),
   title: {
-    default: "hud.xyz",
-    template: "%s - hud.xyz",
+    default: "hudxyz.com",
+    template: "%s - hudxyz.com",
   },
   description: SIMULATOR_SUMMARY,
-  applicationName: "hud.xyz",
+  applicationName: "hudxyz.com",
 };
 
 const archivo = Archivo({ subsets: ["latin"], variable: "--font-sans" });

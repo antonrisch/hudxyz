@@ -205,7 +205,7 @@ export function AppFooter() {
 
         <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className={cn(FOOTER_ROW_CLASS, "text-muted-foreground")}>
-            © {new Date().getFullYear()} hud.xyz
+            © {new Date().getFullYear()} hudxyz.com
           </p>
           <FooterThemeSelect />
         </div>

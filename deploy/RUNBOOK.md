@@ -2,7 +2,7 @@
 
 Solo-operator incident response for hudxyz.com. DNS lives on **Bunny**; the Next app on **Vercel**; Wisp egress on **Hetzner** (`kenobi.hudbox.dev`).
 
-`hud.xyz` is **deprecated** — canonical site is `https://hudxyz.com`. Keep the old name only until DNS/redirect cutover is finished, then drop it from nginx Origin allowlist.
+`hudxyz.com` is **deprecated** — canonical site is `https://hudxyz.com`. Keep the old name only until DNS/redirect cutover is finished, then drop it from nginx Origin allowlist.
 
 ## Architecture
 
@@ -68,7 +68,7 @@ Full wisp deploy steps: [deploy/README.md](./README.md).
 
 ### 403 on Wisp WebSocket
 
-nginx blocks requests whose `Origin` is not `*.hudxyz.com` (or deprecated `*.hud.xyz`) or `*.vercel.app`. Previews on other hosts will fail by design.
+nginx blocks requests whose `Origin` is not `*.hudxyz.com` (or deprecated `*.hudxyz.com`) or `*.vercel.app`. Previews on other hosts will fail by design.
 
 ### Spike in Sentry errors
 

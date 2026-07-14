@@ -13,7 +13,7 @@ import {
   parseToolbarPlacementCookie,
 } from "@/lib/simulator/store";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hud.xyz";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hudxyz.com";
 
 export const metadata: Metadata = {
   title: SIMULATOR_TITLE,
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     description: SIMULATOR_TAGLINE,
     url: "/simulator",
     type: "website",
-    siteName: "hud.xyz",
+    siteName: "hudxyz.com",
   },
   twitter: {
     card: "summary_large_image",

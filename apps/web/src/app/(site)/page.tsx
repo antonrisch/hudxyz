@@ -8,9 +8,9 @@ import { ListingsGrid } from "@/components/listings/listings-grid";
 import { listPublishedListings } from "@/lib/apps/queries";
 
 export const metadata: Metadata = {
-  title: "hud.xyz",
+  title: "hudxyz.com",
   description:
-    "Discover wearable web apps and games for Meta Ray-Ban Display. Add them to your glasses or preview in the hud.xyz simulator.",
+    "Discover wearable web apps and games for Meta Ray-Ban Display. Add them to your glasses or preview in the hudxyz.com simulator.",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
 };

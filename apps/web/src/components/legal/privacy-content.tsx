@@ -9,7 +9,7 @@ export function PrivacyContent() {
     <>
       <h2>Who we are</h2>
       <p>
-        {e} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates hud.xyz, a browser-based
+        {e} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates hudxyz.com, a browser-based
         simulator designed for compatibility with the Meta Ray-Ban Display. We are based in
         Queensland, Australia.
       </p>
@@ -19,13 +19,13 @@ export function PrivacyContent() {
         {address}
       </p>
 
-      <h2>What hud.xyz does</h2>
+      <h2>What hudxyz.com does</h2>
       <p>
         You can enter a URL to load a public website in the simulator. Requests may be routed
         through proxy infrastructure we operate so the page can be displayed. We do not operate or
         control third-party sites you choose to load.
       </p>
-      <p>hud.xyz does not offer user accounts. You can use the service without registering.</p>
+      <p>hudxyz.com does not offer user accounts. You can use the service without registering.</p>
 
       <h2>What we collect</h2>
       <p>We collect limited personal information, mainly:</p>
@@ -42,7 +42,7 @@ export function PrivacyContent() {
         </li>
       </ul>
       <p>
-        Session replay may capture interactions on hud.xyz itself, such as text entered in the
+        Session replay may capture interactions on hudxyz.com itself, such as text entered in the
         address bar. It does not give us control over data handled by third-party sites inside the
         simulator.
       </p>
@@ -88,7 +88,7 @@ export function PrivacyContent() {
 
       <h2>Children</h2>
       <p>
-        hud.xyz is not directed at children under 13. We do not knowingly collect personal
+        hudxyz.com is not directed at children under 13. We do not knowingly collect personal
         information from children.
       </p>
 

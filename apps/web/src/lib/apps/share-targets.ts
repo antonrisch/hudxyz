@@ -21,7 +21,7 @@ export function listingShareUrl(pageUrl: string, utmSource: string) {
 
 export function listingShareTitle(name: string) {
   const base = name.trim() || "This app";
-  return `${base} - hud.xyz Store`;
+  return `${base} - hudxyz.com Store`;
 }
 
 export const LISTING_SHARE_TARGETS: ShareTarget[] = [

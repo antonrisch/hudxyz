@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
+import { JsonLd } from "@/components/layout/json-ld";
 import { ImageGradientBackground } from "@/components/listings/image-gradient-background";
 import { ListingHeader } from "@/components/listings/listing-header";
 import { ListingInformation } from "@/components/listings/listing-info";
@@ -8,6 +9,7 @@ import { ListingMedia } from "@/components/listings/listing-media";
 import { ListingOverview } from "@/components/listings/listing-overview";
 import { listingPath } from "@/lib/apps/public-id";
 import { getPublishedListingByPublicId } from "@/lib/apps/queries";
+import { directorySocialMetadata, softwareApplicationJsonLd } from "@/lib/apps/seo";
 
 type PageProps = {
   params: Promise<{ slug: string; publicId: string }>;
@@ -20,10 +22,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "App not found" };
   }
 
+  const path = listingPath(listing.slug, listing.publicId);
+  const description =
+    listing.description ??
+    `${listing.name} for Meta Ray-Ban Display — open in the hudxyz.com simulator.`;
+
+  // OG/Twitter images come from opengraph-image.tsx / twitter-image.tsx
+  // (generated card). Do not pass imageUrl here — it would override the file.
   return {
     title: listing.name,
-    description: listing.description ?? undefined,
-    alternates: { canonical: listingPath(listing.slug, listing.publicId) },
+    description,
+    alternates: { canonical: path },
+    ...directorySocialMetadata({
+      title: listing.name,
+      description,
+      path,
+      largeImage: true,
+    }),
   };
 }
 
@@ -37,6 +52,8 @@ export default async function AppDetailPage({ params }: PageProps) {
     permanentRedirect(listingPath(listing.slug, listing.publicId));
   }
 
+  const path = listingPath(listing.slug, listing.publicId);
+
   return (
     <main
       className={
@@ -45,6 +62,17 @@ export default async function AppDetailPage({ params }: PageProps) {
           : "page-px mx-auto w-full max-w-6xl flex-1 space-y-8 py-10"
       }
     >
+      <JsonLd
+        data={softwareApplicationJsonLd({
+          name: listing.name,
+          description: listing.description,
+          path,
+          iconUrl: listing.iconUrl,
+          author: listing.author,
+          categoryName: listing.categoryName,
+          listingType: listing.listingType,
+        })}
+      />
       <div className="space-y-4">
         {listing.iconUrl ? (
           <ImageGradientBackground

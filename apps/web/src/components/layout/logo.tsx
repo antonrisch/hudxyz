@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-// hud.xyz logo: pixel mark + wordmark; routes to the site home.
+// hudxyz.com logo: pixel mark + wordmark; routes to the site home.
 export function Logo({
   className,
   showWordmarkOnMobile = false,
@@ -11,7 +11,7 @@ export function Logo({
   return (
     <Link
       href="/"
-      aria-label="hud.xyz home"
+      aria-label="hudxyz.com home"
       className={cn("inline-flex items-center gap-2 hover:underline", className)}
       {...props}
     >
@@ -28,7 +28,7 @@ export function Logo({
           !showWordmarkOnMobile && "hidden sm:inline",
         )}
       >
-        hud.xyz
+        hudxyz.com
       </span>
     </Link>
   );

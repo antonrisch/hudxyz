@@ -10,7 +10,7 @@ import {
   OG_SIZE,
 } from "@/lib/og";
 
-export const alt = "App on hud.xyz";
+export const alt = "App on hudxyz.com";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 export const runtime = "nodejs";
@@ -87,7 +87,7 @@ export default async function OpenGraphImage({ params }: ImageProps) {
               letterSpacing: "-0.05em",
             }}
           >
-            hud.xyz
+            hudxyz.com
           </div>
         </div>
 

@@ -101,7 +101,7 @@ export function GlobalBanner({
   );
 }
 
-/** hud.xyz promo defaults — reuse later on marketing surfaces. */
+/** hudxyz.com promo defaults — reuse later on marketing surfaces. */
 export function HudGlobalBanner({
   open,
   defaultOpen = true,
@@ -128,7 +128,7 @@ export function HudGlobalBanner({
           className="size-full [image-rendering:pixelated]"
         />
       }
-      title="Meet hud.xyz"
+      title="Meet hudxyz.com"
       description="Wearable apps for Meta Ray-Ban Display. Discover community apps and try them in the simulator."
     >
       <a

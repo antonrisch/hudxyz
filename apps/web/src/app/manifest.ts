@@ -3,8 +3,8 @@ import { SIMULATOR_TAGLINE } from "@/lib/simulator/config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "hud.xyz",
-    short_name: "hud.xyz",
+    name: "hudxyz.com",
+    short_name: "hudxyz.com",
     description: SIMULATOR_TAGLINE,
     start_url: "/",
     display: "standalone",

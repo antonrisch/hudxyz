@@ -18,8 +18,8 @@ import { generatePublicId, isPublicId } from "./public-id";
  * Lets media upload before the developer fills required fields. The form treats
  * these as empty; submit rejects them until replaced with real values.
  */
-export const DRAFT_STUB_LAUNCH_URL = "https://hud.xyz/.draft-placeholder";
-export const DRAFT_STUB_CONTACT_EMAIL = "stub@hud.xyz";
+export const DRAFT_STUB_LAUNCH_URL = "https://hudxyz.com/.draft-placeholder";
+export const DRAFT_STUB_CONTACT_EMAIL = "stub@hudxyz.com";
 
 export function isDraftStub(app: { launchUrl: string }): boolean {
   return app.launchUrl === DRAFT_STUB_LAUNCH_URL;

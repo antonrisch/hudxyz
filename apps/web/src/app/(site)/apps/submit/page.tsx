@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Submit a Web App",
-  description: "Submit a Meta Ray-Ban Display Web App to hud.xyz.",
+  description: "Submit a Meta Ray-Ban Display Web App to hudxyz.com.",
   alternates: { canonical: "/apps/submit" },
 };
 

@@ -47,7 +47,7 @@ export default async function OpenGraphImage() {
           }}
         >
           <img src={iconSrc} width={72} height={72} alt="" />
-          <div style={{ color: "#0a0a0a", fontSize: 32, fontWeight: 600 }}>hud.xyz</div>
+          <div style={{ color: "#0a0a0a", fontSize: 32, fontWeight: 600 }}>hudxyz.com</div>
         </div>
         <div
           style={{

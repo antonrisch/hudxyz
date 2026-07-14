@@ -9,21 +9,21 @@ export function TermsContent() {
     <>
       <h2>Agreement</h2>
       <p>
-        These Terms govern your use of hud.xyz, operated by {e}. By using the service, you agree to
-        these Terms. If you do not agree, do not use hud.xyz.
+        These Terms govern your use of hudxyz.com, operated by {e}. By using the service, you agree
+        to these Terms. If you do not agree, do not use hudxyz.com.
       </p>
       <p>There are no user accounts. Use of the service constitutes acceptance.</p>
 
       <h2>The service</h2>
       <p>
-        hud.xyz lets you load public websites in an simulator viewport. Traffic may egress through
-        infrastructure we operate rather than directly from your browser. Third-party sites are not
-        owned, operated, or endorsed by us.
+        hudxyz.com lets you load public websites in an simulator viewport. Traffic may egress
+        through infrastructure we operate rather than directly from your browser. Third-party sites
+        are not owned, operated, or endorsed by us.
       </p>
       <p>We may change, suspend, or discontinue any part of the service at any time.</p>
 
       <h2>Acceptable use</h2>
-      <p>hud.xyz includes an open web proxy. You must use it lawfully and must not:</p>
+      <p>hudxyz.com includes an open web proxy. You must use it lawfully and must not:</p>
       <ul>
         <li>Break the law or facilitate illegal content</li>
         <li>Attack, probe, or access systems you are not authorised to use</li>
@@ -44,12 +44,12 @@ export function TermsContent() {
 
       <h2>Trademarks</h2>
       <p>
-        hud.xyz is operated by {e}. We are not affiliated with, endorsed by, or sponsored by Meta
+        hudxyz.com is operated by {e}. We are not affiliated with, endorsed by, or sponsored by Meta
         Platforms, Inc., EssilorLuxottica S.A., Luxottica Group S.p.A., or their affiliates.
       </p>
       <p>
         Meta, Ray-Ban, and Meta Ray-Ban Display are trademarks of their respective owners. We use
-        those names only to describe compatibility with the Meta Ray-Ban Display. hud.xyz is an
+        those names only to describe compatibility with the Meta Ray-Ban Display. hudxyz.com is an
         independent developer tool, not an official Meta or Ray-Ban product.
       </p>
 
@@ -61,7 +61,7 @@ export function TermsContent() {
 
       <h2>Liability</h2>
       <p>
-        hud.xyz is provided &quot;as is&quot; and &quot;as available&quot;. We do not warrant
+        hudxyz.com is provided &quot;as is&quot; and &quot;as available&quot;. We do not warrant
         uninterrupted, error-free, or secure operation, or that any particular site will load
         correctly.
       </p>

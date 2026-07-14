@@ -4,7 +4,7 @@ import { TermsContent } from "@/components/legal/terms-content";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Terms governing use of the hud.xyz MRBD simulator and web proxy.",
+  description: "Terms governing use of the hudxyz.com MRBD simulator and web proxy.",
   alternates: { canonical: "/terms" },
   robots: { index: true, follow: true },
 };

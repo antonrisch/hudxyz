@@ -91,8 +91,8 @@ export type SuggestedApp = {
 
 // icons are same-origin (/public) — the simulator route sets COEP require-corp, which blocks
 // cross-origin images without CORP.
-export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz simulator feedback")}`;
-export const DIRECTORY_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hud.xyz app directory request")}`;
+export const FEEDBACK_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hudxyz.com simulator feedback")}`;
+export const DIRECTORY_MAILTO = `mailto:antonhudxyz@gmail.com?subject=${encodeURIComponent("hudxyz.com app directory request")}`;
 
 export const SUGGESTED_APPS = [
   {

@@ -17,7 +17,7 @@ export function SubmitConfirmation({ name, publicId }: { name: string; publicId:
         <h1 className="font-bold text-3xl tracking-tight">Submitted for review 🎉</h1>
         <p className="text-muted-foreground">
           Thanks for submitting {name}. We&apos;ll review it and get back to you — it won&apos;t
-          appear on hud.xyz until it&apos;s approved.
+          appear on hudxyz.com until it&apos;s approved.
         </p>
       </div>
 

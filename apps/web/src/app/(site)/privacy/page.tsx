@@ -4,7 +4,7 @@ import { PrivacyContent } from "@/components/legal/privacy-content";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How hud.xyz collects, uses, and discloses personal information.",
+  description: "How hudxyz.com collects, uses, and discloses personal information.",
   alternates: { canonical: "/privacy" },
   robots: { index: true, follow: true },
 };
