@@ -85,7 +85,7 @@ Application code lives under `src/`. Config, `public/`, and `scripts/` stay at t
 - `src/app/api/padme/` — review list/detail + asset CRUD + collections CRUD (gated by review cookie via `src/proxy.ts`).
 - `src/components/` — `simulator/*`, `listings/*`, `submit/*`, `padme/*` (incl. collections list/editor), `layout/*` (incl. `search-command`), `ui/*` (shadcn; add with `pnpm dlx shadcn@latest add <name>`).
 - `src/lib/` — `proxy.ts` (Scramjet), `simulator/*`, `apps/*` (directory + drafts + admin + uploads + search), `collections/*` (public shelves + admin), `padme/*`, `r2/`, `utils.ts`.
-- `src/db/` — Drizzle schema + migrations (Turso); FTS5 `app_search` via custom migration (not in `schema.ts`).
+- `src/db/` — Drizzle schema + single baseline migration (Turso); FTS5 `app_search` is custom SQL in that baseline (not in `schema.ts`). Categories / collections via `pnpm db --seed`.
 - `public/` — `sw.js` plus generated `scramjet/` + `controller/` bundles.
 - `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`, db helpers (`--rebuild-search` backfills FTS).
 

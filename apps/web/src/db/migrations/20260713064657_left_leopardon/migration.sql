@@ -1,1 +1,0 @@
-ALTER TABLE `apps` ADD `sim_count` integer DEFAULT 0 NOT NULL;

@@ -13,7 +13,7 @@ if (!url || !authToken) {
 
 const client = createClient({ url, authToken });
 
-// DDL lives only in the FTS migration — rebuild assumes the table already exists.
+// DDL lives in the baseline migration — rebuild assumes the table already exists.
 const table = await client.execute(
   `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'app_search'`,
 );
