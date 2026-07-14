@@ -2,7 +2,6 @@
 
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useQueryState } from "nuqs";
 import { useCallback, useRef, useState, type ReactNode } from "react";
 
 import { SpiralLoader } from "@/components/icons/spiral-loader";
@@ -36,9 +35,13 @@ const RESULT_LIMIT = 5;
 
 type SearchStatus = "idle" | "loading" | "ready" | "error";
 
+/** Read `?q=` at open time — avoids nuqs/useSearchParams Suspense bailout on static pages. */
+function readUrlQuery(): string {
+  return new URLSearchParams(window.location.search).get("q") ?? "";
+}
+
 export function SearchCommand() {
   const router = useRouter();
-  const [urlQuery] = useQueryState("q");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -46,11 +49,9 @@ export function SearchCommand() {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  // Refs mirror latest values so the mount-time ⌘K listener stays valid.
+  // Ref mirrors latest open so the mount-time ⌘K listener stays valid.
   const openRef = useRef(open);
   openRef.current = open;
-  const urlQueryRef = useRef(urlQuery);
-  urlQueryRef.current = urlQuery;
 
   const normalizedQuery = normalizeSearchInput(query);
   const viewAllHref = normalizedQuery ? `/apps?q=${encodeURIComponent(normalizedQuery)}` : null;
@@ -119,7 +120,7 @@ export function SearchCommand() {
 
   // Open the palette, seeding it from the active `?q=` so it reflects the current search.
   const openPalette = useCallback(() => {
-    const seed = urlQueryRef.current ?? "";
+    const seed = readUrlQuery();
     setQuery(seed);
     setResults([]);
     setStatus("idle");
