@@ -27,3 +27,13 @@ export function findCategoryDefinition(
     (category) => category.listingType === listingType && category.slug === slug,
   );
 }
+
+/** True when the slug exists for any listing type (e.g. `sports` for app + game). */
+export function categorySlugExists(slug: string): boolean {
+  return categoryCatalog.some((category) => category.slug === slug);
+}
+
+/** Display name for a category slug; prefers the first catalog match. */
+export function categoryDisplayName(slug: string): string | null {
+  return categoryCatalog.find((category) => category.slug === slug)?.name ?? null;
+}

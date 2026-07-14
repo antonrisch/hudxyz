@@ -20,7 +20,20 @@ const flag = process.argv[2];
 const here = dirname(fileURLToPath(import.meta.url));
 
 if (flag === "--seed") {
-  const result = spawnSync(process.execPath, [join(here, "seed-categories.mjs")], {
+  const categories = spawnSync(process.execPath, [join(here, "seed-categories.mjs")], {
+    stdio: "inherit",
+  });
+  if ((categories.status ?? 1) !== 0) {
+    process.exit(categories.status ?? 1);
+  }
+  const collections = spawnSync(process.execPath, [join(here, "seed-collections.mjs")], {
+    stdio: "inherit",
+  });
+  process.exit(collections.status ?? 1);
+}
+
+if (flag === "--seed-collections") {
+  const result = spawnSync(process.execPath, [join(here, "seed-collections.mjs")], {
     stdio: "inherit",
   });
   process.exit(result.status ?? 1);
@@ -35,7 +48,8 @@ if (!command) {
   --migrate, -m           Apply migrations
   --push, -p              Push schema to the database
   --studio, -s            Open Drizzle Studio
-  --seed                  Seed reference data (categories)`);
+  --seed                  Seed categories, then collections
+  --seed-collections      Seed New / Popular / Featured collections only`);
   process.exit(1);
 }
 

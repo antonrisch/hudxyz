@@ -9,7 +9,7 @@ import { createClient } from "@libsql/client";
 import "dotenv/config";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const catalog = JSON.parse(readFileSync(join(root, "src/lib/catalog/categories.json"), "utf8"));
+const catalog = JSON.parse(readFileSync(join(root, "src/lib/category/categories.json"), "utf8"));
 
 function categoryStableId(listingType, slug) {
   const digest = createHash("sha256")

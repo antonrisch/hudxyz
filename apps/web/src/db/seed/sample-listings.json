@@ -222,5 +222,66 @@
       "_pexels_id": 6337011,
       "_pexels_url": "https://www.pexels.com/video/man-playing-with-the-kids-6337011/"
     }
+  ],
+  "collections": [
+    {
+      "id": "c011ec71-0001-7000-8000-000000000001",
+      "slug": "new",
+      "name": "New",
+      "description": "Recently published apps and games.",
+      "kind": "smart",
+      "status": "published",
+      "sort_order": 10,
+      "cover_object_key": null,
+      "filter_listing_type": null,
+      "filter_category_slug": null,
+      "smart_sort": "new",
+      "item_limit": 6
+    },
+    {
+      "id": "c011ec71-0001-7000-8000-000000000002",
+      "slug": "popular",
+      "name": "Popular",
+      "description": "Most opened apps and games.",
+      "kind": "smart",
+      "status": "published",
+      "sort_order": 20,
+      "cover_object_key": null,
+      "filter_listing_type": null,
+      "filter_category_slug": null,
+      "smart_sort": "popular",
+      "item_limit": 6
+    },
+    {
+      "id": "c011ec71-0001-7000-8000-000000000003",
+      "slug": "featured",
+      "name": "Featured",
+      "description": "Editor picks from the catalog.",
+      "kind": "editorial",
+      "status": "published",
+      "sort_order": 0,
+      "cover_object_key": null,
+      "filter_listing_type": null,
+      "filter_category_slug": null,
+      "smart_sort": null,
+      "item_limit": null
+    }
+  ],
+  "collection_apps": [
+    {
+      "collection_id": "c011ec71-0001-7000-8000-000000000003",
+      "app_id": "e1fe2771-fc9f-78e5-8cc5-91b8e2f1c81d",
+      "sort_order": 0
+    },
+    {
+      "collection_id": "c011ec71-0001-7000-8000-000000000003",
+      "app_id": "e8c20a8f-a93e-7018-8d66-6637fc0aeb4b",
+      "sort_order": 1
+    },
+    {
+      "collection_id": "c011ec71-0001-7000-8000-000000000003",
+      "app_id": "14fa273f-0a50-7b3e-8e8c-dcc6602bb6ff",
+      "sort_order": 2
+    }
   ]
 }
