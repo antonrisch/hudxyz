@@ -6,3 +6,4 @@ dist
 *.log
 .cursor
 .pnpm-store
+.scrape
