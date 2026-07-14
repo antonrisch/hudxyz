@@ -60,7 +60,7 @@ export default async function AppDetailPage({ params }: PageProps) {
     <main
       className={cn(
         "page-px mx-auto w-full max-w-6xl flex-1 space-y-8 pb-10",
-        listing.iconUrl ? "pt-2 sm:pt-0" : "pt-10",
+        listing.iconUrl ? "pt-2" : "pt-10",
       )}
     >
       <JsonLd
@@ -78,9 +78,9 @@ export default async function AppDetailPage({ params }: PageProps) {
         {listing.iconUrl ? (
           <ImageGradientBackground
             src={listing.iconUrl}
-            className="h-[clamp(8rem,10svh,10rem)] rounded-xl sm:h-[clamp(8rem,16svh,12rem)]"
+            className="h-[clamp(8rem,10svh,10rem)] rounded-2xl sm:h-[clamp(8rem,16svh,12rem)]"
           >
-            <ListingBreadcrumbs listing={listing} className="absolute top-2 left-2 z-10" />
+            <ListingBreadcrumbs listing={listing} className="absolute top-3 left-3 z-10" />
           </ImageGradientBackground>
         ) : (
           <ListingBreadcrumbs listing={listing} />
