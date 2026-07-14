@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Share } from "lucide-react";
 
-import { Share } from "@/components/icons/share";
 import { ListingCopyLinkRow } from "@/components/listings/listing-copy-link-row";
 import { Button } from "@/components/ui/button";
 import {
