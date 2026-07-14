@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { cache } from "react";
 
@@ -121,15 +121,21 @@ async function resolveEditorialListings(collectionId: string): Promise<ListingLi
   }));
 }
 
-async function resolveCollectionListings(
-  collection: {
-    id: string;
-    kind: CollectionKind;
-    filterListingType: ListingType | null;
-    filterCategorySlug: string | null;
-    smartSort: SmartSort | null;
-    itemLimit: number | null;
-  },
+export type CollectionResolveInput = {
+  id: string;
+  kind: CollectionKind;
+  filterListingType: ListingType | null;
+  filterCategorySlug: string | null;
+  smartSort: SmartSort | null;
+  itemLimit: number | null;
+};
+
+/**
+ * Resolve listings for a collection row (any status).
+ * Used by the public hub/detail paths and Padme admin previews.
+ */
+export async function resolveCollectionListings(
+  collection: CollectionResolveInput,
   limit?: number,
 ): Promise<ListingListItem[]> {
   if (collection.kind === "editorial") {
@@ -144,6 +150,25 @@ async function resolveCollectionListings(
     sort: collection.smartSort,
     limit,
   });
+}
+
+/** Item count for admin lists — avoids hydrating full listing rows when only length is needed. */
+export async function countCollectionListings(collection: CollectionResolveInput): Promise<number> {
+  if (collection.kind === "editorial") {
+    if (useSampleListings()) {
+      return (await resolveEditorialListings(collection.id)).length;
+    }
+    const db = getDb();
+    const rows = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(collectionApps)
+      .innerJoin(apps, eq(collectionApps.appId, apps.id))
+      .where(and(eq(collectionApps.collectionId, collection.id), eq(apps.status, "published")));
+    return rows[0]?.count ?? 0;
+  }
+
+  const listings = await resolveCollectionListings(collection, collection.itemLimit ?? undefined);
+  return listings.length;
 }
 
 function toPublishedCollection(row: {

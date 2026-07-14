@@ -17,6 +17,8 @@ export const SEARCH_WEIGHTS = {
 export type SearchSort = ListingSort | "relevance";
 
 export type SearchListingItem = ListingListItem & {
+  /** Internal app id — available for admin membership; omit from public API responses. */
+  id: string;
   author: string;
 };
 
@@ -63,6 +65,7 @@ export function buildFtsMatchQuery(raw: string): string | null {
 }
 
 type SearchRow = {
+  id: string;
   slug: string;
   public_id: string;
   name: string;
@@ -78,6 +81,7 @@ type SearchRow = {
 
 function mapSearchRows(rows: SearchRow[]): SearchListingItem[] {
   return rows.map((row) => ({
+    id: row.id,
     slug: row.slug,
     publicId: row.public_id,
     name: row.name,
@@ -125,6 +129,7 @@ export async function searchPublishedListings(
 
   const rows = await db.all<SearchRow>(sql`
     SELECT
+      apps.id AS id,
       apps.slug AS slug,
       apps.public_id AS public_id,
       apps.name AS name,
