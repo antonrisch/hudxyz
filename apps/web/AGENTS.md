@@ -25,10 +25,11 @@ Canonical detail path is `/apps/{slug}/{publicId}` via `listingPath` in `src/lib
 | ------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | **Stable identity** | `publicId`               | Resolve published detail with `getPublishedListingByPublicId`. Never key public routes on slug alone.                    |
 | **SEO crumb**       | `slug`                   | Derived from `name` (`slugifyName`); not unique. If the path slug ≠ row slug, `permanentRedirect` to the canonical path. |
+| **Browse routes**   | static segments          | `/apps/category/*` and `/apps/collections/*` are reserved — not legacy slug redirects.                                   |
 | **Legacy links**    | `/apps/[slug]`           | Redirect only when exactly one published row matches; otherwise 404.                                                     |
 | **Draft deep-link** | `?id=` on `/apps/submit` | Public id (Crockford), not internal uuid. Asset/draft APIs accept either and resolve to internal `apps.id` for R2 keys.  |
 
-Directory list/detail UI: `src/components/listings/`. Queries: `src/lib/apps/queries.ts`.
+Directory UI: `src/components/listings/`. Listing queries: `src/lib/apps/queries.ts`. Shelves: `src/lib/collections/queries.ts`. Browse URL helpers: `src/lib/apps/browse-params.ts`.
 
 ---
 

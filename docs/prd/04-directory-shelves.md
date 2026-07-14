@@ -1,6 +1,6 @@
 # PRD: Directory shelves and browse
 
-**Status:** Planned  
+**Status:** Implemented  
 **Owner:** apps/web  
 **Depends on:** Published apps in Turso, category catalog  
 **Related:** Directory search PRD; collections admin PRD  
@@ -106,7 +106,7 @@ Collection detail pages use the same resolver without the hub preview limit. Edi
 ### Hub
 
 - Intro heading and short copy, followed only by shelves.
-- Every shelf uses the same component: title, optional description, listing row/card treatment, and a “View all” link to its collection route.
+- Every shelf uses the same component: `ChevronTitle` (linked title + chevron, optional description) and listing rows. No separate “View all” text control.
 - Shelf layout is responsive and preserves useful density with a small catalog.
 - If no published shelf resolves to an item, show the existing directory empty state and submit CTA.
 
