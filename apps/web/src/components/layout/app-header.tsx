@@ -27,7 +27,7 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-3">
           <SearchCommand />
           <Link
             href="/apps/submit"
