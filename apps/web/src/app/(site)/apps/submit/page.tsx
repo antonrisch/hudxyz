@@ -26,6 +26,7 @@ export default async function SubmitAppPage({
   return (
     <main className="page-px mx-auto w-full max-w-3xl flex-1 py-10 min-h-[calc(100svh-12rem)]">
       <SubmitForm
+        key={id ?? "new"}
         categories={categories}
         initialDetail={detail ? serializeDraftDetail(detail) : null}
       />
