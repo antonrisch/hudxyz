@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { SpiralLoader } from "@/components/icons/spiral-loader";
 import { GlobalBannerDevPreview } from "@/components/layout/global-banner-dev-preview";
 import { ListingIcon } from "@/components/listings/listing-icon";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,9 @@ export default function DevPage() {
         </a>
         <a href="#item" className="hover:text-foreground">
           Item
+        </a>
+        <a href="#icons" className="hover:text-foreground">
+          Icons
         </a>
         <a href="#listings" className="hover:text-foreground">
           Listings
@@ -303,6 +307,27 @@ export default function DevPage() {
                 </ItemContent>
               </Item>
             </ItemGroup>,
+          )}
+        </section>
+
+        <section id="icons" className="scroll-mt-24 space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold tracking-tight">Icons</h2>
+            <p className="text-sm text-muted-foreground">
+              Shared icons under <code className="font-mono text-xs">components/icons</code>.
+            </p>
+          </div>
+          {frame(
+            "spiral-loader",
+            <div className="flex flex-wrap items-center gap-6 text-muted-foreground">
+              <SpiralLoader className="size-4" />
+              <SpiralLoader className="size-5" />
+              <SpiralLoader className="size-6" />
+              <span className="inline-flex items-center gap-2 text-sm">
+                <SpiralLoader className="size-4" />
+                Searching…
+              </span>
+            </div>,
           )}
         </section>
 
