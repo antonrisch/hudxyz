@@ -61,9 +61,13 @@ if (!command) {
   process.exit(1);
 }
 
-const result = spawnSync("drizzle-kit", [command], {
+const webRoot = join(here, "..");
+const drizzleConfig = join(webRoot, "drizzle.config.ts");
+
+const result = spawnSync("drizzle-kit", [command, "--config", drizzleConfig], {
   stdio: "inherit",
   shell: true,
+  cwd: webRoot,
 });
 
 process.exit(result.status ?? 1);
