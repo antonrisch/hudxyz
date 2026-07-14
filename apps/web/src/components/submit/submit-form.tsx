@@ -23,7 +23,21 @@ import {
   isDraftStub,
 } from "@/lib/apps/draft";
 import { type SubmitFormValues, submitFormValuesSchema } from "@/lib/apps/draft-schema";
-import { emptyMediaState, mediaFromAssets, type MediaState } from "@/lib/apps/upload-client";
+import {
+  emptyMediaState,
+  mediaFromAssets,
+  type MediaItem,
+  type MediaState,
+} from "@/lib/apps/upload-client";
+
+type AutofillMetadata = {
+  name: string | null;
+  description: string | null;
+  author: string | null;
+  iconUrl: string | null;
+  mrbdCapable: boolean;
+  warnings: string[];
+};
 
 const emptyValues: SubmitFormValues = {
   name: "",
@@ -70,6 +84,20 @@ function simulatorHrefFor(launchUrl: string): string | null {
   return null;
 }
 
+function isEmptyName(value: string): boolean {
+  const trimmed = value.trim();
+  return !trimmed || trimmed === "Untitled";
+}
+
+function isEmptyAuthor(value: string): boolean {
+  const trimmed = value.trim();
+  return !trimmed || trimmed === "Unknown";
+}
+
+function isEmptyDescription(value: string): boolean {
+  return !value.trim();
+}
+
 export function SubmitForm({
   categories,
   initialDetail,
@@ -86,6 +114,8 @@ export function SubmitForm({
     initialDetail ? mediaFromAssets(initialDetail.assets) : emptyMediaState(),
   );
   const [submitting, setSubmitting] = useState(false);
+  const [autofillPending, setAutofillPending] = useState(false);
+  const [mrbdCapableHint, setMrbdCapableHint] = useState(false);
   const [submittedName, setSubmittedName] = useState<string | null>(
     initialDetail?.status === "pending" || initialDetail?.status === "published"
       ? initialDetail.name
@@ -176,6 +206,164 @@ export function SubmitForm({
     }
   }
 
+  /** Persist whatever autofill wrote even when contact email / category aren't ready yet. */
+  async function persistAutofillPartial(fields: {
+    name?: string;
+    author?: string;
+    description?: string;
+    launchUrl: string;
+  }) {
+    const id = await ensureAppId();
+    const body: {
+      launchUrl: string;
+      name?: string;
+      author?: string;
+      description?: string | null;
+    } = {
+      launchUrl: fields.launchUrl,
+    };
+    if (fields.name) body.name = fields.name;
+    if (fields.author) body.author = fields.author;
+    if (fields.description !== undefined) {
+      body.description = fields.description.trim() || null;
+    }
+
+    const response = await fetch(`/api/apps/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiError(response));
+    }
+  }
+
+  async function handleAutofillFromUrl(launchUrl: string) {
+    setAutofillPending(true);
+    try {
+      const response = await fetch("/api/apps/metadata", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: launchUrl }),
+      });
+      if (!response.ok) {
+        throw new Error(await parseApiError(response));
+      }
+
+      const metadata = (await response.json()) as AutofillMetadata;
+      setMrbdCapableHint(metadata.mrbdCapable);
+
+      const current = form.state.values;
+      const filled: string[] = [];
+      const partial: {
+        name?: string;
+        author?: string;
+        description?: string;
+        launchUrl: string;
+      } = { launchUrl };
+
+      if (metadata.name && isEmptyName(current.name)) {
+        form.setFieldValue("name", metadata.name);
+        partial.name = metadata.name;
+        filled.push("name");
+      }
+      if (metadata.description && isEmptyDescription(current.description)) {
+        form.setFieldValue("description", metadata.description);
+        partial.description = metadata.description;
+        filled.push("description");
+      }
+      if (metadata.author && isEmptyAuthor(current.author)) {
+        form.setFieldValue("author", metadata.author);
+        partial.author = metadata.author;
+        filled.push("developer website");
+      }
+
+      let iconImported = false;
+      const hasReadyIcon = media.icon?.status === "ready";
+      if (metadata.iconUrl && !hasReadyIcon) {
+        const placeholder: MediaItem = {
+          localId: crypto.randomUUID(),
+          kind: "icon",
+          status: "uploading",
+          progress: 0,
+          sortOrder: 0,
+        };
+        setMedia((prev) => ({ ...prev, icon: placeholder }));
+
+        try {
+          const appId = await ensureAppId();
+          const importResponse = await fetch("/api/apps/assets/import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ appId, kind: "icon", url: metadata.iconUrl }),
+          });
+          if (!importResponse.ok) {
+            throw new Error(await parseApiError(importResponse));
+          }
+          const asset = (await importResponse.json()) as {
+            id: string;
+            kind: "icon";
+            publicUrl: string;
+            objectKey: string;
+            sortOrder: number;
+          };
+          setMedia((prev) => ({
+            ...prev,
+            icon: {
+              localId: asset.id,
+              kind: "icon",
+              status: "ready",
+              progress: 100,
+              assetId: asset.id,
+              publicUrl: asset.publicUrl,
+              objectKey: asset.objectKey,
+              sortOrder: asset.sortOrder,
+            },
+          }));
+          iconImported = true;
+          filled.push("icon");
+        } catch (error) {
+          setMedia((prev) => ({
+            ...prev,
+            icon:
+              prev.icon?.status === "uploading"
+                ? {
+                    ...prev.icon,
+                    status: "error",
+                    progress: 0,
+                    error: error instanceof Error ? error.message : "Could not import icon",
+                  }
+                : prev.icon,
+          }));
+          toast.error(error instanceof Error ? error.message : "Could not import icon");
+        }
+      }
+
+      if (filled.length > 0) {
+        toast.success(`Filled ${filled.join(", ")} from the Web App URL.`);
+        try {
+          // Partial PATCH so name/description/author land even without contact email.
+          await persistAutofillPartial(partial);
+        } catch {
+          // Fall back to full-schema autosave if partial failed (e.g. race).
+          void autosaveIfValid();
+        }
+      } else {
+        toast.message("Nothing new to fill — fields already have values or metadata was empty.");
+      }
+
+      for (const warning of metadata.warnings) {
+        if (warning.toLowerCase().includes("icon") && !iconImported && !hasReadyIcon) {
+          toast.message(warning);
+        }
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not auto-fill from URL");
+    } finally {
+      setAutofillPending(false);
+    }
+  }
+
   async function handleSubmitForReview() {
     const result = submitFormValuesSchema.safeParse(form.state.values);
     if (!result.success) {
@@ -198,6 +386,7 @@ export function SubmitForm({
       }
 
       setSubmittedName(result.data.name);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       toast.success("Submitted for review");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not submit");
@@ -224,7 +413,7 @@ export function SubmitForm({
           media={media}
           onChange={setMedia}
           ensureAppId={ensureAppId}
-          disabled={submitting}
+          disabled={submitting || autofillPending}
         />
 
         <form.Subscribe selector={(state) => state.values.listingType}>
@@ -235,6 +424,9 @@ export function SubmitForm({
               listingType={listingType}
               initialSecondaryCategoryId={initialDetail?.secondaryCategoryId}
               onBlurSave={() => void autosaveIfValid()}
+              onAutofillFromUrl={(url) => void handleAutofillFromUrl(url)}
+              autofillPending={autofillPending}
+              mrbdCapableHint={mrbdCapableHint}
             />
           )}
         </form.Subscribe>
@@ -243,7 +435,7 @@ export function SubmitForm({
           media={media}
           onChange={setMedia}
           ensureAppId={ensureAppId}
-          disabled={submitting}
+          disabled={submitting || autofillPending}
         />
 
         <div className="flex flex-wrap gap-2">
@@ -263,7 +455,11 @@ export function SubmitForm({
               );
             }}
           </form.Subscribe>
-          <Button type="submit" variant="brand" disabled={submitting || mediaBusy || !mediaReady}>
+          <Button
+            type="submit"
+            variant="brand"
+            disabled={submitting || autofillPending || mediaBusy || !mediaReady}
+          >
             {submitting ? "Submitting…" : "Submit app 🚀"}
           </Button>
         </div>

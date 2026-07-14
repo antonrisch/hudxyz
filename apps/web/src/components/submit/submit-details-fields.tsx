@@ -63,6 +63,15 @@ function defaultCategoryId(
   return forType[0]?.id ?? "";
 }
 
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function SubmitDetailsFields({
   form,
   categories,
@@ -70,6 +79,9 @@ export function SubmitDetailsFields({
   onBlurSave,
   initialSecondaryCategoryId,
   defaultCatalogOpen = false,
+  onAutofillFromUrl,
+  autofillPending = false,
+  mrbdCapableHint = false,
 }: {
   form: SubmitFormApi;
   categories: readonly SubmitCategoryOption[];
@@ -78,6 +90,10 @@ export function SubmitDetailsFields({
   initialSecondaryCategoryId?: string | null;
   /** Review UI opens type/category by default; submit stays collapsed. */
   defaultCatalogOpen?: boolean;
+  /** Submit page only — scrape metadata from the Web App URL. */
+  onAutofillFromUrl?: (launchUrl: string) => void;
+  autofillPending?: boolean;
+  mrbdCapableHint?: boolean;
 }) {
   const categoryOptions = categories.filter((category) => category.listingType === listingType);
   const [catalogOpen, setCatalogOpen] = useState(
@@ -115,23 +131,41 @@ export function SubmitDetailsFields({
       <form.Field name="launchUrl">
         {(field) => {
           const invalid = field.state.meta.errors.length > 0;
+          const canAutofill = Boolean(onAutofillFromUrl) && isHttpUrl(field.state.value.trim());
           return (
             <Field data-invalid={invalid}>
               <FieldLabel htmlFor={field.name}>Web App URL</FieldLabel>
-              <Input
-                id={field.name}
-                name={field.name}
-                type="url"
-                value={field.state.value}
-                onBlur={() => {
-                  field.handleBlur();
-                  onBlurSave?.();
-                }}
-                onChange={(event) => field.handleChange(event.target.value)}
-                aria-invalid={invalid}
-                placeholder="https://example.com/my-web-app"
-                autoComplete="url"
-              />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  type="url"
+                  value={field.state.value}
+                  onBlur={() => {
+                    field.handleBlur();
+                    onBlurSave?.();
+                  }}
+                  onChange={(event) => field.handleChange(event.target.value)}
+                  aria-invalid={invalid}
+                  placeholder="https://example.com/my-web-app"
+                  autoComplete="url"
+                  className="sm:min-w-0 sm:flex-1"
+                />
+                {onAutofillFromUrl ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!canAutofill || autofillPending}
+                    onClick={() => onAutofillFromUrl(field.state.value.trim())}
+                    className="shrink-0"
+                  >
+                    {autofillPending ? "Fetching…" : "Auto-fill from URL"}
+                  </Button>
+                ) : null}
+              </div>
+              {mrbdCapableHint ? (
+                <FieldDescription>Detected MRBD-capable metadata on this page.</FieldDescription>
+              ) : null}
               {invalid ? <FieldError errors={fieldErrors(field.state.meta.errors)} /> : null}
             </Field>
           );

@@ -8,8 +8,10 @@ initBotId({
     { path: "/api/apps", method: "POST" },
     { path: "/api/apps/*", method: "PATCH" },
     { path: "/api/apps/*/submit", method: "POST" },
+    { path: "/api/apps/metadata", method: "POST" },
     { path: "/api/apps/assets/presign", method: "POST" },
     { path: "/api/apps/assets", method: "POST" },
+    { path: "/api/apps/assets/import", method: "POST" },
     { path: "/api/apps/assets/*", method: "DELETE" },
   ],
 });

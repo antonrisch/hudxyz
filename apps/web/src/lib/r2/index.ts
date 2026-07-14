@@ -51,6 +51,23 @@ export async function presignPut(
   return getSignedUrl(getR2Client(), command, { expiresIn: expiresInSeconds });
 }
 
+/** Server-side PUT (e.g. icon import from a scraped URL). */
+export async function putObject(
+  objectKey: string,
+  body: Buffer | Uint8Array,
+  contentType: string,
+): Promise<void> {
+  const { bucket } = getConfig();
+  await getR2Client().send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: objectKey,
+      Body: body,
+      ContentType: contentType,
+    }),
+  );
+}
+
 export async function deleteObject(objectKey: string): Promise<void> {
   const { bucket } = getConfig();
   await getR2Client().send(
