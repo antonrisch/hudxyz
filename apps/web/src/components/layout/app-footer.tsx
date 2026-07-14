@@ -79,7 +79,7 @@ function buildCategoryLinks(listingType: ListingType, slugs: readonly string[]):
   return slugs.flatMap((slug) => {
     const category = findCategoryDefinition(listingType, slug);
     if (!category) return [];
-    return { href: `/apps?type=${listingType}&category=${slug}`, label: category.name };
+    return { href: `/apps/category/${slug}`, label: category.name };
   });
 }
 

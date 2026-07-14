@@ -3,8 +3,8 @@ import type { SearchParams } from "nuqs/server";
 import { permanentRedirect } from "next/navigation";
 
 import { ChevronTitle } from "@/components/layout/chevron-title";
-import { ListingRow } from "@/components/listings/listing-row";
 import { ListingsEmpty } from "@/components/listings/listings-empty";
+import { ListingsGrid } from "@/components/listings/listings-grid";
 import { listPublishedListings } from "@/lib/apps/queries";
 
 export const metadata: Metadata = {
@@ -44,11 +44,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       {listings.length === 0 ? (
         <ListingsEmpty />
       ) : (
-        <ul className="mt-8 grid list-none grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {listings.map((listing) => (
-            <ListingRow key={listing.publicId} listing={listing} />
-          ))}
-        </ul>
+        <ListingsGrid listings={listings} className="mt-8" />
       )}
     </main>
   );
