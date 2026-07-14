@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 import { uuidv7 } from "@/lib/uuidv7";
 
@@ -100,4 +100,61 @@ export const appAssets = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
   },
   (table) => [uniqueIndex("app_assets_object_key_unique").on(table.objectKey)],
+);
+
+export const collectionKinds = ["editorial", "smart"] as const;
+
+export type CollectionKind = (typeof collectionKinds)[number];
+
+export const collectionStatuses = ["draft", "published"] as const;
+
+export type CollectionStatus = (typeof collectionStatuses)[number];
+
+export const smartSorts = ["new", "popular"] as const;
+
+export type SmartSort = (typeof smartSorts)[number];
+
+export const collections = sqliteTable(
+  "collections",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull().unique(),
+    name: text("name").notNull(),
+    description: text("description"),
+    kind: text("kind").notNull().$type<CollectionKind>(),
+    status: text("status").notNull().default("draft").$type<CollectionStatus>(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    coverObjectKey: text("cover_object_key"),
+    filterListingType: text("filter_listing_type").$type<ListingType>(),
+    filterCategorySlug: text("filter_category_slug"),
+    smartSort: text("smart_sort").$type<SmartSort>(),
+    itemLimit: integer("item_limit"),
+    publishedAt: integer("published_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
+  },
+  (table) => [index("collections_status_sort_order_idx").on(table.status, table.sortOrder)],
+);
+
+export const collectionApps = sqliteTable(
+  "collection_apps",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    collectionId: text("collection_id")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    appId: text("app_id")
+      .notNull()
+      .references(() => apps.id, { onDelete: "cascade" }),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
+  },
+  (table) => [
+    uniqueIndex("collection_apps_collection_id_app_id_unique").on(table.collectionId, table.appId),
+    index("collection_apps_collection_id_sort_order_idx").on(table.collectionId, table.sortOrder),
+  ],
 );
