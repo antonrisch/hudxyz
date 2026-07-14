@@ -12,3 +12,8 @@ export async function parseApiError(response: Response): Promise<string> {
   }
   return `Request failed (${response.status})`;
 }
+
+/** Shared safe JSON error body for API routes. */
+export function apiError(message: string, status: number): Response {
+  return Response.json({ error: message }, { status });
+}
