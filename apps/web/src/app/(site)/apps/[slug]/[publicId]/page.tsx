@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
+import { ImageGradientBackground } from "@/components/listings/image-gradient-background";
 import { ListingHeader } from "@/components/listings/listing-header";
 import { ListingInformation } from "@/components/listings/listing-info";
 import { ListingMedia } from "@/components/listings/listing-media";
@@ -37,8 +38,22 @@ export default async function AppDetailPage({ params }: PageProps) {
   }
 
   return (
-    <main className="page-px mx-auto w-full max-w-6xl flex-1 space-y-8 py-10">
-      <ListingHeader listing={listing} />
+    <main
+      className={
+        listing.iconUrl
+          ? "page-px mx-auto w-full max-w-6xl flex-1 space-y-8 pt-2 sm:pt-0 pb-10"
+          : "page-px mx-auto w-full max-w-6xl flex-1 space-y-8 py-10"
+      }
+    >
+      <div className="space-y-4">
+        {listing.iconUrl ? (
+          <ImageGradientBackground
+            src={listing.iconUrl}
+            className="h-[clamp(8rem,10svh,10rem)] rounded-xl sm:h-[clamp(8rem,16svh,12rem)]"
+          />
+        ) : null}
+        <ListingHeader listing={listing} />
+      </div>
       <ListingMedia screenshots={listing.screenshots} video={listing.video} />
       <ListingOverview description={listing.description} />
       <ListingInformation listing={listing} />

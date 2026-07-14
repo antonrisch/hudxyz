@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { SpiralLoader } from "@/components/icons/spiral-loader";
 import { GlobalBannerDevPreview } from "@/components/layout/global-banner-dev-preview";
+import { ImageGradientBackground } from "@/components/listings/image-gradient-background";
 import { ListingIcon } from "@/components/listings/listing-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,6 +102,9 @@ export default function DevPage() {
         </a>
         <a href="#listings" className="hover:text-foreground">
           Listings
+        </a>
+        <a href="#image-gradient" className="hover:text-foreground">
+          Image gradient
         </a>
         <a href="#global-banner" className="hover:text-foreground">
           Global banner
@@ -354,6 +358,60 @@ export default function DevPage() {
               <Button variant="brand" size="lg">
                 Open in simulator
               </Button>
+            </div>,
+          )}
+        </section>
+
+        <section id="image-gradient" className="scroll-mt-24 space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold tracking-tight">Image gradient</h2>
+            <p className="text-sm text-muted-foreground">
+              App Store–style atmosphere from an icon src (
+              <code className="font-mono text-xs">ImageGradientBackground</code>
+              ).
+            </p>
+          </div>
+          {frame(
+            "image-gradient-background",
+            <div className="grid gap-4 sm:grid-cols-2">
+              {(
+                [
+                  {
+                    src: "/suggested-apps/texas-holdem.png",
+                    title: "Texas Hold'em",
+                    subtitle: "Play poker on your glasses",
+                  },
+                  {
+                    src: "/suggested-apps/block-stack.png",
+                    title: "Block Stack",
+                    subtitle: "Stack your way up",
+                  },
+                  {
+                    src: "/suggested-apps/alpha-tab.png",
+                    title: "Alpha Tab",
+                    subtitle: "Guitar tabs in your HUD",
+                  },
+                  {
+                    src: "/suggested-apps/tools.svg",
+                    title: "Tools",
+                    subtitle: "SVG icon source",
+                  },
+                ] as const
+              ).map((item) => (
+                <ImageGradientBackground
+                  key={item.src}
+                  src={item.src}
+                  className="flex h-50 items-center gap-4 rounded-xl px-5"
+                >
+                  <ListingIcon src={item.src} alt="" size={80} className="size-20 shrink-0" />
+                  <div className="min-w-0 space-y-1">
+                    <p className="truncate text-lg font-semibold tracking-tight drop-shadow-sm">
+                      {item.title}
+                    </p>
+                    <p className="truncate text-sm text-white/70">{item.subtitle}</p>
+                  </div>
+                </ImageGradientBackground>
+              ))}
             </div>,
           )}
         </section>
