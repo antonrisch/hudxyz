@@ -43,20 +43,31 @@ const now = Date.now();
 
 const smartShelves = [
   {
-    slug: "new",
-    name: "New",
-    description: "Recently published apps and games.",
-    sortOrder: 10,
-    smartSort: "new",
-    itemLimit: 6,
-  },
-  {
     slug: "popular",
     name: "Popular",
     description: "Most opened apps and games.",
-    sortOrder: 20,
+    sortOrder: 10,
     smartSort: "popular",
     itemLimit: 6,
+    filterListingType: null,
+  },
+  {
+    slug: "new",
+    name: "New & Noteworthy",
+    description: "Recently published apps and games.",
+    sortOrder: 20,
+    smartSort: "new",
+    itemLimit: 6,
+    filterListingType: null,
+  },
+  {
+    slug: "games",
+    name: "Games",
+    description: "Popular games for Meta Ray-Ban Display.",
+    sortOrder: 30,
+    smartSort: "popular",
+    itemLimit: 6,
+    filterListingType: "game",
   },
 ];
 
@@ -67,14 +78,14 @@ for (const shelf of smartShelves) {
             id, slug, name, description, kind, status, sort_order,
             cover_object_key, filter_listing_type, filter_category_slug,
             smart_sort, item_limit, published_at, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, 'smart', 'published', ?, NULL, NULL, NULL, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, 'smart', 'published', ?, NULL, ?, NULL, ?, ?, ?, ?, ?)
           ON CONFLICT(slug) DO UPDATE SET
             name = excluded.name,
             description = excluded.description,
             kind = 'smart',
             status = 'published',
             sort_order = excluded.sort_order,
-            filter_listing_type = NULL,
+            filter_listing_type = excluded.filter_listing_type,
             filter_category_slug = NULL,
             smart_sort = excluded.smart_sort,
             item_limit = excluded.item_limit,
@@ -86,6 +97,7 @@ for (const shelf of smartShelves) {
       shelf.name,
       shelf.description,
       shelf.sortOrder,
+      shelf.filterListingType,
       shelf.smartSort,
       shelf.itemLimit,
       now,
@@ -147,8 +159,8 @@ if (published.rows.length > 0) {
   }
 
   console.log(
-    `Seeded smart shelves (new, popular) and editorial featured (${memberIds.length} members).`,
+    `Seeded smart shelves (popular, new, games) and editorial featured (${memberIds.length} members).`,
   );
 } else {
-  console.log("Seeded smart shelves (new, popular). No published apps for featured.");
+  console.log("Seeded smart shelves (popular, new, games). No published apps for featured.");
 }

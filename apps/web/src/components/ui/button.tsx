@@ -23,6 +23,8 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        white:
+          "border-transparent bg-white bg-clip-border text-black hover:bg-[color-mix(in_oklch,white_88%,black_12%)] hover:text-black active:bg-[color-mix(in_oklch,white_80%,black_20%)] active:text-black aria-pressed:bg-[color-mix(in_oklch,white_72%,black_28%)] aria-pressed:text-black",
       },
       size: {
         default:

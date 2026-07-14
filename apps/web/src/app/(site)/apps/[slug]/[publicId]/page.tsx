@@ -11,6 +11,7 @@ import { ListingOverview } from "@/components/listings/listing-overview";
 import { listingPath } from "@/lib/apps/public-id";
 import { getPublishedListingByPublicId } from "@/lib/apps/queries";
 import { directorySocialMetadata, softwareApplicationJsonLd } from "@/lib/apps/seo";
+import { cn } from "@/lib/utils";
 
 type PageProps = {
   params: Promise<{ slug: string; publicId: string }>;
@@ -57,11 +58,10 @@ export default async function AppDetailPage({ params }: PageProps) {
 
   return (
     <main
-      className={
-        listing.iconUrl
-          ? "page-px mx-auto w-full max-w-6xl flex-1 space-y-8 pt-2 sm:pt-0 pb-10"
-          : "page-px mx-auto w-full max-w-6xl flex-1 space-y-8 py-10"
-      }
+      className={cn(
+        "page-px mx-auto w-full max-w-6xl flex-1 space-y-8 pb-10",
+        listing.iconUrl ? "pt-2 sm:pt-0" : "pt-10",
+      )}
     >
       <JsonLd
         data={softwareApplicationJsonLd({
