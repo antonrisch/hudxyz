@@ -140,7 +140,7 @@ export function UrlBar({
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck={false}
-            className="min-w-0 w-full border-none focus-visible:border-transparent focus-visible:ring-0"
+            className="min-w-0 w-full border-none bg-transparent dark:bg-transparent focus-visible:border-transparent focus-visible:ring-0"
           />
           <div className="flex">
             <Button
