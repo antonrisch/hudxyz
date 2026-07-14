@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { JsonLd } from "@/components/layout/json-ld";
 import { ListingsBrowseView } from "@/components/listings/listings-browse-view";
 import {
   appsCanonicalPath,
@@ -10,8 +11,10 @@ import {
   parseSearchSort,
   type BrowseParams,
 } from "@/lib/apps/browse-params";
+import { listingPath } from "@/lib/apps/public-id";
 import { listPublishedCategoryCounts, listPublishedListings } from "@/lib/apps/queries";
 import { searchPublishedListings } from "@/lib/apps/search";
+import { directorySocialMetadata, itemListJsonLd } from "@/lib/apps/seo";
 import { categoryDisplayName, categorySlugExists } from "@/lib/category/categories";
 
 export async function generateMetadata({
@@ -42,10 +45,17 @@ export async function generateMetadata({
     };
   }
 
+  const path = appsCanonicalPath({ categorySlug: slug, listingType });
+  const description = `Browse ${typeLabel} in ${name} for Meta Ray-Ban Display.`;
   return {
     title: name,
-    description: `Browse ${typeLabel} in ${name} for Meta Ray-Ban Display.`,
-    alternates: { canonical: appsCanonicalPath({ categorySlug: slug }) },
+    description,
+    alternates: { canonical: path },
+    ...directorySocialMetadata({
+      title: name,
+      description,
+      path,
+    }),
   };
 }
 
@@ -95,17 +105,33 @@ export default async function CategoryPage({
     listPublishedCategoryCounts({ listingType }),
   ]);
 
+  const path = appsCanonicalPath({ categorySlug: slug, listingType });
+  const description = `Browse apps and games in ${name} for Meta Ray-Ban Display.`;
+
   return (
-    <ListingsBrowseView
-      header={{
-        title: name,
-        count: listings.length,
-        listingType,
-        categorySlug: slug,
-        sort,
-        categories,
-      }}
-      listings={listings}
-    />
+    <>
+      <JsonLd
+        data={itemListJsonLd({
+          name,
+          description,
+          path,
+          items: listings.map((listing) => ({
+            name: listing.name,
+            path: listingPath(listing.slug, listing.publicId),
+          })),
+        })}
+      />
+      <ListingsBrowseView
+        header={{
+          title: name,
+          count: listings.length,
+          listingType,
+          categorySlug: slug,
+          sort,
+          categories,
+        }}
+        listings={listings}
+      />
+    </>
   );
 }

@@ -292,3 +292,31 @@ export const getPublishedCollectionBySlug = cache(
     };
   },
 );
+
+export type PublishedCollectionPath = {
+  slug: string;
+  updatedAt: Date;
+};
+
+/** Lightweight published collection rows for sitemap generation. */
+export async function listPublishedCollectionPaths(): Promise<PublishedCollectionPath[]> {
+  if (useSampleListings()) {
+    return sampleCollections()
+      .filter((row) => row.status === "published")
+      .map((row) => ({
+        slug: row.slug,
+        // Sample fixture has no updated_at — use a stable epoch.
+        updatedAt: new Date(0),
+      }));
+  }
+
+  const db = getDb();
+  return db
+    .select({
+      slug: collections.slug,
+      updatedAt: collections.updatedAt,
+    })
+    .from(collections)
+    .where(eq(collections.status, "published"))
+    .orderBy(asc(collections.sortOrder));
+}

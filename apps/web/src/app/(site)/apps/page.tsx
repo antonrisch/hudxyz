@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { JsonLd } from "@/components/layout/json-ld";
 import { ListingShelf } from "@/components/listings/listing-shelf";
 import { ListingsBrowseView } from "@/components/listings/listings-browse-view";
 import { ListingsEmpty } from "@/components/listings/listings-empty";
@@ -12,8 +13,10 @@ import {
   parseSearchSort,
   type BrowseParams,
 } from "@/lib/apps/browse-params";
+import { listingPath } from "@/lib/apps/public-id";
 import { listPublishedCategoryCounts, listPublishedListings } from "@/lib/apps/queries";
 import { searchPublishedListings } from "@/lib/apps/search";
+import { directorySocialMetadata, itemListJsonLd } from "@/lib/apps/seo";
 import { listPublishedShelves } from "@/lib/collections/queries";
 
 const HUB_COPY = {
@@ -53,18 +56,31 @@ export async function generateMetadata({
   }
 
   if (!filtered) {
+    const description = `${HUB_COPY.description} Open them in the hudxyz.com simulator.`;
     return {
       title: HUB_COPY.title,
-      description: `${HUB_COPY.description} Open them in the hud.xyz simulator.`,
+      description,
       alternates: { canonical: "/apps" },
+      ...directorySocialMetadata({
+        title: HUB_COPY.title,
+        description,
+        path: "/apps",
+      }),
     };
   }
 
   const copy = listingType ? TYPE_COPY[listingType] : HUB_COPY;
+  const path = appsCanonicalPath({ listingType });
+  const description = `${copy.description} Open them in the hudxyz.com simulator.`;
   return {
     title: copy.title,
-    description: `${copy.description} Open them in the hud.xyz simulator.`,
-    alternates: { canonical: appsCanonicalPath({ listingType }) },
+    description,
+    alternates: { canonical: path },
+    ...directorySocialMetadata({
+      title: copy.title,
+      description,
+      path,
+    }),
   };
 }
 
@@ -100,9 +116,23 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
 
   if (!filtered) {
     const shelves = await listPublishedShelves();
+    const jsonItems = shelves.flatMap((shelf) =>
+      shelf.listings.slice(0, 6).map((listing) => ({
+        name: listing.name,
+        path: listingPath(listing.slug, listing.publicId),
+      })),
+    );
 
     return (
       <main className="page-px mx-auto w-full max-w-6xl flex-1 py-10">
+        <JsonLd
+          data={itemListJsonLd({
+            name: HUB_COPY.title,
+            description: HUB_COPY.description,
+            path: "/apps",
+            items: jsonItems,
+          })}
+        />
         <h1 className="font-bold text-3xl tracking-tight">{HUB_COPY.title}</h1>
         <p className="mt-2 text-base text-muted-foreground">{HUB_COPY.description}</p>
 
@@ -127,18 +157,32 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
   ]);
 
   const copy = listingType ? TYPE_COPY[listingType] : HUB_COPY;
+  const path = appsCanonicalPath({ listingType });
 
   return (
-    <ListingsBrowseView
-      header={{
-        title: copy.title,
-        description: copy.description,
-        count: listings.length,
-        listingType,
-        sort,
-        categories,
-      }}
-      listings={listings}
-    />
+    <>
+      <JsonLd
+        data={itemListJsonLd({
+          name: copy.title,
+          description: copy.description,
+          path,
+          items: listings.map((listing) => ({
+            name: listing.name,
+            path: listingPath(listing.slug, listing.publicId),
+          })),
+        })}
+      />
+      <ListingsBrowseView
+        header={{
+          title: copy.title,
+          description: copy.description,
+          count: listings.length,
+          listingType,
+          sort,
+          categories,
+        }}
+        listings={listings}
+      />
+    </>
   );
 }

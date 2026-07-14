@@ -484,3 +484,35 @@ export async function getPublishedListingBySlug(slug: string): Promise<ListingDe
   if (rows.length !== 1) return null;
   return getPublishedListingByPublicId(rows[0]!.publicId);
 }
+
+export type PublishedListingPath = {
+  slug: string;
+  publicId: string;
+  updatedAt: Date;
+};
+
+/** Lightweight rows for sitemap generation. */
+export async function listPublishedListingPaths(): Promise<PublishedListingPath[]> {
+  if (useSampleListings()) {
+    return sampleListings.apps
+      .filter((row) => row.status === "published")
+      .map((row) => ({
+        slug: row.slug,
+        publicId: row.public_id,
+        updatedAt: new Date(row.updated_at),
+      }));
+  }
+
+  const db = getDb();
+  const rows = await db
+    .select({
+      slug: apps.slug,
+      publicId: apps.publicId,
+      updatedAt: apps.updatedAt,
+    })
+    .from(apps)
+    .where(eq(apps.status, "published"))
+    .orderBy(desc(apps.updatedAt));
+
+  return rows;
+}
