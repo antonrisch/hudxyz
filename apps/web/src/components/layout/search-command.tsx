@@ -173,12 +173,13 @@ export function SearchCommand() {
       <Button
         type="button"
         variant="secondary"
-        size="icon"
-        className="sm:hidden"
+        size="default"
+        className="border border-input text-muted-foreground sm:hidden"
         aria-label="Search apps"
         onClick={openPalette}
       >
-        <Search />
+        Search
+        <Search data-icon="inline-end" />
       </Button>
       <Button
         type="button"
