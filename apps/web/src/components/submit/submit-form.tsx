@@ -29,6 +29,7 @@ import {
   type MediaItem,
   type MediaState,
 } from "@/lib/apps/upload-client";
+import { cn } from "@/lib/utils";
 
 type AutofillMetadata = {
   name: string | null;
@@ -438,7 +439,14 @@ export function SubmitForm({
           disabled={submitting || autofillPending}
         />
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
+          <Button
+            type="submit"
+            variant="brand"
+            disabled={submitting || autofillPending || mediaBusy || !mediaReady}
+          >
+            {submitting ? "Submitting…" : "🚀 Submit app"}
+          </Button>
           <form.Subscribe selector={(state) => state.values.launchUrl}>
             {(launchUrl) => {
               const href = simulatorHrefFor(launchUrl);
@@ -447,7 +455,7 @@ export function SubmitForm({
                 <Link
                   href={href}
                   target="_blank"
-                  className={buttonVariants({ variant: "outline" })}
+                  className={cn(buttonVariants({ variant: "outline" }))}
                 >
                   <Glasses data-icon="inline-start" />
                   Preview in simulator
@@ -455,13 +463,6 @@ export function SubmitForm({
               );
             }}
           </form.Subscribe>
-          <Button
-            type="submit"
-            variant="brand"
-            disabled={submitting || autofillPending || mediaBusy || !mediaReady}
-          >
-            {submitting ? "Submitting…" : "Submit app 🚀"}
-          </Button>
         </div>
       </form>
     </>

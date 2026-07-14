@@ -402,8 +402,9 @@ export function SubmitDetailsFields({
               </FieldDescription>
               <Input
                 id={field.name}
-                name={field.name}
+                name="email"
                 type="email"
+                inputMode="email"
                 value={field.state.value}
                 onBlur={() => {
                   field.handleBlur();
@@ -413,6 +414,7 @@ export function SubmitDetailsFields({
                 aria-invalid={invalid}
                 placeholder="you@example.com"
                 autoComplete="email"
+                spellCheck={false}
               />
               {invalid ? <FieldError errors={fieldErrors(field.state.meta.errors)} /> : null}
             </Field>
