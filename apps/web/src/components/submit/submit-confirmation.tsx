@@ -56,7 +56,7 @@ export function SubmitConfirmation({ name, publicId }: { name: string; publicId:
       ) : null}
 
       <Link href="/apps" className={buttonVariants({ variant: "brand", size: "lg" })}>
-        Back to Web Apps
+        Back to Apps & Games
       </Link>
     </div>
   );
