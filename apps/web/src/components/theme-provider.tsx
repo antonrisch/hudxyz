@@ -64,7 +64,8 @@ function ThemeHotkey() {
         return;
       }
 
-      if (event.key.toLowerCase() !== "d") {
+      // Autofill and other synthetic keydowns can omit `key`.
+      if (event.key?.toLowerCase() !== "d") {
         return;
       }
 

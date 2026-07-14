@@ -1,7 +1,7 @@
 "use client";
 
 import { ImageIcon, PlusIcon, UploadIcon, XIcon } from "lucide-react";
-import { useId, useRef } from "react";
+import { useId, useRef, useState } from "react";
 
 import { OptionalMark } from "@/components/submit/optional-mark";
 import {
@@ -28,6 +28,7 @@ import {
   type MediaState,
   uploadAppAsset,
 } from "@/lib/apps/upload-client";
+import { useMountEffect } from "@/lib/use-mount-effect";
 import { cn } from "@/lib/utils";
 
 type MediaUpdater = (prev: MediaState) => MediaState;
@@ -274,14 +275,90 @@ function MediaAttachment({
   );
 }
 
+function dragEventHasFiles(event: DragEvent | React.DragEvent) {
+  return Array.from(event.dataTransfer?.types ?? []).includes("Files");
+}
+
+/** True while a file drag is over the window — reveals drop targets. */
+function useWindowFileDrag() {
+  const [active, setActive] = useState(false);
+  const depthRef = useRef(0);
+
+  useMountEffect(() => {
+    function onDragEnter(event: DragEvent) {
+      if (!dragEventHasFiles(event)) return;
+      depthRef.current += 1;
+      setActive(true);
+    }
+
+    function onDragLeave(event: DragEvent) {
+      if (!dragEventHasFiles(event)) return;
+      depthRef.current = Math.max(0, depthRef.current - 1);
+      if (depthRef.current === 0) setActive(false);
+    }
+
+    function onDragOver(event: DragEvent) {
+      if (!dragEventHasFiles(event)) return;
+      // Prevent the browser from opening the dropped file as a navigation.
+      event.preventDefault();
+    }
+
+    function clear(event: DragEvent) {
+      if (dragEventHasFiles(event)) event.preventDefault();
+      depthRef.current = 0;
+      setActive(false);
+    }
+
+    function onDragEnd() {
+      depthRef.current = 0;
+      setActive(false);
+    }
+
+    window.addEventListener("dragenter", onDragEnter);
+    window.addEventListener("dragleave", onDragLeave);
+    window.addEventListener("dragover", onDragOver);
+    window.addEventListener("drop", clear);
+    window.addEventListener("dragend", onDragEnd);
+
+    return () => {
+      window.removeEventListener("dragenter", onDragEnter);
+      window.removeEventListener("dragleave", onDragLeave);
+      window.removeEventListener("dragover", onDragOver);
+      window.removeEventListener("drop", clear);
+      window.removeEventListener("dragend", onDragEnd);
+    };
+  });
+
+  return active;
+}
+
+function filesMatchingAccept(files: FileList | File[], accept: string): File[] {
+  const tokens = accept
+    .split(",")
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean);
+
+  return Array.from(files).filter((file) => {
+    const type = file.type.toLowerCase();
+    const name = file.name.toLowerCase();
+    return tokens.some((token) => {
+      if (token.endsWith("/*")) return type.startsWith(token.slice(0, -1));
+      if (token.startsWith(".")) return name.endsWith(token);
+      return type === token;
+    });
+  });
+}
+
 function MediaSection({
   title,
   description,
   optional,
   uploadLabel,
+  dropLabel,
   accept,
   disabled,
   showUpload,
+  fileDragActive,
   multiple,
   onPick,
   children,
@@ -290,9 +367,11 @@ function MediaSection({
   description: React.ReactNode;
   optional?: boolean;
   uploadLabel: string;
+  dropLabel: string;
   accept: string;
   disabled?: boolean;
   showUpload: boolean;
+  fileDragActive: boolean;
   /** Screenshots default to multi-select; a single pick is still `files.length === 1`. */
   multiple?: boolean;
   onPick: (files: File[]) => void;
@@ -300,9 +379,45 @@ function MediaSection({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
+  const [over, setOver] = useState(false);
+  const dropDepthRef = useRef(0);
+  const canDrop = showUpload && !disabled;
+
+  function resetOver() {
+    dropDepthRef.current = 0;
+    setOver(false);
+  }
+
+  function handleDrop(event: React.DragEvent) {
+    event.preventDefault();
+    resetOver();
+    if (!canDrop) return;
+
+    const files = filesMatchingAccept(event.dataTransfer.files, accept);
+    if (files.length > 0) onPick(files);
+  }
 
   return (
-    <section className="space-y-3">
+    <section
+      className="space-y-3"
+      onDragEnter={(event) => {
+        if (!canDrop || !dragEventHasFiles(event)) return;
+        event.preventDefault();
+        dropDepthRef.current += 1;
+        setOver(true);
+      }}
+      onDragOver={(event) => {
+        if (!canDrop || !dragEventHasFiles(event)) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+      }}
+      onDragLeave={(event) => {
+        if (!canDrop || !dragEventHasFiles(event)) return;
+        dropDepthRef.current = Math.max(0, dropDepthRef.current - 1);
+        if (dropDepthRef.current === 0) setOver(false);
+      }}
+      onDrop={handleDrop}
+    >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <FieldTitle>
@@ -324,6 +439,19 @@ function MediaSection({
         ) : null}
       </div>
       {children}
+      {canDrop && fileDragActive ? (
+        <div
+          aria-hidden
+          className={cn(
+            "flex min-h-24 items-center justify-center rounded-xl border border-dashed px-4 py-6 text-center text-sm transition-[color,background-color,border-color] duration-150 ease-out",
+            over && fileDragActive
+              ? "border-foreground/40 bg-muted text-foreground"
+              : "border-border bg-muted/40 text-muted-foreground",
+          )}
+        >
+          {dropLabel}
+        </div>
+      ) : null}
       <input
         id={inputId}
         ref={inputRef}
@@ -495,6 +623,8 @@ export function SubmitMedia({
   /** Defaults to `/api/apps`. Admin uses `/api/padme`. */
   apiBase?: string;
 }) {
+  const fileDragActive = useWindowFileDrag();
+
   function upload(kind: AppAssetKind, files: File[]) {
     queueUploads({ ensureAppId, kind, files, media, onChange, apiBase });
   }
@@ -506,9 +636,11 @@ export function SubmitMedia({
         description={`Up to ${MAX_SCREENSHOTS_PER_APP}. Helps people see your Web App before they open it.`}
         optional
         uploadLabel="Upload"
+        dropLabel="Drop screenshots here"
         accept={IMAGE_ACCEPT}
         multiple
         showUpload={canAddScreenshot(media.screenshots)}
+        fileDragActive={fileDragActive}
         disabled={disabled}
         onPick={(files) => upload("screenshot", files)}
       >
@@ -539,8 +671,10 @@ export function SubmitMedia({
         description="MP4, 5 to 30 seconds, up to 50 MB."
         optional
         uploadLabel={media.video ? "Replace" : "Upload"}
+        dropLabel={media.video ? "Drop to replace video" : "Drop MP4 here"}
         accept="video/mp4"
         showUpload={media.video?.status !== "uploading"}
+        fileDragActive={fileDragActive}
         disabled={disabled}
         onPick={(files) => upload("video", files)}
       >
