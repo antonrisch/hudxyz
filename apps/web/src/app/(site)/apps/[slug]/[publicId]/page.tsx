@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 import { JsonLd } from "@/components/layout/json-ld";
 import { ImageGradientBackground } from "@/components/listings/image-gradient-background";
+import { ListingBreadcrumbs } from "@/components/listings/listing-breadcrumbs";
 import { ListingHeader } from "@/components/listings/listing-header";
 import { ListingInformation } from "@/components/listings/listing-info";
 import { ListingMedia } from "@/components/listings/listing-media";
@@ -78,8 +79,12 @@ export default async function AppDetailPage({ params }: PageProps) {
           <ImageGradientBackground
             src={listing.iconUrl}
             className="h-[clamp(8rem,10svh,10rem)] rounded-xl sm:h-[clamp(8rem,16svh,12rem)]"
-          />
-        ) : null}
+          >
+            <ListingBreadcrumbs listing={listing} className="absolute top-2 left-2 z-10" />
+          </ImageGradientBackground>
+        ) : (
+          <ListingBreadcrumbs listing={listing} />
+        )}
         <ListingHeader listing={listing} />
       </div>
       <ListingMedia screenshots={listing.screenshots} video={listing.video} />
