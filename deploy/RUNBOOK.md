@@ -1,21 +1,23 @@
 # Production runbook
 
-Solo-operator incident response for hud.xyz. DNS lives on **Bunny**; the Next app on **Vercel**; Wisp egress on **Hetzner** (`kenobi.hudbox.dev`).
+Solo-operator incident response for hudxyz.com. DNS lives on **Bunny**; the Next app on **Vercel**; Wisp egress on **Hetzner** (`kenobi.hudbox.dev`).
+
+`hud.xyz` is **deprecated** — canonical site is `https://hudxyz.com`. Keep the old name only until DNS/redirect cutover is finished, then drop it from nginx Origin allowlist.
 
 ## Architecture
 
 ```
-Browser ──HTTPS──> hud.xyz (Vercel / Next.js)
+Browser ──HTTPS──> hudxyz.com (Vercel / Next.js)
                  └── wss ──> kenobi.hudbox.dev (nginx) ──> wisp (:4000) ──> internet
 ```
 
 ## Severity guide
 
-| Level  | Examples                                                | Response                                   |
-| ------ | ------------------------------------------------------- | ------------------------------------------ |
-| **P0** | hud.xyz down, proxy used for abuse at scale, data leak  | Drop everything; fix or rollback within 1h |
-| **P1** | Simulator broken but site loads, elevated Sentry errors | Fix same day                               |
-| **P2** | Cosmetic bug, single-user report                        | Next deploy window                         |
+| Level  | Examples                                                  | Response                                   |
+| ------ | --------------------------------------------------------- | ------------------------------------------ |
+| **P0** | hudxyz.com down, proxy used for abuse at scale, data leak | Drop everything; fix or rollback within 1h |
+| **P1** | Simulator broken but site loads, elevated Sentry errors   | Fix same day                               |
+| **P2** | Cosmetic bug, single-user report                          | Next deploy window                         |
 
 ## Escalation
 
@@ -31,7 +33,7 @@ Fastest path when a bad deploy shipped:
 
 1. Vercel → **Project** → **Deployments**
 2. Find last known-good production deployment → **⋯** → **Instant Rollback**
-3. Confirm `https://hud.xyz` loads and proxy works
+3. Confirm `https://hudxyz.com` loads and proxy works
 
 `NEXT_PUBLIC_*` vars are **build-time**. Rolling back does not change env; if the break was a bad env change, fix env and **Redeploy** instead.
 
@@ -61,12 +63,12 @@ Full wisp deploy steps: [deploy/README.md](./README.md).
 
 - Browser devtools → **Console** and **Network** → WebSocket to `wisp` (101 Switching Protocols?)
 - Verify Vercel env: `NEXT_PUBLIC_WISP_URL=wss://kenobi.hudbox.dev/wisp/`
-- Check nginx origin allowlist still permits `https://hud.xyz` and your preview host if testing previews
+- Check nginx origin allowlist still permits `https://hudxyz.com` and your preview host if testing previews
 - `journalctl -u wisp -f` on kenobi while reproducing
 
 ### 403 on Wisp WebSocket
 
-nginx blocks requests whose `Origin` is not `*.hud.xyz` or `*.vercel.app`. Previews on other hosts will fail by design.
+nginx blocks requests whose `Origin` is not `*.hudxyz.com` (or deprecated `*.hud.xyz`) or `*.vercel.app`. Previews on other hosts will fail by design.
 
 ### Spike in Sentry errors
 
@@ -75,7 +77,7 @@ nginx blocks requests whose `Origin` is not `*.hud.xyz` or `*.vercel.app`. Previ
 
 ### SSL / DNS
 
-- **Bunny** → confirm A/CNAME for `hud.xyz` still points at Vercel
+- **Bunny** → confirm A/CNAME for `hudxyz.com` still points at Vercel
 - **kenobi** TLS: `sudo certbot certificates` on the VPS if wss fails after cert renewal
 
 ## Communication
@@ -95,8 +97,8 @@ No public status page yet. For a prolonged P0:
 
 After any production change:
 
-- [ ] `https://hud.xyz` loads
+- [ ] `https://hudxyz.com` loads
 - [ ] Load a public URL in the simulator (proxy path works)
 - [ ] `/privacy` and `/terms` render
 - [ ] Sentry test event (optional) via a thrown error on preview only
-- [ ] `curl -I https://hud.xyz/privacy` shows security headers (HSTS, nosniff, etc.)
+- [ ] `curl -I https://hudxyz.com/privacy` shows security headers (HSTS, nosniff, etc.)

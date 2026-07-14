@@ -12,7 +12,7 @@ browser ──wss──> nginx (:443 TLS) ──> 127.0.0.1:4000 (wisp) ──> 
 
 - wisp-js 0.4.1 blocks loopback / private / link-local (incl. `169.254.169.254` metadata) on the **resolved** ip by default — internal targets unreachable, DNS-rebinding covered. Pinned exactly so the defaults can't drift.
 - `wisp-server.mjs` adds: TCP-only, ports 80/443, stream caps, loopback bind.
-- nginx adds a per-ip connection cap. Origin allowlist in `nginx-wisp.conf` permits `hud.xyz` + `*.vercel.app`.
+- nginx adds a per-ip connection cap. Origin allowlist in `nginx-wisp.conf` permits `hudxyz.com` + `*.vercel.app` (`hud.xyz` still allowed, deprecated).
 - Still a relay to arbitrary **public** http(s) sites — inherent to the feature.
 
 ## Deploy
