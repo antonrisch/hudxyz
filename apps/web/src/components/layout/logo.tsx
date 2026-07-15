@@ -28,7 +28,7 @@ export function Logo({
           !showWordmarkOnMobile && "hidden sm:inline",
         )}
       >
-        hudxyz.com
+        hudxyz
       </span>
     </Link>
   );
