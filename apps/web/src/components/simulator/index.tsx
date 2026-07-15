@@ -48,6 +48,9 @@ import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadStage } from "@/lib/simulator/capture";
 import { createStageRecorder, downloadStageRecording } from "@/lib/simulator/record";
+import { track } from "@/lib/analytics/track";
+import type { SimulatorLoadSource } from "@/lib/analytics/events";
+import { consumeCatalogSimulatorLoad } from "@/lib/analytics/simulator-source";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +62,7 @@ interface SimulatorContextValue {
   iframeRef: RefObject<HTMLIFrameElement | null>;
   displayRef: RefObject<HTMLDivElement | null>;
   urlInputRef: RefObject<HTMLInputElement | null>;
-  load: (raw: string) => void;
+  load: (raw: string, source?: SimulatorLoadSource) => void;
   press: (intent: Intent) => void;
   pressDown: (intent: Intent) => void;
   pressUp: (intent: Intent) => void;
@@ -130,15 +133,33 @@ export default function Simulator({
   panZoomRef.current = panZoom;
   const displayScaleRef = useRef(1);
   const filterRafRef = useRef<number | null>(null);
+  const loadSourceRef = useRef<SimulatorLoadSource>("custom");
+  const pendingLoadSourceRef = useRef<SimulatorLoadSource | null>(null);
+  const failureStageRef = useRef<"timeout" | "proxy" | "unknown">("unknown");
+
+  const resolveLoadSource = useCallback(
+    (url: string, explicit?: SimulatorLoadSource): SimulatorLoadSource => {
+      if (explicit) return explicit;
+      if (consumeCatalogSimulatorLoad()) return "catalog";
+      const normalized = normalizeWebUrl(url);
+      if (normalized && suggestedApps.some((app) => normalizeWebUrl(app.url) === normalized)) {
+        return "catalog";
+      }
+      return "custom";
+    },
+    [suggestedApps],
+  );
 
   // navigate: route the target through the same-origin proxy. created once, reused.
   const load = useCallback(
-    (raw: string) => {
+    (raw: string, source?: SimulatorLoadSource) => {
       const url = normalizeWebUrl(raw);
       if (!url) return;
+      pendingLoadSourceRef.current = resolveLoadSource(url, source);
+      failureStageRef.current = "unknown";
       store.getState().requestLoad(url);
     },
-    [store],
+    [resolveLoadSource, store],
   );
 
   // inject a d-pad gesture. app mode -> synthesize the mapped key into the proxied frame.
@@ -326,6 +347,23 @@ export default function Simulator({
     migrateLegacySimulatorPreferences(store);
   });
 
+  // Product analytics for load outcomes (no URL / host PII).
+  useMountEffect(() => {
+    return store.subscribe((state, prev) => {
+      if (state.status === prev.status) return;
+      if (state.status === "ready" && prev.status === "revealing") {
+        track("simulator_load_succeeded", { source: loadSourceRef.current });
+        return;
+      }
+      if (state.status === "error" && prev.status !== "error") {
+        track("simulator_load_failed", {
+          source: loadSourceRef.current,
+          failure_stage: failureStageRef.current,
+        });
+      }
+    });
+  });
+
   // proxy navigation: react to loadToken (bumped by requestLoad/launchApp/reload).
   useMountEffect(() => {
     let cancelNav = () => {};
@@ -342,6 +380,13 @@ export default function Simulator({
       const { url } = store.getState();
       const navToken = store.getState().loadToken;
       const isStale = () => cancelled || store.getState().loadToken !== navToken;
+
+      // Prefer source from `load()`; otherwise derive from URL / referrer (seed + reload).
+      const pendingSource = pendingLoadSourceRef.current;
+      pendingLoadSourceRef.current = null;
+      loadSourceRef.current = pendingSource ?? resolveLoadSource(url);
+      failureStageRef.current = "unknown";
+      track("simulator_load_requested", { source: loadSourceRef.current });
 
       const onLoad = () => {
         void (async () => {
@@ -369,6 +414,7 @@ export default function Simulator({
 
       const loadTimeout = window.setTimeout(() => {
         if (!isStale() && store.getState().status === "loading") {
+          failureStageRef.current = "timeout";
           store.getState().appError();
         }
       }, 30_000);
@@ -391,7 +437,10 @@ export default function Simulator({
           if (isStale()) return;
           frame.go(url);
         } catch {
-          if (!isStale()) store.getState().appError();
+          if (!isStale()) {
+            failureStageRef.current = "proxy";
+            store.getState().appError();
+          }
         }
       })();
     };

@@ -19,6 +19,7 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { parseApiError } from "@/lib/apps/api-error";
 import { normalizeSearchInput } from "@/lib/apps/search";
+import { track } from "@/lib/analytics/track";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
 type SearchResult = {
@@ -110,7 +111,13 @@ export function SearchCommand() {
   );
 
   const selectHref = useCallback(
-    (href: string) => {
+    (href: string, meta?: { publicId?: string; source: "palette" | "view_all" }) => {
+      if (meta) {
+        track("search_result_selected", {
+          public_id: meta.publicId,
+          source: meta.source,
+        });
+      }
       setOpen(false);
       resetSearch();
       router.push(href);
@@ -219,7 +226,9 @@ export function SearchCommand() {
                   <CommandItem
                     key={result.publicId}
                     value={`${result.name} ${result.publicId}`}
-                    onSelect={() => selectHref(result.href)}
+                    onSelect={() =>
+                      selectHref(result.href, { publicId: result.publicId, source: "palette" })
+                    }
                     className="gap-3 py-2"
                   >
                     <ListingIcon src={result.iconUrl} alt="" size={40} />
@@ -234,7 +243,7 @@ export function SearchCommand() {
                 {viewAllHref && normalizedQuery ? (
                   <CommandItem
                     value={`view-all ${normalizedQuery}`}
-                    onSelect={() => selectHref(viewAllHref)}
+                    onSelect={() => selectHref(viewAllHref, { source: "view_all" })}
                     className="text-muted-foreground"
                   >
                     View all results for “{normalizedQuery}”

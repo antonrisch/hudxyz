@@ -18,6 +18,8 @@ import {
   listingShareUrl,
 } from "@/lib/apps/share-targets";
 import { listingPath } from "@/lib/apps/public-id";
+import { track } from "@/lib/analytics/track";
+import type { ListingShareChannel } from "@/lib/analytics/events";
 import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +69,7 @@ export function ListingShareDialog({
     if (canUseNativeShare()) {
       try {
         await navigator.share({ title: shareTitle, url });
+        track("listing_shared", { public_id: publicId, channel: "native" });
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -74,6 +77,10 @@ export function ListingShareDialog({
     }
 
     openDialog();
+  };
+
+  const trackShare = (channel: ListingShareChannel) => {
+    track("listing_shared", { public_id: publicId, channel });
   };
 
   return (
@@ -126,6 +133,7 @@ export function ListingShareDialog({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={target.label}
+                onClick={() => trackShare(target.name)}
                 className={cn(
                   "inline-flex size-10 shrink-0 items-center justify-center rounded-xl p-2.5 transition-transform outline-none",
                   "hover:brightness-110 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.97]",
@@ -142,7 +150,11 @@ export function ListingShareDialog({
             url={copyUrl}
             copied={copied}
             disabled={!copyUrl}
-            onCopy={() => void copy(copyUrl)}
+            onCopy={() => {
+              void (async () => {
+                if (await copy(copyUrl)) trackShare("copy");
+              })();
+            }}
           />
         </DialogContent>
       </Dialog>
