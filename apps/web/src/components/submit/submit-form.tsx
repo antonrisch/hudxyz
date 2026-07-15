@@ -15,6 +15,7 @@ import {
 } from "@/components/submit/submit-details-fields";
 import { SubmitIconField, SubmitMedia } from "@/components/submit/submit-media";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { parseApiError } from "@/lib/apps/api-error";
 import {
   type DraftAppDto,
@@ -30,6 +31,7 @@ import {
   type MediaState,
 } from "@/lib/apps/upload-client";
 import { track, trackOnce } from "@/lib/analytics/track";
+import { legal } from "@/lib/legal/config";
 import { cn } from "@/lib/utils";
 
 type AutofillMetadata = {
@@ -120,6 +122,7 @@ export function SubmitForm({
   const [submitting, setSubmitting] = useState(false);
   const [autofillPending, setAutofillPending] = useState(false);
   const [mrbdCapableHint, setMrbdCapableHint] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [submittedName, setSubmittedName] = useState<string | null>(
     initialDetail?.status === "pending" || initialDetail?.status === "published"
       ? initialDetail.name
@@ -384,12 +387,23 @@ export function SubmitForm({
       toast.error("Upload an icon before submitting.");
       return;
     }
+    if (!termsAccepted) {
+      toast.error("Accept the Terms of Service and Privacy Policy to submit.");
+      return;
+    }
 
     setSubmitting(true);
     try {
       const id = await persistDraft(result.data);
 
-      const response = await fetch(`/api/apps/${id}/submit`, { method: "POST" });
+      const response = await fetch(`/api/apps/${id}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          termsVersion: legal.termsVersion,
+          termsAccepted: true,
+        }),
+      });
       if (!response.ok) {
         throw new Error(await parseApiError(response));
       }
@@ -414,6 +428,7 @@ export function SubmitForm({
       </p>
       <form
         className="mt-8 space-y-10"
+        data-sentry-mask
         onSubmit={(event) => {
           event.preventDefault();
           void handleSubmitForReview();
@@ -450,11 +465,44 @@ export function SubmitForm({
           />
         ) : null}
 
+        <Field className="gap-3 rounded-xl border border-border bg-muted/40 p-4">
+          <div className="flex items-start gap-3">
+            <input
+              id="terms-accepted"
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(event) => setTermsAccepted(event.target.checked)}
+              disabled={submitting || autofillPending}
+              className="mt-1 size-4 shrink-0 rounded border-border accent-brand"
+            />
+            <div className="min-w-0 space-y-1">
+              <FieldLabel htmlFor="terms-accepted" className="font-medium text-foreground">
+                I have the rights to submit this Web App and agree to the Terms
+              </FieldLabel>
+              <FieldDescription>
+                By submitting, you confirm you have authority and rights to the app and media, agree
+                to the{" "}
+                <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
+                  Terms of Service
+                </Link>{" "}
+                (version {legal.termsVersion}), and acknowledge the{" "}
+                <Link
+                  href="/privacy"
+                  className="underline underline-offset-4 hover:text-foreground"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </FieldDescription>
+            </div>
+          </div>
+        </Field>
+
         <div className="flex flex-wrap gap-3">
           <Button
             type="submit"
             variant="brand"
-            disabled={submitting || autofillPending || mediaBusy || !mediaReady}
+            disabled={submitting || autofillPending || mediaBusy || !mediaReady || !termsAccepted}
           >
             {submitting ? "Submitting…" : "🚀 Submit app"}
           </Button>

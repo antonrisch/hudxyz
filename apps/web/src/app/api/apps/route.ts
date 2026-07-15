@@ -6,6 +6,7 @@ import {
   DraftValidationError,
   serializeDraftApp,
 } from "@/lib/apps/draft";
+import { draftEditCookieOptions, draftEditCookieName } from "@/lib/apps/draft-edit-token";
 import { clientIp, rateLimitOrNull, requireSubmitSession } from "@/lib/apps/submit-guard";
 import { requireHumanOrNull } from "@/lib/apps/botid";
 
@@ -44,8 +45,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const app = await createStubDraft();
-    return NextResponse.json(serializeDraftApp(app), { status: 201 });
+    const { app, editToken } = await createStubDraft();
+    const response = NextResponse.json(serializeDraftApp(app), { status: 201 });
+    response.cookies.set(
+      draftEditCookieName(app.publicId),
+      editToken,
+      draftEditCookieOptions(process.env.NODE_ENV === "production"),
+    );
+    return response;
   } catch (error) {
     if (error instanceof DraftValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
