@@ -17,35 +17,31 @@ export function ListingRow({
 }) {
   const href = listingPath(listing.slug, listing.publicId);
   const simulatorHref = `/simulator?url=${encodeURIComponent(listing.launchUrl)}`;
-
   const description = listing.description ?? `${listing.listingType} · ${listing.categoryName}`;
 
   return (
     <li
       className={cn(
-        "flex items-center gap-3 rounded-xl border border-transparent px-2.5 py-2.5 text-sm hover:bg-input",
-        "has-[a:focus-visible]:border-ring has-[a:focus-visible]:ring-[3px] has-[a:focus-visible]:ring-ring/50",
+        "relative flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm hover:bg-input",
         className,
       )}
     >
-      <Link href={href} className="group flex min-w-0 flex-1 items-center gap-3 outline-none">
-        <ListingIcon src={listing.iconUrl} alt="" size={64} />
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <p className="line-clamp-1 text-base font-semibold text-foreground leading-none">
-            {listing.name}
-          </p>
-          <p title={description} className="truncate text-sm text-muted-foreground leading-none">
-            {description}
-          </p>
-        </div>
-      </Link>
+      <ListingIcon src={listing.iconUrl} alt="" size={64} />
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <Link
+          href={href}
+          className="line-clamp-1 text-base font-semibold leading-none outline-none before:absolute before:inset-0 before:rounded-xl focus-visible:before:ring-3 focus-visible:before:ring-ring/50"
+        >
+          {listing.name}
+        </Link>
+        <p title={description} className="truncate text-sm leading-none text-muted-foreground">
+          {description}
+        </p>
+      </div>
       <Link
         href={simulatorHref}
         onClick={() => trackListingOpen(listing.publicId, "sim")}
-        className={cn(
-          buttonVariants({ variant: "brand", size: "default" }),
-          "shrink-0 flex-none font-medium px-3",
-        )}
+        className={cn(buttonVariants({ variant: "brand" }), "relative z-10 px-3")}
       >
         Try
       </Link>
