@@ -4,49 +4,23 @@ import { listingPath } from "@/lib/apps/public-id";
 import { listPublishedCategoryCounts, listPublishedListingPaths } from "@/lib/apps/queries";
 import { listPublishedCollectionPaths } from "@/lib/collections/queries";
 import { legal } from "@/lib/legal/config";
+import { sitemapLastModified } from "@/lib/seo/sitemap-date";
 import { siteUrl } from "@/lib/site";
+
+function entry(url: string, lastModified?: Date): MetadataRoute.Sitemap[number] {
+  return lastModified ? { url, lastModified } : { url };
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
-  const now = new Date();
 
   const staticEntries: MetadataRoute.Sitemap = [
-    {
-      url: base,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    {
-      url: `${base}/simulator`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${base}/apps`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.9,
-    },
-    {
-      url: `${base}/apps/categories`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.8,
-    },
-    {
-      url: `${base}/privacy`,
-      lastModified: new Date(legal.lastUpdated),
-      changeFrequency: "yearly",
-      priority: 0.5,
-    },
-    {
-      url: `${base}/terms`,
-      lastModified: new Date(legal.lastUpdated),
-      changeFrequency: "yearly",
-      priority: 0.5,
-    },
+    entry(base),
+    entry(`${base}/simulator`),
+    entry(`${base}/apps`),
+    entry(`${base}/apps/categories`),
+    entry(`${base}/privacy`, new Date(legal.lastUpdated)),
+    entry(`${base}/terms`, new Date(legal.lastUpdated)),
   ];
 
   let listingEntries: MetadataRoute.Sitemap = [];
@@ -60,26 +34,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       listPublishedCategoryCounts(),
     ]);
 
-    listingEntries = listings.map((listing) => ({
-      url: `${base}${listingPath(listing.slug, listing.publicId)}`,
-      lastModified: listing.updatedAt,
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    }));
+    listingEntries = listings.map((listing) =>
+      entry(
+        `${base}${listingPath(listing.slug, listing.publicId)}`,
+        sitemapLastModified(listing.updatedAt),
+      ),
+    );
 
-    collectionEntries = collections.map((collection) => ({
-      url: `${base}/apps/collections/${collection.slug}`,
-      lastModified: collection.updatedAt,
-      changeFrequency: "weekly" as const,
-      priority: 0.75,
-    }));
+    collectionEntries = collections.map((collection) =>
+      entry(
+        `${base}/apps/collections/${collection.slug}`,
+        sitemapLastModified(collection.updatedAt),
+      ),
+    );
 
-    categoryEntries = categories.map((category) => ({
-      url: `${base}/apps/category/${category.slug}`,
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.65,
-    }));
+    categoryEntries = categories.map((category) =>
+      entry(`${base}/apps/category/${category.slug}`, sitemapLastModified(category.updatedAt)),
+    );
   } catch (error) {
     // Sitemap should still serve static routes if Turso is unreachable.
     console.error("Sitemap directory entries unavailable", error);
