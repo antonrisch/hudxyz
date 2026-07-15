@@ -2,11 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Play } from "lucide-react";
 
-import { Frames } from "@/components/simulator/frames";
 import { buttonVariants } from "@/components/ui/button";
-import { BACKGROUND_LQIP } from "@/lib/simulator/background-lqip";
 import { SIMULATOR_SUMMARY, SIMULATOR_TITLE } from "@/lib/simulator/config";
 import { cn } from "@/lib/utils";
+
+const HERO_IMAGE = "/home/simulator-hero.webp";
+const HERO_LQIP =
+  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAAQABADASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAwEF/8QAIBAAAgICAgIDAAAAAAAAAAAAAQMCEQQSABMUMUKx0f/EABQBAQAAAAAAAAAAAAAAAAAAAAL/xAAXEQEBAQEAAAAAAAAAAAAAAAACEQAB/9oADAMBAAIRAxEAPwDLViPOT45iuMtduw3rX7yZkczHacdC4slQPYqBPv64ocxbw1k4tbdmHxAqqvjxcZFhjLr3let3QqvfGkrMQD3l3//Z";
 
 export function SimulatorHero({ className }: { className?: string }) {
   return (
@@ -20,20 +22,16 @@ export function SimulatorHero({ className }: { className?: string }) {
         className,
       )}
     >
-      {/* Image + frames share one transform so the glasses stay locked to the photo. */}
-      <div className="absolute inset-0 scale-100 transition-transform duration-300 ease-out group-hover:scale-[1.05]">
-        <Image
-          src="/backgrounds/alps.webp"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          placeholder="blur"
-          blurDataURL={BACKGROUND_LQIP.alps}
-          className="object-cover object-top"
-        />
-        <Frames className="pointer-events-none absolute top-[40%] right-[30%] w-full origin-center -translate-y-1/2 scale-[2.25]" />
-      </div>
+      <Image
+        src={HERO_IMAGE}
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        placeholder="blur"
+        blurDataURL={HERO_LQIP}
+        className="object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.05]"
+      />
       <div
         aria-hidden
         className="absolute inset-0 bg-linear-to-tr from-black/80 from-5% via-black/40 via-35% to-transparent to-70% transition-opacity duration-300 ease-out group-hover:opacity-90"
@@ -48,7 +46,7 @@ export function SimulatorHero({ className }: { className?: string }) {
         <span
           className={cn(
             buttonVariants({ variant: "white", size: "lg" }),
-            "w-full sm:w-auto pointer-events-none group-hover:bg-[color-mix(in_oklch,white_88%,black_12%)] group-active:bg-[color-mix(in_oklch,white_80%,black_20%)]",
+            "w-full pointer-events-none group-hover:bg-[color-mix(in_oklch,white_88%,black_12%)] group-active:bg-[color-mix(in_oklch,white_80%,black_20%)] sm:w-auto",
           )}
         >
           <Play fill="currentColor" data-icon="inline-start" className="size-3" />
