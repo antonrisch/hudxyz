@@ -1,5 +1,6 @@
 import type { AnalyticsEventMap, AnalyticsEventName } from "@/lib/analytics/events";
 import { isPostHogEnabled } from "@/lib/analytics/enabled";
+import { isAnalyticsConsentResolved } from "@/lib/analytics/identity";
 
 let captureImpl:
   | (<E extends AnalyticsEventName>(event: E, properties: AnalyticsEventMap[E]) => void)
@@ -18,7 +19,7 @@ export function track<E extends AnalyticsEventName>(
   event: E,
   properties: AnalyticsEventMap[E],
 ): void {
-  if (!isPostHogEnabled() || !captureImpl) return;
+  if (!isPostHogEnabled() || !captureImpl || !isAnalyticsConsentResolved()) return;
   try {
     captureImpl(event, properties);
   } catch {
@@ -35,4 +36,10 @@ export function trackOnce<E extends AnalyticsEventName>(
   if (trackedOnce.has(key)) return;
   trackedOnce.add(key);
   track(event, properties);
+}
+
+/** Test-only: clear capture binding and once-keys between cases. */
+export function resetAnalyticsTrackForTests(): void {
+  captureImpl = null;
+  trackedOnce.clear();
 }

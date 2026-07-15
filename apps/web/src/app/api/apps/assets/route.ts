@@ -4,10 +4,11 @@ import { appAssetKinds, type AppAssetKind } from "@/db/schema";
 import { appsMedia } from "@/flags";
 import { isValidPreviewDimensions, isValidPreviewDurationMs } from "@/lib/apps/asset-limits";
 import { assertObjectKeyForApp } from "@/lib/apps/asset-keys";
-import { canAddAsset, deleteAppAssetsByKind, getAppById, insertAppAsset } from "@/lib/apps/assets";
+import { saveDraftAsset } from "@/lib/apps/assets";
 import { requireHumanOrNull } from "@/lib/apps/botid";
+import { DraftConflictError } from "@/lib/apps/draft";
 import { isAppsMediaKind } from "@/lib/apps/media-policy";
-import { requireSubmitSession } from "@/lib/apps/submit-guard";
+import { requireEditableDraftAccess, requireSubmitSession } from "@/lib/apps/submit-guard";
 import { publicUrl } from "@/lib/r2";
 
 type RegisterBody = {
@@ -51,10 +52,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const app = await getAppById(appId);
-  if (!app) {
-    return NextResponse.json({ error: "App not found" }, { status: 404 });
-  }
+  const access = await requireEditableDraftAccess(request, appId);
+  if ("error" in access) return access.error;
+  const app = access.app;
 
   if (!assertObjectKeyForApp(app.id, objectKey, kind)) {
     return NextResponse.json({ error: "objectKey does not match app" }, { status: 400 });
@@ -75,21 +75,23 @@ export async function POST(request: Request) {
     }
   }
 
-  if (kind === "icon" || kind === "video") {
-    await deleteAppAssetsByKind(app.id, kind);
-  } else if (!(await canAddAsset(app.id, kind))) {
-    return NextResponse.json({ error: "Screenshot limit reached" }, { status: 409 });
+  let asset;
+  try {
+    asset = await saveDraftAsset({
+      appId: app.id,
+      kind,
+      objectKey,
+      sortOrder,
+      width,
+      height,
+      durationMs: kind === "video" ? durationMs : undefined,
+    });
+  } catch (error) {
+    if (error instanceof DraftConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+    throw error;
   }
-
-  const asset = await insertAppAsset({
-    appId: app.id,
-    kind,
-    objectKey,
-    sortOrder,
-    width,
-    height,
-    durationMs: kind === "video" ? durationMs : undefined,
-  });
 
   return NextResponse.json({
     id: asset.id,

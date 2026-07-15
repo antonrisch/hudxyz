@@ -5,17 +5,19 @@ import { cn } from "@/lib/utils";
 
 export function LegalPage({
   title,
+  lastUpdated,
   children,
   className,
 }: {
   title: string;
+  lastUpdated: string;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
     <main className={cn("page-px mx-auto w-full max-w-3xl flex-1 py-10", className)}>
       <p className="text-muted-foreground text-sm">
-        Last updated {legal.lastUpdated} ·{" "}
+        Last updated {lastUpdated} ·{" "}
         <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
           Privacy
         </Link>

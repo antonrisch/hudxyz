@@ -19,8 +19,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry(`${base}/simulator`),
     entry(`${base}/apps`),
     entry(`${base}/apps/categories`),
-    entry(`${base}/privacy`, new Date(legal.lastUpdated)),
-    entry(`${base}/terms`, new Date(legal.lastUpdated)),
+    entry(`${base}/privacy`, new Date(legal.privacyLastUpdated)),
+    entry(`${base}/terms`, new Date(legal.termsLastUpdated)),
   ];
 
   let listingEntries: MetadataRoute.Sitemap = [];

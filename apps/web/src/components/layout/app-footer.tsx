@@ -1,5 +1,6 @@
 "use client";
 
+import { ConsentDialogLink } from "@c15t/nextjs/components/consent-dialog-link";
 import { Monitor, Moon, Sun } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -53,6 +54,14 @@ const SUPPORT_LINKS: readonly FooterLink[] = [
   { href: "/terms", label: "Terms" },
 ];
 
+function PrivacySettingsLink() {
+  return (
+    <li>
+      <ConsentDialogLink className={FOOTER_LINK_CLASS}>Privacy settings</ConsentDialogLink>
+    </li>
+  );
+}
+
 const THEME_OPTIONS: readonly ThemeOption[] = [
   { value: "system", label: "System", Icon: Monitor },
   { value: "light", label: "Light", Icon: Sun },
@@ -93,6 +102,7 @@ function FooterNavSection({ title, links }: FooterSection) {
             <FooterLinkItem {...link} />
           </li>
         ))}
+        {title === "Support" ? <PrivacySettingsLink /> : null}
       </ul>
     </nav>
   );
