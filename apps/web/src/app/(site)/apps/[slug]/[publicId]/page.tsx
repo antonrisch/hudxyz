@@ -9,9 +9,14 @@ import { ListingInformation } from "@/components/listings/listing-info";
 import { ListingMedia } from "@/components/listings/listing-media";
 import { ListingOverview } from "@/components/listings/listing-overview";
 import { appsMedia } from "@/flags";
+import { categoryPath } from "@/lib/apps/browse-params";
 import { listingPath } from "@/lib/apps/public-id";
 import { getPublishedListingByPublicId } from "@/lib/apps/queries";
-import { directorySocialMetadata, softwareApplicationJsonLd } from "@/lib/apps/seo";
+import {
+  breadcrumbListJsonLd,
+  directorySocialMetadata,
+  softwareApplicationJsonLd,
+} from "@/lib/apps/seo";
 import { cn } from "@/lib/utils";
 
 type PageProps = {
@@ -77,6 +82,15 @@ export default async function AppDetailPage({ params }: PageProps) {
           categoryName: listing.categoryName,
           listingType: listing.listingType,
         })}
+      />
+      <JsonLd
+        data={breadcrumbListJsonLd([
+          { name: "Apps", path: "/apps" },
+          ...(listing.categorySlug
+            ? [{ name: listing.categoryName, path: categoryPath(listing.categorySlug) }]
+            : []),
+          { name: listing.name },
+        ])}
       />
       <div className="space-y-4">
         {listing.iconUrl ? (

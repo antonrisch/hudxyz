@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { appAssetKinds, type AppAssetKind } from "@/db/schema";
-import { getAppForAdmin } from "@/lib/apps/admin";
+import { getAppForAdmin, touchAppMediaForAdmin } from "@/lib/apps/admin";
 import { isValidPreviewDimensions, isValidPreviewDurationMs } from "@/lib/apps/asset-limits";
 import { assertObjectKeyForApp } from "@/lib/apps/asset-keys";
 import { canAddAsset, deleteAppAssetsByKind, insertAppAsset } from "@/lib/apps/assets";
@@ -74,6 +74,8 @@ export async function POST(request: Request) {
     height,
     durationMs: kind === "video" ? durationMs : undefined,
   });
+
+  await touchAppMediaForAdmin(app.id);
 
   return NextResponse.json({
     id: asset.id,

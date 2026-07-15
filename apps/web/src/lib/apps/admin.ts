@@ -63,12 +63,33 @@ async function revalidateAfterAdminMutation(options: {
   if (!options.wasOrIsPublished) return;
 
   revalidatePath("/apps");
+  revalidatePath("/");
   revalidatePath("/apps/categories");
   if (options.slug && options.publicId) {
     revalidatePath(listingPath(options.slug, options.publicId));
   }
   await revalidateCategoryPaths(options.categoryIds ?? []);
   await revalidatePublishedCollectionPaths();
+}
+
+/**
+ * Bump listing freshness and revalidate public surfaces after Padme media edits.
+ * Icon/screenshot/video changes are meaningful page content for crawlers.
+ */
+export async function touchAppMediaForAdmin(appId: string): Promise<void> {
+  const existing = await getAppForAdmin(appId);
+  if (!existing) return;
+
+  const db = getDb();
+  const now = new Date();
+  await db.update(apps).set({ updatedAt: now }).where(eq(apps.id, existing.id));
+
+  await revalidateAfterAdminMutation({
+    slug: existing.slug,
+    publicId: existing.publicId,
+    wasOrIsPublished: existing.status === "published",
+    categoryIds: [existing.primaryCategoryId, existing.secondaryCategoryId],
+  });
 }
 
 /** Statuses the admin queue can filter. */

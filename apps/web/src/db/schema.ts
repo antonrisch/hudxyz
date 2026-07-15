@@ -17,8 +17,8 @@ export const users = sqliteTable("users", {
     .$defaultFn(() => uuidv7()),
   email: text("email").notNull().unique(),
   displayName: text("display_name"),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(timestampDefaultNow),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().default(timestampDefaultNow),
 });
 
 export const appStatuses = ["draft", "pending", "published", "rejected", "archived"] as const;
@@ -70,15 +70,15 @@ export const apps = sqliteTable("apps", {
   status: text("status").notNull().default("draft").$type<AppStatus>(),
   submittedByUserId: text("submitted_by_user_id").references(() => users.id),
   reviewerNotes: text("reviewer_notes"),
-  submittedAt: integer("submitted_at", { mode: "timestamp" }),
-  reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
-  publishedAt: integer("published_at", { mode: "timestamp" }),
+  submittedAt: integer("submitted_at", { mode: "timestamp_ms" }),
+  reviewedAt: integer("reviewed_at", { mode: "timestamp_ms" }),
+  publishedAt: integer("published_at", { mode: "timestamp_ms" }),
   /** Opens via “Open on Glasses” (device install / deep link). */
   launchCount: integer("launch_count").notNull().default(0),
   /** Opens via “Try in Simulator”. */
   simCount: integer("sim_count").notNull().default(0),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(timestampDefaultNow),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().default(timestampDefaultNow),
 });
 
 export const appAssets = sqliteTable(
@@ -97,7 +97,9 @@ export const appAssets = sqliteTable(
     height: integer("height"),
     /** Video length in ms (optional; validated when provided). */
     durationMs: integer("duration_ms"),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(timestampDefaultNow),
   },
   (table) => [uniqueIndex("app_assets_object_key_unique").on(table.objectKey)],
 );
@@ -131,9 +133,13 @@ export const collections = sqliteTable(
     filterCategorySlug: text("filter_category_slug"),
     smartSort: text("smart_sort").$type<SmartSort>(),
     itemLimit: integer("item_limit"),
-    publishedAt: integer("published_at", { mode: "timestamp" }),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(timestampDefaultNow),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(timestampDefaultNow),
   },
   (table) => [index("collections_status_sort_order_idx").on(table.status, table.sortOrder)],
 );
@@ -151,7 +157,9 @@ export const collectionApps = sqliteTable(
       .notNull()
       .references(() => apps.id, { onDelete: "cascade" }),
     sortOrder: integer("sort_order").notNull().default(0),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(timestampDefaultNow),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(timestampDefaultNow),
   },
   (table) => [
     uniqueIndex("collection_apps_collection_id_app_id_unique").on(table.collectionId, table.appId),
