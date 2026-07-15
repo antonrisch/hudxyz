@@ -1,0 +1,47 @@
+/* Shared styles for components under `src/components/icons/`. */
+
+@keyframes spiral-loader-fade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/** Lucide Loader spokes: opacity chase (SVG stays put — no rotate). */
+.spiralLoader > :global(path) {
+  animation: spiral-loader-fade 0.8s linear infinite;
+}
+
+.spiralLoader > :global(path):nth-child(1) {
+  animation-delay: -0.7s;
+}
+
+.spiralLoader > :global(path):nth-child(2) {
+  animation-delay: -0.6s;
+}
+
+.spiralLoader > :global(path):nth-child(3) {
+  animation-delay: -0.5s;
+}
+
+.spiralLoader > :global(path):nth-child(4) {
+  animation-delay: -0.4s;
+}
+
+.spiralLoader > :global(path):nth-child(5) {
+  animation-delay: -0.3s;
+}
+
+.spiralLoader > :global(path):nth-child(6) {
+  animation-delay: -0.2s;
+}
+
+.spiralLoader > :global(path):nth-child(7) {
+  animation-delay: -0.1s;
+}
+
+.spiralLoader > :global(path):nth-child(8) {
+  animation-delay: 0s;
+}

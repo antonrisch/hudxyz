@@ -7,7 +7,7 @@ import sharp from "sharp";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const backgroundsDir = join(__dirname, "../public/backgrounds");
 const sourceDir = join(backgroundsDir, "_source");
-const lqipPath = join(__dirname, "../lib/simulator/background-lqip.ts");
+const lqipPath = join(__dirname, "../src/lib/simulator/background-lqip.ts");
 
 const DISPLAY_EDGE = 1920;
 const DISPLAY_FPS = 30;
