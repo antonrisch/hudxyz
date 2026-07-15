@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { JsonLd } from "@/components/layout/json-ld";
 import { DirectoryListPage } from "@/components/listings/directory-list-page";
-import { directorySocialMetadata } from "@/lib/apps/seo";
+import { breadcrumbListJsonLd, directorySocialMetadata } from "@/lib/apps/seo";
 import { getPublishedCollectionBySlug } from "@/lib/collections/queries";
 
 export async function generateMetadata({
@@ -42,12 +43,17 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
   const path = `/apps/collections/${collection.slug}`;
 
   return (
-    <DirectoryListPage
-      title={collection.name}
-      description={collection.description}
-      path={path}
-      listings={collection.listings}
-      variant={collection.smartSort === "popular" ? "numbered" : "default"}
-    />
+    <>
+      <JsonLd
+        data={breadcrumbListJsonLd([{ name: "Apps", path: "/apps" }, { name: collection.name }])}
+      />
+      <DirectoryListPage
+        title={collection.name}
+        description={collection.description}
+        path={path}
+        listings={collection.listings}
+        variant={collection.smartSort === "popular" ? "numbered" : "default"}
+      />
+    </>
   );
 }
