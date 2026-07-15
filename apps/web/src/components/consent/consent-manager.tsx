@@ -108,7 +108,9 @@ export function ConsentManager({ children }: { children: ReactNode }) {
     <ConsentManagerProvider options={options}>
       <SettledConsentAnalytics />
       <ConsentBanner layout={["customize", ["reject", "accept"]]} primaryButton="accept" />
-      <ConsentDialog />
+      {/* Include `null` so footer Privacy settings still opens under inth
+          `world_no_banner` / model `none` (default AU match today). */}
+      <ConsentDialog models={["opt-in", "opt-out", null]} />
       {children}
     </ConsentManagerProvider>
   );
