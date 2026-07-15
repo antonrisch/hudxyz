@@ -28,7 +28,7 @@ Public **list** and **detail** pages for `status = published` apps, with icon/sc
 | `/apps`        | Grid/list of published apps          |
 | `/apps/[slug]` | Detail: metadata, media gallery, CTA |
 
-Optional later: `/apps?type=game`, category filters.
+Optional later: category index and collection shelves (see shelves PRD).
 
 ## List page (`/apps`)
 

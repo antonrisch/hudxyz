@@ -113,12 +113,11 @@ Add a search affordance to `src/components/layout/app-header.tsx`.
 
 ## Full results at `/apps?q=`
 
-- Reuse the flat list shell from the directory shelves PRD.
-- Default sort is relevance. Permit type and category refinement without dropping `q`.
-- If explicit sort choices are shown for search, use Relevance, New, and Popular; changing away from relevance preserves the search match set.
+- Minimal results page: title and listing grid only (no type/sort/category filter chrome).
+- Cap at 20 results (relevance ranking). No public sort refinements.
 - Search result pages are `noindex, follow` and canonicalize to `/apps`.
-- Preserve the query in the search field and include the result count.
-- Empty results suggest browsing categories and submitting an app.
+- Category URLs with `?q=` redirect to `/apps?q=`.
+- Empty results use the shared directory empty state.
 
 ## Performance and resilience
 
@@ -137,7 +136,7 @@ Add a search affordance to `src/components/layout/app-header.tsx`.
 - [x] The rebuild script produces one document per published app.
 - [x] Header search shows at most five keyboard-navigable results.
 - [x] “View all” opens `/apps?q=` and preserves the query.
-- [x] Full results support type/category refinement and remain `noindex`.
+- [x] Full results are capped at 20, have no filter chrome, and remain `noindex`.
 - [x] Search does not expose private listing fields.
 
 ## Deferred

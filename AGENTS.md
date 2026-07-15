@@ -52,8 +52,10 @@ Public catalog of MRBD (and later other) web apps, plus a form to list a new one
 
 | Route                      | Purpose                                                                        |
 | -------------------------- | ------------------------------------------------------------------------------ |
-| `/apps`                    | Shelves-only hub; flat results when `?type=` / `?sort=` / `?q=`                |
-| `/apps/category/{slug}`    | Category browse (primary or secondary; optional `?type=` / `?sort=` / `?q=`)   |
+| `/apps`                    | Shelves-only hub                                                               |
+| `/apps?q=`                 | Search results (top 20, no filters; `noindex`)                                 |
+| `/apps/categories`         | Occupied categories index (apps ∪ games by slug)                               |
+| `/apps/category/{slug}`    | Category detail — collection-style grid; empty → 404                           |
 | `/apps/collections/{slug}` | Published collection / shelf detail                                            |
 | `/apps/{slug}/{publicId}`  | Canonical listing detail — resolve by **publicId**; slug is cosmetic SEO crumb |
 | `/apps/{slug}`             | Legacy → permanent redirect when exactly one published row matches             |
@@ -78,7 +80,7 @@ Public catalog of MRBD (and later other) web apps, plus a form to list a new one
 
 Application code lives under `src/`. Config, `public/`, and `scripts/` stay at the app root.
 
-- `src/app/(site)/` — marketing + directory: `/`, `/apps`, `/apps/submit`, legal; shared site header/footer.
+- `src/app/(site)/` — marketing + directory: `/`, `/apps`, `/apps/categories`, `/apps/submit`, legal; shared site header/footer.
 - `src/app/(admin)/padme/` — internal review UI (`noindex`); Apps queue + Collections admin (`?secret=` unlock).
 - `src/app/simulator/` — simulator SPA (legacy `/?…` redirects here).
 - `src/app/api/apps/` — draft/submit + asset presign/register/delete (submit-session + BotID on mutates); public `GET /api/apps/search` for header palette.

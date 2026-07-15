@@ -12,7 +12,7 @@
 
 ## Goal
 
-Make `/apps` a shelves-only discovery hub. Editorial collections and query-backed smart shelves share one visual treatment, while category, type, sort, and search drill-downs use a simple flat results page.
+Make `/apps` a shelves-only discovery hub. Editorial collections and query-backed smart shelves share one visual treatment. Categories reuse the collection detail UI. Avoid thin faceted SEO URLs while the catalog is small.
 
 ## Non-goals
 
@@ -21,33 +21,32 @@ Make `/apps` a shelves-only discovery hub. Editorial collections and query-backe
 - Votes, ratings, rankings, or personalization
 - A separate top-level games product or `/games` route
 - Multi-device taxonomy beyond the existing `targetDevice` string
+- Public type/sort query-param browse surfaces (`?type=`, `?sort=`)
 
 ## Information architecture
 
-| Route                                         | Purpose                                              |
-| --------------------------------------------- | ---------------------------------------------------- |
-| `/apps`                                       | Published shelves, ordered by editorial hub position |
-| `/apps?type=app`                              | All published apps                                   |
-| `/apps?type=game`                             | All published games                                  |
-| `/apps?sort=new\|popular`                     | Flat list using the selected sort                    |
-| `/apps/category/[slug]`                       | Published listings in a category                     |
-| `/apps/category/[slug]?type=app\|game&sort=…` | Optional type and sort refinement                    |
-| `/apps/collections/[slug]`                    | All published members/results for one collection     |
-| `/apps?q=…`                                   | Full search results; implemented by the search PRD   |
+| Route                      | Purpose                                              |
+| -------------------------- | ---------------------------------------------------- |
+| `/apps`                    | Published shelves, ordered by editorial hub position |
+| `/apps?q=…`                | Search results (top 20, no filters); see search PRD  |
+| `/apps/categories`         | Occupied categories index (apps ∪ games by slug)     |
+| `/apps/category/[slug]`    | Category detail — collection-style grid; empty → 404 |
+| `/apps/collections/[slug]` | All published members/results for one collection     |
 
-Any supported filter on `/apps` switches from shelves to the flat result layout. Invalid type/sort values are ignored; an unknown category or collection slug returns 404.
+Legacy `/apps?type=` and `/apps?sort=` permanently redirect to `/apps`. An unknown category or collection slug returns 404.
 
-`listingType` remains explicit metadata selected during submission and editable in Padme. A game is never inferred from its name or category.
+`listingType` remains explicit metadata selected during submission and editable in Padme. A game is never inferred from its name or category. Type filtering stays available for Padme smart shelves only.
 
 ## Category URLs and SEO
 
 - Category slugs come from `src/lib/category/categories.json`.
-- Resolve a category URL by slug across both listing types. For example, `/apps/category/sports` includes app and game categories named `sports`; `?type=game` narrows it.
+- Resolve a category URL by slug across both listing types (union). For example, `/apps/category/sports` includes app and game categories named `sports`.
 - Match both primary and secondary category assignments.
-- Repoint existing footer category links from query parameters to the flat category routes.
-- Index `/apps`, non-empty type views, category pages, published collection pages, and app detail pages.
-- Search results are `noindex`. Sort refinements canonicalize to their un-sorted parent. A type refinement on a category canonicalizes to the category route.
-- Generate distinct title/description metadata for the hub, type views, categories, and collections.
+- Index `/apps`, `/apps/categories`, **non-empty** category pages, published collection pages, and app detail pages.
+- Sitemap emits `/apps/categories` plus only occupied category slugs (not the full catalog).
+- Search results are `noindex`. Legacy type/sort params redirect away.
+- Footer links to `/apps/categories` rather than hardcoded category columns.
+- Generate distinct title/description metadata for the hub, categories index, category detail, and collections.
 
 ## Collection data model
 
@@ -99,7 +98,7 @@ Fetch published collections in `sortOrder`, then resolve each shelf:
 - Omit an empty shelf from the hub rather than rendering an empty row.
 - Never expose a draft/rejected/archived app through collection membership.
 
-Collection detail pages use the same resolver without the hub preview limit. Editorial detail keeps manual order; smart detail keeps its configured sort.
+Collection detail pages use the same resolver without the hub preview limit. Editorial detail keeps manual order; smart detail keeps its configured sort. Popular smart collections render numbered listing rows.
 
 ## Public UI
 
@@ -110,21 +109,22 @@ Collection detail pages use the same resolver without the hub preview limit. Edi
 - Shelf layout is responsive and preserves useful density with a small catalog.
 - If no published shelf resolves to an item, show the existing directory empty state and submit CTA.
 
-### Flat results
+### Categories
 
-- Shared result header with title, result count, active filters, sort control, and search affordance.
-- Type controls: All, Apps, Games.
-- Category controls only show catalog categories with at least one published matching listing.
-- Sort controls: New (default) and Popular.
-- Reuse the existing listing item and empty-state components.
-- Filter links use server-renderable URLs; no client-only state is required for navigation.
+- `/apps/categories` lists occupied categories (count > 0) with icon, name, and count.
+- `/apps/category/[slug]` reuses the collection detail shell (`DirectoryListPage`): title, description, `ListingsGrid`. No type/sort/search refinements on the page.
+- Empty categories return 404 and are omitted from the sitemap.
+
+### Collections
+
+- Same shell as category detail; popular smart collections use the numbered grid variant.
 
 ## Query layer
 
 Extend `src/lib/apps/queries.ts` with:
 
-- A published-list query accepting `listingType`, `categorySlug`, `sort`, and limit/offset.
-- Category counts computed from published primary and secondary assignments.
+- A published-list query accepting `listingType`, `categorySlug`, `sort`, and limit/offset (type/sort remain for smart shelves and Padme).
+- Category counts computed from published primary and secondary assignments (slug-union when unfiltered).
 - Published collection list/detail queries and the shared shelf resolver.
 - Equivalent behavior for `LISTINGS_SOURCE=sample`, or an explicit documented sample collection fixture.
 
@@ -135,20 +135,20 @@ Keep all published-status checks in the query layer so pages cannot accidentally
 - Create the two tables and required indexes.
 - Seed a minimal useful hub: smart “New” and “Popular” shelves plus at least one editorial collection when content exists.
 - Seed data must be idempotent and reference app IDs/public IDs without duplicating memberships.
-- Existing `/apps?type=` links continue to work.
+- Legacy `/apps?type=` / `?sort=` redirect to `/apps`.
 
 ## Acceptance
 
-- [ ] Unfiltered `/apps` renders shelves only, in configured order.
-- [ ] Editorial and smart shelves have identical presentation.
-- [ ] Draft collections and unpublished apps never appear publicly.
-- [ ] `/apps/category/[slug]` matches primary and secondary categories across listing types.
-- [ ] Type and sort drill-downs render a flat result list.
-- [ ] Popular ordering uses existing launch + simulator counts with a deterministic tie-break.
-- [ ] Collection detail pages resolve both editorial and smart collections.
-- [ ] Empty shelves are omitted and empty result pages have a useful state.
-- [ ] Footer category links point to canonical category routes.
-- [ ] Metadata and canonical URLs follow the SEO rules above.
+- [x] Unfiltered `/apps` renders shelves only, in configured order.
+- [x] Editorial and smart shelves have identical presentation.
+- [x] Draft collections and unpublished apps never appear publicly.
+- [x] `/apps/category/[slug]` matches primary and secondary categories across listing types.
+- [x] Type and sort public browse surfaces are removed (redirect to `/apps`).
+- [x] Popular ordering uses existing launch + simulator counts with a deterministic tie-break.
+- [x] Collection detail pages resolve both editorial and smart collections.
+- [x] Empty shelves are omitted; empty categories 404.
+- [x] Footer links to `/apps/categories`.
+- [x] Metadata, canonical URLs, and sitemap follow the SEO rules above.
 
 ## Deferred
 
