@@ -70,6 +70,11 @@ export const apps = sqliteTable("apps", {
   status: text("status").notNull().default("draft").$type<AppStatus>(),
   submittedByUserId: text("submitted_by_user_id").references(() => users.id),
   reviewerNotes: text("reviewer_notes"),
+  /** SHA-256 hash of the per-draft edit token (raw token only in HttpOnly cookie). */
+  editTokenHash: text("edit_token_hash"),
+  /** Terms version accepted at submit time (`legal.termsVersion`). Null for legacy rows. */
+  termsVersion: text("terms_version"),
+  termsAcceptedAt: integer("terms_accepted_at", { mode: "timestamp_ms" }),
   submittedAt: integer("submitted_at", { mode: "timestamp_ms" }),
   reviewedAt: integer("reviewed_at", { mode: "timestamp_ms" }),
   publishedAt: integer("published_at", { mode: "timestamp_ms" }),

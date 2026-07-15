@@ -3,12 +3,18 @@ import { z } from "zod";
 
 import { MAX_ICON_BYTES, sanitizeAssetFilename } from "@/lib/apps/asset-limits";
 import { appAssetObjectKey } from "@/lib/apps/asset-keys";
-import { deleteAppAssetsByKind, getAppById, insertAppAsset } from "@/lib/apps/assets";
+import { saveDraftAsset } from "@/lib/apps/assets";
 import { requireHumanOrNull } from "@/lib/apps/botid";
+import { DraftConflictError } from "@/lib/apps/draft";
 import { httpUrlSchema } from "@/lib/apps/http-url";
 import { detectImageContentType, SafeFetchError, safeFetch } from "@/lib/apps/safe-fetch";
-import { clientIp, rateLimitOrNull, requireSubmitSession } from "@/lib/apps/submit-guard";
-import { publicUrl, putObject } from "@/lib/r2";
+import {
+  clientIp,
+  rateLimitOrNull,
+  requireEditableDraftAccess,
+  requireSubmitSession,
+} from "@/lib/apps/submit-guard";
+import { deleteObject, publicUrl, putObject } from "@/lib/r2";
 
 const EXT_BY_CONTENT_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -69,14 +75,9 @@ export async function POST(request: Request) {
 
   const { appId, kind, url } = parsed.data;
 
-  const app = await getAppById(appId);
-  if (!app) {
-    return NextResponse.json({ error: "App not found" }, { status: 404 });
-  }
-
-  if (app.status !== "draft") {
-    return NextResponse.json({ error: "Only draft apps can import media" }, { status: 409 });
-  }
+  const access = await requireEditableDraftAccess(request, appId);
+  if ("error" in access) return access.error;
+  const app = access.app;
 
   let fetched;
   try {
@@ -108,14 +109,22 @@ export async function POST(request: Request) {
   const objectKey = appAssetObjectKey(app.id, kind, filename);
 
   await putObject(objectKey, fetched.body, contentType);
-  await deleteAppAssetsByKind(app.id, kind);
 
-  const asset = await insertAppAsset({
-    appId: app.id,
-    kind,
-    objectKey,
-    sortOrder: 0,
-  });
+  let asset;
+  try {
+    asset = await saveDraftAsset({
+      appId: app.id,
+      kind,
+      objectKey,
+      sortOrder: 0,
+    });
+  } catch (error) {
+    await deleteObject(objectKey).catch(() => undefined);
+    if (error instanceof DraftConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+    throw error;
+  }
 
   return NextResponse.json({
     id: asset.id,

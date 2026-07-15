@@ -4,10 +4,14 @@ import { appAssetKinds, type AppAssetKind } from "@/db/schema";
 import { appsMedia } from "@/flags";
 import { isAllowedContentTypeForKind, sanitizeAssetFilename } from "@/lib/apps/asset-limits";
 import { appAssetObjectKey } from "@/lib/apps/asset-keys";
-import { getAppById } from "@/lib/apps/assets";
 import { requireHumanOrNull } from "@/lib/apps/botid";
 import { isAppsMediaKind } from "@/lib/apps/media-policy";
-import { clientIp, rateLimitOrNull, requireSubmitSession } from "@/lib/apps/submit-guard";
+import {
+  clientIp,
+  rateLimitOrNull,
+  requireEditableDraftAccess,
+  requireSubmitSession,
+} from "@/lib/apps/submit-guard";
 import { presignPut, publicUrl } from "@/lib/r2";
 
 type PresignBody = {
@@ -70,10 +74,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
   }
 
-  const app = await getAppById(appId);
-  if (!app) {
-    return NextResponse.json({ error: "App not found" }, { status: 404 });
-  }
+  const access = await requireEditableDraftAccess(request, appId);
+  if ("error" in access) return access.error;
+  const app = access.app;
 
   const objectKey = appAssetObjectKey(app.id, kind, filename);
   const uploadUrl = await presignPut(objectKey, contentType);

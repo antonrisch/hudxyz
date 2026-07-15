@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
 
 import { SubmitForm } from "@/components/submit/submit-form";
 import { appsMedia } from "@/flags";
 import { getDraftAppDetail, listCategoriesForForm, serializeDraftDetail } from "@/lib/apps/draft";
+import { draftEditCookieName, verifyDraftEditToken } from "@/lib/apps/draft-edit-token";
 
 export const dynamic = "force-dynamic";
 
@@ -22,18 +25,29 @@ export default async function SubmitAppPage({
   const rawId = params.id;
   const id = typeof rawId === "string" ? rawId : Array.isArray(rawId) ? rawId[0] : undefined;
 
-  const [categories, detail, appsMediaEnabled] = await Promise.all([
+  const [categories, appsMediaEnabled, cookieStore] = await Promise.all([
     listCategoriesForForm(),
-    id ? getDraftAppDetail(id) : Promise.resolve(null),
     appsMedia(),
+    cookies(),
   ]);
+
+  let initialDetail = null;
+  if (id) {
+    const detail = await getDraftAppDetail(id);
+    if (!detail || detail.status !== "draft") notFound();
+
+    const token = cookieStore.get(draftEditCookieName(detail.publicId))?.value;
+    if (!(await verifyDraftEditToken(detail.editTokenHash, token))) notFound();
+
+    initialDetail = serializeDraftDetail(detail);
+  }
 
   return (
     <main className="page-px mx-auto w-full max-w-3xl flex-1 py-10 min-h-[calc(100svh-12rem)]">
       <SubmitForm
-        key={id ?? "new"}
+        key={initialDetail?.publicId ?? id ?? "new"}
         categories={categories}
-        initialDetail={detail ? serializeDraftDetail(detail) : null}
+        initialDetail={initialDetail}
         appsMediaEnabled={appsMediaEnabled}
       />
     </main>

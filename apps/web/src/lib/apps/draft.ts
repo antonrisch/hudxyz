@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import { getDb } from "@/db";
 import { appAssets, apps, categories, type AppStatus, type ListingType } from "@/db/schema";
@@ -7,6 +7,8 @@ import {
   validateListingCategories,
   type ResolvedCategory,
 } from "@/lib/category/validate-listing-categories";
+import { hashDraftEditToken, mintDraftEditToken } from "@/lib/apps/draft-edit-token";
+import { legal } from "@/lib/legal/config";
 import { publicUrl } from "@/lib/r2";
 
 import type { DraftAppFields, DraftAppPatch } from "./draft-schema";
@@ -159,7 +161,7 @@ export function serializeDraftDetail(detail: DraftAppDetail) {
 export type DraftDetailDto = ReturnType<typeof serializeDraftDetail>;
 
 /** Minimal draft so media can upload before the developer fills the form. */
-export async function createStubDraft(): Promise<DraftAppRow> {
+export async function createStubDraft(): Promise<{ app: DraftAppRow; editToken: string }> {
   const db = getDb();
   const appCategories = await db
     .select({ id: categories.id, slug: categories.slug })
@@ -187,7 +189,9 @@ export async function createStubDraft(): Promise<DraftAppRow> {
   });
 }
 
-export async function createDraftApp(input: DraftAppFields): Promise<DraftAppRow> {
+export async function createDraftApp(
+  input: DraftAppFields,
+): Promise<{ app: DraftAppRow; editToken: string }> {
   await assertCategoriesForListing({
     listingType: input.listingType,
     primaryCategoryId: input.primaryCategoryId,
@@ -196,6 +200,8 @@ export async function createDraftApp(input: DraftAppFields): Promise<DraftAppRow
 
   const publicId = await mintUniquePublicId();
   const slug = slugifyName(input.name);
+  const editToken = mintDraftEditToken();
+  const editTokenHash = await hashDraftEditToken(editToken);
 
   const db = getDb();
   const rows = await db
@@ -213,6 +219,7 @@ export async function createDraftApp(input: DraftAppFields): Promise<DraftAppRow
       description: input.description,
       targetDevice: input.targetDevice ?? "mrbd",
       status: "draft",
+      editTokenHash,
     })
     .returning();
 
@@ -220,7 +227,7 @@ export async function createDraftApp(input: DraftAppFields): Promise<DraftAppRow
   if (!row) {
     throw new Error("Failed to create draft app");
   }
-  return row;
+  return { app: row, editToken };
 }
 
 export async function updateDraftApp(appId: string, patch: DraftAppPatch): Promise<DraftAppRow> {
@@ -263,12 +270,12 @@ export async function updateDraftApp(appId: string, patch: DraftAppPatch): Promi
       ...next,
       updatedAt: new Date(),
     })
-    .where(eq(apps.id, existing.id))
+    .where(and(eq(apps.id, existing.id), eq(apps.status, "draft")))
     .returning();
 
   const row = rows[0];
   if (!row) {
-    throw new DraftNotFoundError();
+    throw new DraftConflictError("Draft changed or was already submitted.");
   }
   return row;
 }
@@ -309,7 +316,13 @@ export async function getDraftAppDetail(appId: string): Promise<DraftAppDetail |
   };
 }
 
-export async function submitDraftApp(appId: string): Promise<DraftAppRow> {
+export async function submitDraftApp(appId: string, termsVersion: string): Promise<DraftAppRow> {
+  if (termsVersion !== legal.termsVersion) {
+    throw new DraftValidationError(
+      "Please refresh and accept the current Terms of Service before submitting.",
+    );
+  }
+
   const detail = await getDraftAppDetail(appId);
   if (!detail) {
     throw new DraftNotFoundError();
@@ -348,15 +361,17 @@ export async function submitDraftApp(appId: string): Promise<DraftAppRow> {
       // Finalize SEO crumb from the submitted name.
       slug: slugifyName(detail.name),
       status: "pending" satisfies AppStatus,
+      termsVersion: legal.termsVersion,
+      termsAcceptedAt: now,
       submittedAt: now,
       updatedAt: now,
     })
-    .where(eq(apps.id, detail.id))
+    .where(and(eq(apps.id, detail.id), eq(apps.status, "draft")))
     .returning();
 
   const row = rows[0];
   if (!row) {
-    throw new DraftNotFoundError();
+    throw new DraftConflictError("Draft was already submitted.");
   }
   return row;
 }

@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { getDraftAppById, type DraftAppRow } from "@/lib/apps/draft";
+import {
+  draftEditCookieName,
+  readDraftEditTokenFromCookieHeader,
+  verifyDraftEditToken,
+} from "@/lib/apps/draft-edit-token";
 import {
   SUBMIT_SESSION_COOKIE,
   isSubmitSessionConfigured,
@@ -8,6 +14,10 @@ import {
 
 /** In-process rate limit buckets (per instance). Good enough for stub/presign abuse. */
 const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+export function isEditableDraft(app: Pick<DraftAppRow, "status">): boolean {
+  return app.status === "draft";
+}
 
 export function clientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -68,3 +78,42 @@ export async function requireSubmitSession(request: Request): Promise<NextRespon
 
   return originCheckOrNull(request);
 }
+
+/**
+ * Require ownership of a specific draft via its edit-token cookie.
+ * Returns 404 (not 401/403) so private drafts are not enumerable.
+ */
+export async function requireDraftEditAccess(
+  request: Request,
+  appId: string,
+): Promise<{ app: DraftAppRow } | { error: NextResponse }> {
+  const app = await getDraftAppById(appId);
+  if (!app) {
+    return { error: NextResponse.json({ error: "App not found" }, { status: 404 }) };
+  }
+
+  const token = readDraftEditTokenFromCookieHeader(request.headers.get("cookie"), app.publicId);
+  const ok = await verifyDraftEditToken(app.editTokenHash, token);
+  if (!ok) {
+    return { error: NextResponse.json({ error: "App not found" }, { status: 404 }) };
+  }
+
+  return { app };
+}
+
+/** Require draft ownership and reject mutations after submission. */
+export async function requireEditableDraftAccess(
+  request: Request,
+  appId: string,
+): Promise<{ app: DraftAppRow } | { error: NextResponse }> {
+  const access = await requireDraftEditAccess(request, appId);
+  if ("error" in access) return access;
+  if (!isEditableDraft(access.app)) {
+    return {
+      error: NextResponse.json({ error: "Only draft apps can be changed" }, { status: 409 }),
+    };
+  }
+  return access;
+}
+
+export { draftEditCookieName };

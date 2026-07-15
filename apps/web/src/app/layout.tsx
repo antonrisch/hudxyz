@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Archivo, JetBrains_Mono } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
+import { ConsentManager } from "@/components/consent/consent-manager";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
@@ -36,10 +37,12 @@ export default function RootLayout({
       className={cn("antialiased font-sans", archivo.variable, jetbrainsMono.variable)}
     >
       <body className="flex min-h-svh flex-col bg-background">
-        <ThemeProvider>
-          <NuqsAdapter>{children}</NuqsAdapter>
-          <Toaster />
-        </ThemeProvider>
+        <ConsentManager>
+          <ThemeProvider>
+            <NuqsAdapter>{children}</NuqsAdapter>
+            <Toaster />
+          </ThemeProvider>
+        </ConsentManager>
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>

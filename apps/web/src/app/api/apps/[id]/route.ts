@@ -10,19 +10,22 @@ import {
 } from "@/lib/apps/draft";
 import { draftAppPatchSchema } from "@/lib/apps/draft-schema";
 import { requireHumanOrNull } from "@/lib/apps/botid";
-import { requireSubmitSession } from "@/lib/apps/submit-guard";
+import { requireEditableDraftAccess, requireSubmitSession } from "@/lib/apps/submit-guard";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
 /**
- * Read a listing by id (any status) for form hydration.
+ * Read a listing by id for form hydration. Requires the draft edit-token cookie.
  * GET /api/apps/[id]
  */
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;
-  const detail = await getDraftAppDetail(id);
+  const access = await requireEditableDraftAccess(request, id);
+  if ("error" in access) return access.error;
+
+  const detail = await getDraftAppDetail(access.app.id);
   if (!detail) {
     return NextResponse.json({ error: "App not found" }, { status: 404 });
   }
@@ -41,6 +44,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (gated) return gated;
 
   const { id } = await context.params;
+  const access = await requireEditableDraftAccess(request, id);
+  if ("error" in access) return access.error;
 
   let body: unknown;
   try {
@@ -64,7 +69,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   try {
-    const app = await updateDraftApp(id, parsed.data);
+    const app = await updateDraftApp(access.app.id, parsed.data);
     const detail = await getDraftAppDetail(app.id);
     if (!detail) {
       return NextResponse.json({ error: "App not found" }, { status: 404 });

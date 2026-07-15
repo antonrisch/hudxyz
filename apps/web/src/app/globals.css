@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Resolve the real stylesheet via @c15t/ui — @c15t/nextjs/styles.css only
+   re-exports @c15t/react → @c15t/ui, and those nested package imports do not
+   resolve under pnpm, which left the banner/dialog completely unstyled. */
+@import "@c15t/ui/styles.css";
 
 @custom-variant dark (&:is(.dark *));
 

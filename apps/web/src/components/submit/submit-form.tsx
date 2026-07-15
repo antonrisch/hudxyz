@@ -30,6 +30,7 @@ import {
   type MediaState,
 } from "@/lib/apps/upload-client";
 import { track, trackOnce } from "@/lib/analytics/track";
+import { legal } from "@/lib/legal/config";
 import { cn } from "@/lib/utils";
 
 type AutofillMetadata = {
@@ -389,7 +390,15 @@ export function SubmitForm({
     try {
       const id = await persistDraft(result.data);
 
-      const response = await fetch(`/api/apps/${id}/submit`, { method: "POST" });
+      // Clicking Submit is the acceptance act — server still validates version + literal true.
+      const response = await fetch(`/api/apps/${id}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          termsVersion: legal.termsVersion,
+          termsAccepted: true,
+        }),
+      });
       if (!response.ok) {
         throw new Error(await parseApiError(response));
       }
@@ -414,6 +423,7 @@ export function SubmitForm({
       </p>
       <form
         className="mt-8 space-y-10"
+        data-sentry-mask
         onSubmit={(event) => {
           event.preventDefault();
           void handleSubmitForReview();
@@ -450,30 +460,44 @@ export function SubmitForm({
           />
         ) : null}
 
-        <div className="flex flex-wrap gap-3">
-          <Button
-            type="submit"
-            variant="brand"
-            disabled={submitting || autofillPending || mediaBusy || !mediaReady}
-          >
-            {submitting ? "Submitting…" : "🚀 Submit app"}
-          </Button>
-          <form.Subscribe selector={(state) => state.values.launchUrl}>
-            {(launchUrl) => {
-              const href = simulatorHrefFor(launchUrl);
-              if (!href) return null;
-              return (
-                <Link
-                  href={href}
-                  target="_blank"
-                  className={cn(buttonVariants({ variant: "outline" }))}
-                >
-                  <Glasses data-icon="inline-start" />
-                  Preview in simulator
-                </Link>
-              );
-            }}
-          </form.Subscribe>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="submit"
+              variant="brand"
+              disabled={submitting || autofillPending || mediaBusy || !mediaReady}
+            >
+              {submitting ? "Submitting…" : "🚀 Submit app"}
+            </Button>
+            <form.Subscribe selector={(state) => state.values.launchUrl}>
+              {(launchUrl) => {
+                const href = simulatorHrefFor(launchUrl);
+                if (!href) return null;
+                return (
+                  <Link
+                    href={href}
+                    target="_blank"
+                    className={cn(buttonVariants({ variant: "outline" }))}
+                  >
+                    <Glasses data-icon="inline-start" />
+                    Preview in simulator
+                  </Link>
+                );
+              }}
+            </form.Subscribe>
+          </div>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            By clicking submit, you confirm you have authority and rights to the app and media,
+            agree to the{" "}
+            <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
+              Terms of Service
+            </Link>{" "}
+            ({legal.termsVersion}), and acknowledge the{" "}
+            <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </div>
       </form>
     </>
