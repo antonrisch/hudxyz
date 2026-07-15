@@ -29,6 +29,7 @@ import {
   type MediaItem,
   type MediaState,
 } from "@/lib/apps/upload-client";
+import { track, trackOnce } from "@/lib/analytics/track";
 import { cn } from "@/lib/utils";
 
 type AutofillMetadata = {
@@ -147,6 +148,7 @@ export function SubmitForm({
       }
       const data = (await response.json()) as DraftAppDto;
       publicIdRef.current = data.publicId;
+      track("submission_started", { public_id: data.publicId });
       // Keep catalog fields in sync so submit works even if they haven't touched Type yet.
       if (!form.state.values.primaryCategoryId) {
         form.setFieldValue("listingType", data.listingType);
@@ -325,6 +327,10 @@ export function SubmitForm({
           }));
           iconImported = true;
           filled.push("icon");
+          trackOnce(`submission_icon_uploaded:${appId}`, "submission_icon_uploaded", {
+            public_id: appId,
+            source: "import",
+          });
         } catch (error) {
           setMedia((prev) => ({
             ...prev,
@@ -388,6 +394,7 @@ export function SubmitForm({
         throw new Error(await parseApiError(response));
       }
 
+      track("submission_completed", { public_id: id });
       setSubmittedName(result.data.name);
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast.success("Submitted for review");

@@ -28,6 +28,7 @@ import {
   type MediaState,
   uploadAppAsset,
 } from "@/lib/apps/upload-client";
+import { trackOnce } from "@/lib/analytics/track";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { cn } from "@/lib/utils";
 
@@ -85,6 +86,13 @@ async function runUpload(input: {
         error: undefined,
       })),
     );
+
+    if (kind === "icon" && (!apiBase || apiBase === "/api/apps")) {
+      trackOnce(`submission_icon_uploaded:${appId}`, "submission_icon_uploaded", {
+        public_id: appId,
+        source: "upload",
+      });
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Upload failed";
     onChange((prev) =>
