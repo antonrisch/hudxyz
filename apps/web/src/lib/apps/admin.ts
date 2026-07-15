@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { appAssets, apps, categories, type AppStatus, type ListingType } from "@/db/schema";
 import { listingPath } from "@/lib/apps/public-id";
+import { listPublishedCollectionPaths } from "@/lib/collections/queries";
 import { deleteObject } from "@/lib/r2";
 
 import {
@@ -21,6 +22,54 @@ import { draftAppPatchSchema, slugifyName } from "./draft-schema";
 import { rebuildAppSearchDocument } from "./search-index";
 
 const primaryCategory = alias(categories, "primary_category");
+
+async function revalidateCategoryPaths(categoryIds: readonly (string | null | undefined)[]) {
+  const ids = [...new Set(categoryIds.filter((id): id is string => Boolean(id)))];
+  if (ids.length === 0) return;
+
+  const db = getDb();
+  const rows = await db
+    .select({ slug: categories.slug })
+    .from(categories)
+    .where(inArray(categories.id, ids));
+
+  for (const row of rows) {
+    revalidatePath(`/apps/category/${row.slug}`);
+  }
+}
+
+async function revalidatePublishedCollectionPaths() {
+  try {
+    const collections = await listPublishedCollectionPaths();
+    for (const collection of collections) {
+      revalidatePath(`/apps/collections/${collection.slug}`);
+    }
+  } catch {
+    // Admin mutations should still succeed if collection lookup fails.
+  }
+}
+
+/**
+ * Padme always refreshes. Public directory surfaces only when the app is/was published
+ * (hub, categories, listing detail, collections).
+ */
+async function revalidateAfterAdminMutation(options: {
+  slug?: string;
+  publicId?: string;
+  wasOrIsPublished: boolean;
+  categoryIds?: readonly (string | null | undefined)[];
+}) {
+  revalidatePath("/padme");
+  if (!options.wasOrIsPublished) return;
+
+  revalidatePath("/apps");
+  revalidatePath("/apps/categories");
+  if (options.slug && options.publicId) {
+    revalidatePath(listingPath(options.slug, options.publicId));
+  }
+  await revalidateCategoryPaths(options.categoryIds ?? []);
+  await revalidatePublishedCollectionPaths();
+}
 
 /** Statuses the admin queue can filter. */
 export const adminListStatuses = ["draft", "pending", "published", "rejected"] as const;
@@ -275,7 +324,7 @@ export async function updateAppForAdmin(appId: string, patch: AdminAppPatch): Pr
       : null;
 
   const db = getDb();
-  return db.transaction(async (tx) => {
+  const row = await db.transaction(async (tx) => {
     const rows = await tx
       .update(apps)
       .set({
@@ -286,14 +335,28 @@ export async function updateAppForAdmin(appId: string, patch: AdminAppPatch): Pr
       .where(eq(apps.id, existing.id))
       .returning();
 
-    const row = rows[0];
-    if (!row) {
+    const updated = rows[0];
+    if (!updated) {
       throw new DraftNotFoundError();
     }
 
-    await rebuildAppSearchDocument(tx, row.id);
-    return row;
+    await rebuildAppSearchDocument(tx, updated.id);
+    return updated;
   });
+
+  await revalidateAfterAdminMutation({
+    slug: row.slug,
+    publicId: row.publicId,
+    wasOrIsPublished: existing.status === "published" || row.status === "published",
+    categoryIds: [
+      existing.primaryCategoryId,
+      existing.secondaryCategoryId,
+      row.primaryCategoryId,
+      row.secondaryCategoryId,
+    ],
+  });
+
+  return row;
 }
 
 /**
@@ -323,9 +386,10 @@ export async function deleteAppForAdmin(appId: string): Promise<void> {
     await tx.delete(apps).where(eq(apps.id, existing.id));
   });
 
-  revalidatePath("/apps");
-  revalidatePath("/padme");
-  if (existing.status === "published") {
-    revalidatePath(listingPath(existing.slug, existing.publicId));
-  }
+  await revalidateAfterAdminMutation({
+    slug: existing.slug,
+    publicId: existing.publicId,
+    wasOrIsPublished: existing.status === "published",
+    categoryIds: [existing.primaryCategoryId, existing.secondaryCategoryId],
+  });
 }

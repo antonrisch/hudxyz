@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { JsonLd } from "@/components/layout/json-ld";
-import { ListingsEmpty } from "@/components/listings/listings-empty";
-import { ListingsGrid } from "@/components/listings/listings-grid";
-import { listingPath } from "@/lib/apps/public-id";
-import { directorySocialMetadata, itemListJsonLd } from "@/lib/apps/seo";
+import { DirectoryListPage } from "@/components/listings/directory-list-page";
+import { directorySocialMetadata } from "@/lib/apps/seo";
 import { getPublishedCollectionBySlug } from "@/lib/collections/queries";
 
 export async function generateMetadata({
@@ -43,44 +40,14 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
   if (!collection) notFound();
 
   const path = `/apps/collections/${collection.slug}`;
-  const description =
-    collection.description ??
-    `Browse ${collection.name} on the Meta Ray-Ban Display apps directory.`;
 
   return (
-    <main className="page-px mx-auto w-full max-w-6xl flex-1 py-10">
-      <JsonLd
-        data={itemListJsonLd({
-          name: collection.name,
-          description,
-          path,
-          items: collection.listings.map((listing) => ({
-            name: listing.name,
-            path: listingPath(listing.slug, listing.publicId),
-          })),
-        })}
-      />
-      <h1 className="font-bold text-3xl tracking-tight">{collection.name}</h1>
-      {collection.description ? (
-        <p className="mt-2 text-base text-muted-foreground">{collection.description}</p>
-      ) : null}
-      <p className="mt-2 text-sm text-muted-foreground">
-        {collection.listings.length === 1
-          ? "1 result"
-          : `${collection.listings.length.toLocaleString()} results`}
-      </p>
-
-      {collection.listings.length === 0 ? (
-        <div className="mt-8">
-          <ListingsEmpty />
-        </div>
-      ) : (
-        <ListingsGrid
-          listings={collection.listings}
-          variant={collection.smartSort === "popular" ? "numbered" : "default"}
-          className="mt-8"
-        />
-      )}
-    </main>
+    <DirectoryListPage
+      title={collection.name}
+      description={collection.description}
+      path={path}
+      listings={collection.listings}
+      variant={collection.smartSort === "popular" ? "numbered" : "default"}
+    />
   );
 }

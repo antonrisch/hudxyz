@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { appsBrowsePath } from "@/lib/apps/browse-params";
+import { categoryPath } from "@/lib/apps/browse-params";
 import { formatOpenCount, totalOpenCount } from "@/lib/apps/listing-urls";
 import type { ListingDetail } from "@/lib/apps/queries";
 import { cn } from "@/lib/utils";
@@ -32,18 +32,16 @@ export function ListingMetaChips({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <MetaChipLink href={appsBrowsePath({ listingType: listing.listingType })}>
-        {typeLabel}
-      </MetaChipLink>
+      <MetaChip>{typeLabel}</MetaChip>
       {listing.categorySlug ? (
-        <MetaChipLink href={appsBrowsePath({ categorySlug: listing.categorySlug })}>
+        <MetaChipLink href={categoryPath(listing.categorySlug)}>
           {listing.categoryName}
         </MetaChipLink>
       ) : listing.categoryName ? (
         <MetaChip>{listing.categoryName}</MetaChip>
       ) : null}
       {listing.secondaryCategorySlug && listing.secondaryCategoryName ? (
-        <MetaChipLink href={appsBrowsePath({ categorySlug: listing.secondaryCategorySlug })}>
+        <MetaChipLink href={categoryPath(listing.secondaryCategorySlug)}>
           {listing.secondaryCategoryName}
         </MetaChipLink>
       ) : null}

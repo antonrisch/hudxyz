@@ -13,7 +13,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { appsBrowsePath } from "@/lib/apps/browse-params";
+import { categoryPath } from "@/lib/apps/browse-params";
 import type { ListingDetail } from "@/lib/apps/queries";
 import { cn } from "@/lib/utils";
 
@@ -26,9 +26,7 @@ export function ListingBreadcrumbs({
   className?: string;
 }) {
   const router = useRouter();
-  const fallbackHref = listing.categorySlug
-    ? appsBrowsePath({ categorySlug: listing.categorySlug })
-    : "/apps";
+  const fallbackHref = listing.categorySlug ? categoryPath(listing.categorySlug) : "/apps";
 
   return (
     <div className={cn(className)}>
@@ -59,9 +57,7 @@ export function ListingBreadcrumbs({
             <>
               <BreadcrumbSeparator>/</BreadcrumbSeparator>
               <BreadcrumbItem>
-                <BreadcrumbLink
-                  render={<Link href={appsBrowsePath({ categorySlug: listing.categorySlug })} />}
-                >
+                <BreadcrumbLink render={<Link href={categoryPath(listing.categorySlug)} />}>
                   {listing.categoryName}
                 </BreadcrumbLink>
               </BreadcrumbItem>
