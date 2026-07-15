@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getAppForAdmin } from "@/lib/apps/admin";
+import { getAppForAdmin, touchAppMediaForAdmin } from "@/lib/apps/admin";
 import { deleteAppAsset, getAppAssetById } from "@/lib/apps/assets";
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +19,8 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   if (!deleted) {
     return NextResponse.json({ error: "Asset not found" }, { status: 404 });
   }
+
+  await touchAppMediaForAdmin(app.id);
 
   return NextResponse.json({ ok: true, id: deleted.id });
 }

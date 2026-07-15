@@ -308,6 +308,7 @@ async function toAdminDetail(row: CollectionRow): Promise<AdminCollectionDetail>
  * Category/type filtered hubs also call listPublishedShelves only on the unfiltered `/apps`.
  */
 export function revalidateCollectionSurfaces(slug: string, collectionId?: string): void {
+  revalidatePath("/");
   revalidatePath("/apps");
   revalidatePath(`/apps/collections/${slug}`);
   revalidatePath("/padme/collections");
@@ -555,6 +556,7 @@ export async function reorderCollections(orderedIds: string[]): Promise<AdminCol
     }
   });
 
+  revalidatePath("/");
   revalidatePath("/apps");
   revalidatePath("/padme/collections");
   return listCollectionsForAdmin();
