@@ -486,13 +486,13 @@ export function SubmitForm({
               }}
             </form.Subscribe>
           </div>
-          <p className="max-w-prose text-muted-foreground text-sm leading-relaxed">
+          <p className="text-muted-foreground text-sm leading-relaxed">
             By clicking submit, you confirm you have authority and rights to the app and media,
             agree to the{" "}
             <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
               Terms of Service
             </Link>{" "}
-            (version {legal.termsVersion}), and acknowledge the{" "}
+            ({legal.termsVersion}), and acknowledge the{" "}
             <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
               Privacy Policy
             </Link>
