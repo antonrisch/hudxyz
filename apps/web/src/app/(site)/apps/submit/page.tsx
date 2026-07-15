@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Submit a Web App",
   description: "Submit a Meta Ray-Ban Display Web App to hudxyz.com.",
   alternates: { canonical: "/apps/submit" },
+  robots: { index: false, follow: false },
 };
 
 export default async function SubmitAppPage({

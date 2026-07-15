@@ -57,6 +57,8 @@ export type CategoryCount = {
   slug: string;
   name: string;
   count: number;
+  /** Newest published listing update touching this category (sitemap lastmod). */
+  updatedAt: Date;
 };
 
 type SampleCategoryRef = {
@@ -298,7 +300,7 @@ export async function listPublishedCategoryCounts(filter?: {
   listingType?: ListingType;
 }): Promise<CategoryCount[]> {
   if (useSampleListings()) {
-    const counts = new Map<string, { name: string; count: number }>();
+    const counts = new Map<string, { name: string; count: number; updatedAt: Date }>();
 
     for (const app of sampleListings.apps) {
       if (app.status !== "published") continue;
@@ -308,20 +310,27 @@ export async function listPublishedCategoryCounts(filter?: {
         app.primary_category as SampleCategoryRef,
         app.secondary_category as SampleCategoryRef | null,
       ].filter(Boolean) as SampleCategoryRef[];
+      const updatedAt = new Date(app.updated_at);
 
       for (const ref of refs) {
         const name = categoryNameFromRef(ref) ?? ref.slug;
         const existing = counts.get(ref.slug);
         if (existing) {
           existing.count += 1;
+          if (updatedAt > existing.updatedAt) existing.updatedAt = updatedAt;
         } else {
-          counts.set(ref.slug, { name, count: 1 });
+          counts.set(ref.slug, { name, count: 1, updatedAt });
         }
       }
     }
 
     return [...counts.entries()]
-      .map(([slug, value]) => ({ slug, name: value.name, count: value.count }))
+      .map(([slug, value]) => ({
+        slug,
+        name: value.name,
+        count: value.count,
+        updatedAt: value.updatedAt,
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
@@ -336,6 +345,7 @@ export async function listPublishedCategoryCounts(filter?: {
       slug: primaryCategory.slug,
       name: primaryCategory.name,
       count: sql<number>`count(*)`.mapWith(Number),
+      updatedAt: sql<number>`max(${apps.updatedAt})`.mapWith(Number),
     })
     .from(apps)
     .innerJoin(primaryCategory, eq(apps.primaryCategoryId, primaryCategory.id))
@@ -347,25 +357,33 @@ export async function listPublishedCategoryCounts(filter?: {
       slug: secondaryCategory.slug,
       name: secondaryCategory.name,
       count: sql<number>`count(*)`.mapWith(Number),
+      updatedAt: sql<number>`max(${apps.updatedAt})`.mapWith(Number),
     })
     .from(apps)
     .innerJoin(secondaryCategory, eq(apps.secondaryCategoryId, secondaryCategory.id))
     .where(and(...conditions))
     .groupBy(secondaryCategory.slug, secondaryCategory.name);
 
-  const counts = new Map<string, { name: string; count: number }>();
+  const counts = new Map<string, { name: string; count: number; updatedAt: Date }>();
   for (const row of [...primaryRows, ...secondaryRows]) {
     if (!row.slug) continue;
+    const updatedAt = new Date(row.updatedAt);
     const existing = counts.get(row.slug);
     if (existing) {
       existing.count += row.count;
+      if (updatedAt > existing.updatedAt) existing.updatedAt = updatedAt;
     } else {
-      counts.set(row.slug, { name: row.name, count: row.count });
+      counts.set(row.slug, { name: row.name, count: row.count, updatedAt });
     }
   }
 
   return [...counts.entries()]
-    .map(([slug, value]) => ({ slug, name: value.name, count: value.count }))
+    .map(([slug, value]) => ({
+      slug,
+      name: value.name,
+      count: value.count,
+      updatedAt: value.updatedAt,
+    }))
     .filter((row) => row.count > 0)
     .sort((a, b) => a.name.localeCompare(b.name));
 }

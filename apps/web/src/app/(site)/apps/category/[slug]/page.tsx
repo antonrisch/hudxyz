@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 
+import { JsonLd } from "@/components/layout/json-ld";
 import { DirectoryListPage } from "@/components/listings/directory-list-page";
 import {
   appsSearchPath,
@@ -10,8 +11,9 @@ import {
   type BrowseParams,
 } from "@/lib/apps/browse-params";
 import { listPublishedListings } from "@/lib/apps/queries";
-import { directorySocialMetadata } from "@/lib/apps/seo";
+import { breadcrumbListJsonLd, directorySocialMetadata } from "@/lib/apps/seo";
 import { categoryDisplayName, categorySlugExists } from "@/lib/category/categories";
+import { categoryDescription } from "@/lib/category/category-copy";
 
 export async function generateMetadata({
   params,
@@ -25,7 +27,7 @@ export async function generateMetadata({
 
   const name = categoryDisplayName(slug) ?? slug;
   const path = categoryPath(slug);
-  const description = `Browse apps and games in ${name} for Meta Ray-Ban Display.`;
+  const description = categoryDescription(slug, name);
 
   return {
     title: name,
@@ -63,9 +65,18 @@ export default async function CategoryPage({
   if (listings.length === 0) notFound();
 
   const path = categoryPath(slug);
-  const description = `Browse apps and games in ${name} for Meta Ray-Ban Display.`;
+  const description = categoryDescription(slug, name);
 
   return (
-    <DirectoryListPage title={name} description={description} path={path} listings={listings} />
+    <>
+      <JsonLd
+        data={breadcrumbListJsonLd([
+          { name: "Apps", path: "/apps" },
+          { name: "Categories", path: "/apps/categories" },
+          { name },
+        ])}
+      />
+      <DirectoryListPage title={name} description={description} path={path} listings={listings} />
+    </>
   );
 }

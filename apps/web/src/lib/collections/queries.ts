@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { cache } from "react";
 
@@ -265,6 +265,7 @@ export const getPublishedCollectionBySlug = cache(
       if (!collection) return null;
 
       const listings = await resolveCollectionListings(sampleCollectionInput(collection));
+      if (listings.length === 0) return null;
 
       return {
         ...toPublishedCollection({
@@ -290,6 +291,7 @@ export const getPublishedCollectionBySlug = cache(
     if (!collection) return null;
 
     const listings = await resolveCollectionListings(collection);
+    if (listings.length === 0) return null;
 
     return {
       ...toPublishedCollection(collection),
@@ -303,25 +305,109 @@ export type PublishedCollectionPath = {
   updatedAt: Date;
 };
 
-/** Lightweight published collection rows for sitemap generation. */
-export async function listPublishedCollectionPaths(): Promise<PublishedCollectionPath[]> {
+function laterDate(a: Date, b: Date | null | undefined): Date {
+  if (!b) return a;
+  return b.getTime() > a.getTime() ? b : a;
+}
+
+/** Newest published listing `updatedAt` that currently feeds this collection. */
+async function latestMemberListingUpdatedAt(
+  collection: CollectionResolveInput,
+): Promise<Date | null> {
   if (useSampleListings()) {
-    return sampleCollections()
-      .filter((row) => row.status === "published")
-      .map((row) => ({
-        slug: row.slug,
-        // Sample fixture has no updated_at — use a stable epoch.
-        updatedAt: new Date(0),
-      }));
+    const listings = await resolveCollectionListings(collection, collection.itemLimit ?? undefined);
+    return listings.length > 0 ? new Date(0) : null;
   }
 
   const db = getDb();
-  return db
-    .select({
-      slug: collections.slug,
-      updatedAt: collections.updatedAt,
-    })
+
+  if (collection.kind === "editorial") {
+    const rows = await db
+      .select({ updatedAt: sql<number>`max(${apps.updatedAt})`.mapWith(Number) })
+      .from(collectionApps)
+      .innerJoin(apps, eq(collectionApps.appId, apps.id))
+      .where(and(eq(collectionApps.collectionId, collection.id), eq(apps.status, "published")));
+    const value = rows[0]?.updatedAt;
+    return value ? new Date(value) : null;
+  }
+
+  if (!collection.smartSort) return null;
+
+  const conditions = [eq(apps.status, "published")];
+  if (collection.filterListingType) {
+    conditions.push(eq(apps.listingType, collection.filterListingType));
+  }
+  if (collection.filterCategorySlug) {
+    const primaryCategory = alias(categories, "primary_category");
+    const secondaryCategory = alias(categories, "secondary_category");
+    const rows = await db
+      .select({ updatedAt: sql<number>`max(${apps.updatedAt})`.mapWith(Number) })
+      .from(apps)
+      .innerJoin(primaryCategory, eq(apps.primaryCategoryId, primaryCategory.id))
+      .leftJoin(secondaryCategory, eq(apps.secondaryCategoryId, secondaryCategory.id))
+      .where(
+        and(
+          ...conditions,
+          or(
+            eq(primaryCategory.slug, collection.filterCategorySlug),
+            eq(secondaryCategory.slug, collection.filterCategorySlug),
+          ),
+        ),
+      );
+    const value = rows[0]?.updatedAt;
+    return value ? new Date(value) : null;
+  }
+
+  const rows = await db
+    .select({ updatedAt: sql<number>`max(${apps.updatedAt})`.mapWith(Number) })
+    .from(apps)
+    .where(and(...conditions));
+  const value = rows[0]?.updatedAt;
+  return value ? new Date(value) : null;
+}
+
+/** Lightweight non-empty published collection rows for sitemap generation. */
+export async function listPublishedCollectionPaths(): Promise<PublishedCollectionPath[]> {
+  if (useSampleListings()) {
+    const published = sampleCollections()
+      .filter((row) => row.status === "published")
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order);
+
+    const resolved = await Promise.all(
+      published.map(async (collection) => {
+        const input = sampleCollectionInput(collection);
+        const count = await countCollectionListings(input);
+        if (count === 0) return null;
+        return {
+          slug: collection.slug,
+          // Sample fixture has no updated_at — use a stable epoch.
+          updatedAt: new Date(0),
+        } satisfies PublishedCollectionPath;
+      }),
+    );
+
+    return resolved.filter((row): row is PublishedCollectionPath => row != null);
+  }
+
+  const db = getDb();
+  const rows = await db
+    .select()
     .from(collections)
     .where(eq(collections.status, "published"))
     .orderBy(asc(collections.sortOrder));
+
+  const resolved = await Promise.all(
+    rows.map(async (collection) => {
+      const count = await countCollectionListings(collection);
+      if (count === 0) return null;
+      const memberUpdatedAt = await latestMemberListingUpdatedAt(collection);
+      return {
+        slug: collection.slug,
+        updatedAt: laterDate(collection.updatedAt, memberUpdatedAt),
+      } satisfies PublishedCollectionPath;
+    }),
+  );
+
+  return resolved.filter((row): row is PublishedCollectionPath => row != null);
 }
