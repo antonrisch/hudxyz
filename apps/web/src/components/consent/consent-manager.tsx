@@ -14,6 +14,46 @@ import { useMountEffect } from "@/lib/use-mount-effect";
 
 const consentCategories = ["necessary", "measurement"] as const;
 
+/** Match hudxyz semantic tokens / brand accent (provider-scoped theme). */
+const consentTheme = {
+  colors: {
+    primary: "#0067ff",
+    primaryHover: "#0058db",
+    surface: "#ffffff",
+    surfaceHover: "#f5f5f5",
+    border: "#ebebeb",
+    text: "#0a0a0a",
+    textMuted: "#737373",
+    textOnPrimary: "#ffffff",
+    overlay: "rgba(0, 0, 0, 0.45)",
+  },
+  dark: {
+    primary: "#3b82ff",
+    primaryHover: "#5a96ff",
+    surface: "#171717",
+    surfaceHover: "#262626",
+    border: "#333333",
+    text: "#fafafa",
+    textMuted: "#a3a3a3",
+    textOnPrimary: "#ffffff",
+    overlay: "rgba(0, 0, 0, 0.6)",
+  },
+  radius: {
+    sm: "0.375rem",
+    md: "0.5rem",
+    lg: "0.75rem",
+  },
+  consentActions: {
+    accept: { variant: "primary" as const, mode: "filled" as const },
+    reject: { variant: "neutral" as const, mode: "stroke" as const },
+    customize: { variant: "neutral" as const, mode: "ghost" as const },
+  },
+  slots: {
+    consentBannerCard: "max-w-[min(28rem,calc(100vw-2rem))]",
+    consentBannerFooter: "gap-2",
+  },
+};
+
 type SubscribeToConsentChanges = ReturnType<typeof useConsentManager>["subscribeToConsentChanges"];
 
 function ConsentAnalyticsSync({
@@ -60,12 +100,14 @@ export function ConsentManager({ children }: { children: ReactNode }) {
     ...modeOptions,
     consentCategories: [...consentCategories],
     reloadOnConsentRevoked: true,
+    colorScheme: "system" as const,
+    theme: consentTheme,
   };
 
   return (
     <ConsentManagerProvider options={options}>
       <SettledConsentAnalytics />
-      <ConsentBanner />
+      <ConsentBanner layout={["customize", ["reject", "accept"]]} primaryButton="accept" />
       <ConsentDialog />
       {children}
     </ConsentManagerProvider>

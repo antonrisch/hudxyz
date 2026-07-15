@@ -38,6 +38,9 @@ importers:
       '@c15t/nextjs':
         specifier: ^2.1.0
         version: 2.1.0(@types/react@19.2.17)(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))
+      '@c15t/ui':
+        specifier: 2.1.0
+        version: 2.1.0(@types/react@19.2.17)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))
       '@flags-sdk/vercel':
         specifier: ^1.4.5
         version: 1.4.5(@aws-sdk/credential-provider-web-identity@3.972.63)(flags@4.2.0(@opentelemetry/api@1.9.1)(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(ws@8.21.0(bufferutil@4.1.0))

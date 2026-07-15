@@ -27,6 +27,7 @@
     "@base-ui/react": "^1.6.0",
     "@better-auth/drizzle-adapter": "^1.6.23",
     "@c15t/nextjs": "^2.1.0",
+    "@c15t/ui": "2.1.0",
     "@flags-sdk/vercel": "^1.4.5",
     "@libsql/client": "^0.17.4",
     "@mercuryworkshop/libcurl-transport": "^2.0.5",
