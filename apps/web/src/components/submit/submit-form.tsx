@@ -102,9 +102,11 @@ function isEmptyDescription(value: string): boolean {
 export function SubmitForm({
   categories,
   initialDetail,
+  appsMediaEnabled,
 }: {
   categories: readonly SubmitCategoryOption[];
   initialDetail: DraftDetailDto | null;
+  appsMediaEnabled: boolean;
 }) {
   // `?id=` is the public id (10-char Crockford), not the internal uuid.
   const [publicId, setPublicId] = useQueryState("id", parseAsString);
@@ -432,12 +434,14 @@ export function SubmitForm({
           )}
         </form.Subscribe>
 
-        <SubmitMedia
-          media={media}
-          onChange={setMedia}
-          ensureAppId={ensureAppId}
-          disabled={submitting || autofillPending}
-        />
+        {appsMediaEnabled ? (
+          <SubmitMedia
+            media={media}
+            onChange={setMedia}
+            ensureAppId={ensureAppId}
+            disabled={submitting || autofillPending}
+          />
+        ) : null}
 
         <div className="flex flex-wrap gap-3">
           <Button

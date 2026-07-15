@@ -8,6 +8,7 @@ import { ListingHeader } from "@/components/listings/listing-header";
 import { ListingInformation } from "@/components/listings/listing-info";
 import { ListingMedia } from "@/components/listings/listing-media";
 import { ListingOverview } from "@/components/listings/listing-overview";
+import { appsMedia } from "@/flags";
 import { listingPath } from "@/lib/apps/public-id";
 import { getPublishedListingByPublicId } from "@/lib/apps/queries";
 import { directorySocialMetadata, softwareApplicationJsonLd } from "@/lib/apps/seo";
@@ -46,7 +47,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function AppDetailPage({ params }: PageProps) {
   const { slug, publicId } = await params;
-  const listing = await getPublishedListingByPublicId(publicId);
+  const [listing, appsMediaEnabled] = await Promise.all([
+    getPublishedListingByPublicId(publicId),
+    appsMedia(),
+  ]);
   if (!listing) notFound();
 
   // Slug is cosmetic — keep the canonical path in sync when the name changes.
@@ -87,7 +91,9 @@ export default async function AppDetailPage({ params }: PageProps) {
         )}
         <ListingHeader listing={listing} />
       </div>
-      <ListingMedia screenshots={listing.screenshots} video={listing.video} />
+      {appsMediaEnabled ? (
+        <ListingMedia screenshots={listing.screenshots} video={listing.video} />
+      ) : null}
       <ListingOverview description={listing.description} />
       <ListingInformation listing={listing} />
     </main>

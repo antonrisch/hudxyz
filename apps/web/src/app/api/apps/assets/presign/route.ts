@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { appAssetKinds, type AppAssetKind } from "@/db/schema";
+import { appsMedia } from "@/flags";
 import { isAllowedContentTypeForKind, sanitizeAssetFilename } from "@/lib/apps/asset-limits";
 import { appAssetObjectKey } from "@/lib/apps/asset-keys";
 import { getAppById } from "@/lib/apps/assets";
-import { clientIp, rateLimitOrNull, requireSubmitSession } from "@/lib/apps/submit-guard";
 import { requireHumanOrNull } from "@/lib/apps/botid";
+import { isAppsMediaKind } from "@/lib/apps/media-policy";
+import { clientIp, rateLimitOrNull, requireSubmitSession } from "@/lib/apps/submit-guard";
 import { presignPut, publicUrl } from "@/lib/r2";
 
 type PresignBody = {
@@ -43,6 +45,13 @@ export async function POST(request: Request) {
 
   if (!appAssetKinds.includes(kind)) {
     return NextResponse.json({ error: "kind must be icon, screenshot, or video" }, { status: 400 });
+  }
+
+  if (isAppsMediaKind(kind) && !(await appsMedia())) {
+    return NextResponse.json(
+      { error: "Screenshot and preview video uploads are temporarily disabled" },
+      { status: 403 },
+    );
   }
 
   if (!isAllowedContentTypeForKind(kind, contentType)) {

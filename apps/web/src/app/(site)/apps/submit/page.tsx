@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { SubmitForm } from "@/components/submit/submit-form";
+import { appsMedia } from "@/flags";
 import { getDraftAppDetail, listCategoriesForForm, serializeDraftDetail } from "@/lib/apps/draft";
 
 export const dynamic = "force-dynamic";
@@ -20,8 +21,11 @@ export default async function SubmitAppPage({
   const rawId = params.id;
   const id = typeof rawId === "string" ? rawId : Array.isArray(rawId) ? rawId[0] : undefined;
 
-  const categories = await listCategoriesForForm();
-  const detail = id ? await getDraftAppDetail(id) : null;
+  const [categories, detail, appsMediaEnabled] = await Promise.all([
+    listCategoriesForForm(),
+    id ? getDraftAppDetail(id) : Promise.resolve(null),
+    appsMedia(),
+  ]);
 
   return (
     <main className="page-px mx-auto w-full max-w-3xl flex-1 py-10 min-h-[calc(100svh-12rem)]">
@@ -29,6 +33,7 @@ export default async function SubmitAppPage({
         key={id ?? "new"}
         categories={categories}
         initialDetail={detail ? serializeDraftDetail(detail) : null}
+        appsMediaEnabled={appsMediaEnabled}
       />
     </main>
   );

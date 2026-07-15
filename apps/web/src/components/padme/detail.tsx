@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { ArrowLeft, Glasses } from "lucide-react";
+import { ArrowLeft, Glasses, Info } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -66,9 +66,11 @@ function statusLabel(status: AdminDetailDto["status"]): string {
 export function PadmeDetail({
   initial,
   categories,
+  appsMediaEnabled,
 }: {
   initial: AdminDetailDto;
   categories: readonly SubmitCategoryOption[];
+  appsMediaEnabled: boolean;
 }) {
   const router = useRouter();
   const [detail, setDetail] = useState(initial);
@@ -210,6 +212,16 @@ export function PadmeDetail({
             />
           )}
         </form.Subscribe>
+
+        {!appsMediaEnabled ? (
+          <div className="flex gap-2.5 rounded-xl bg-muted px-3 py-2.5 text-sm text-muted-foreground">
+            <Info aria-hidden className="mt-0.5 size-4 shrink-0" />
+            <p>
+              Screenshots and preview videos are hidden on listing pages and can&apos;t be uploaded
+              by submitters. You can still add or replace them here.
+            </p>
+          </div>
+        ) : null}
 
         <SubmitMedia
           media={media}

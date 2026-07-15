@@ -7,3 +7,4 @@ dist
 .cursor
 .pnpm-store
 .scrape
+.vercel
