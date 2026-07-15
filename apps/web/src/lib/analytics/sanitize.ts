@@ -2,7 +2,12 @@
  * Strip query/hash so search terms and simulator `?url=` never leave the browser.
  * Keep origin + pathname for route-level pageviews.
  */
-export function sanitizeAnalyticsUrl(rawUrl: string, origin = window.location.origin): string {
+function defaultAnalyticsOrigin(): string {
+  if (typeof window !== "undefined") return window.location.origin;
+  return "https://hudxyz.com";
+}
+
+export function sanitizeAnalyticsUrl(rawUrl: string, origin = defaultAnalyticsOrigin()): string {
   try {
     const url = new URL(rawUrl, origin);
     return `${url.origin}${url.pathname}`;
@@ -11,7 +16,7 @@ export function sanitizeAnalyticsUrl(rawUrl: string, origin = window.location.or
   }
 }
 
-export function sanitizeAnalyticsPath(rawUrl: string, origin = window.location.origin): string {
+export function sanitizeAnalyticsPath(rawUrl: string, origin = defaultAnalyticsOrigin()): string {
   try {
     return new URL(rawUrl, origin).pathname || "/";
   } catch {
