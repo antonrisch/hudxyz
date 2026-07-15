@@ -272,7 +272,10 @@ export function CollectionEditor({
         {detail.preview.length === 0 ? (
           <p className="text-sm text-muted-foreground">No resolved listings.</p>
         ) : (
-          <ListingsGrid listings={detail.preview} />
+          <ListingsGrid
+            listings={detail.preview}
+            variant={detail.smartSort === "popular" ? "numbered" : "default"}
+          />
         )}
       </section>
 

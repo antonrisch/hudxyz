@@ -4,6 +4,8 @@ import type { PublishedShelf } from "@/lib/collections/queries";
 import { cn } from "@/lib/utils";
 
 export function ListingShelf({ shelf, className }: { shelf: PublishedShelf; className?: string }) {
+  const variant = shelf.smartSort === "popular" ? "numbered" : "default";
+
   return (
     <section className={cn("space-y-3", className)}>
       <ChevronTitle
@@ -13,7 +15,7 @@ export function ListingShelf({ shelf, className }: { shelf: PublishedShelf; clas
       >
         {shelf.name}
       </ChevronTitle>
-      <ListingsGrid listings={shelf.listings} />
+      <ListingsGrid listings={shelf.listings} variant={variant} />
     </section>
   );
 }

@@ -10,14 +10,20 @@ import { cn } from "@/lib/utils";
 
 export function ListingRow({
   listing,
+  index,
+  variant = "default",
   className,
 }: {
   listing: ListingListItem;
+  /** 1-based rank when `variant="numbered"`. */
+  index?: number;
+  variant?: "default" | "numbered";
   className?: string;
 }) {
   const href = listingPath(listing.slug, listing.publicId);
   const simulatorHref = `/simulator?url=${encodeURIComponent(listing.launchUrl)}`;
   const description = listing.description ?? `${listing.listingType} · ${listing.categoryName}`;
+  const numbered = variant === "numbered" && index != null;
 
   return (
     <li
@@ -26,7 +32,17 @@ export function ListingRow({
         className,
       )}
     >
-      <ListingIcon src={listing.iconUrl} alt="" size={64} />
+      <div className={cn("flex shrink-0 items-center", numbered && "gap-1.5")}>
+        {numbered ? (
+          <span
+            className="w-5 shrink-0 text-center text-base font-semibold tabular-nums text-foreground"
+            aria-hidden
+          >
+            {index}
+          </span>
+        ) : null}
+        <ListingIcon src={listing.iconUrl} alt="" size={64} />
+      </div>
       <div className="min-w-0 flex-1 space-y-1.5">
         <Link
           href={href}
@@ -41,7 +57,7 @@ export function ListingRow({
       <Link
         href={simulatorHref}
         onClick={() => trackListingOpen(listing.publicId, "sim")}
-        className={cn(buttonVariants({ variant: "brand" }), "relative z-10 px-3")}
+        className={cn(buttonVariants({ variant: "brand" }), "relative z-10")}
       >
         Try
       </Link>

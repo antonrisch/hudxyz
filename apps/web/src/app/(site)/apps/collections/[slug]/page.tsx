@@ -75,7 +75,11 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
           <ListingsEmpty />
         </div>
       ) : (
-        <ListingsGrid listings={collection.listings} className="mt-8" />
+        <ListingsGrid
+          listings={collection.listings}
+          variant={collection.smartSort === "popular" ? "numbered" : "default"}
+          className="mt-8"
+        />
       )}
     </main>
   );

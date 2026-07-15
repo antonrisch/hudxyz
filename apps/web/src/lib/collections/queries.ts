@@ -26,6 +26,7 @@ export type PublishedCollection = {
   name: string;
   description: string | null;
   kind: CollectionKind;
+  smartSort: SmartSort | null;
   coverUrl: string | null;
 };
 
@@ -176,6 +177,7 @@ function toPublishedCollection(row: {
   name: string;
   description: string | null;
   kind: CollectionKind;
+  smartSort: SmartSort | null;
   coverObjectKey: string | null;
 }): PublishedCollection {
   return {
@@ -183,6 +185,7 @@ function toPublishedCollection(row: {
     name: row.name,
     description: row.description,
     kind: row.kind,
+    smartSort: row.smartSort,
     coverUrl: row.coverObjectKey ? publicUrl(row.coverObjectKey) : null,
   };
 }
@@ -218,6 +221,7 @@ export async function listPublishedShelves(): Promise<PublishedShelf[]> {
             name: collection.name,
             description: collection.description,
             kind: collection.kind,
+            smartSort: collection.smart_sort,
             coverObjectKey: collection.cover_object_key,
           }),
           listings,
@@ -268,6 +272,7 @@ export const getPublishedCollectionBySlug = cache(
           name: collection.name,
           description: collection.description,
           kind: collection.kind,
+          smartSort: collection.smart_sort,
           coverObjectKey: collection.cover_object_key,
         }),
         listings,
