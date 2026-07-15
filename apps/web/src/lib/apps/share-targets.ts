@@ -6,8 +6,10 @@ import { RedditIcon } from "@/components/icons/reddit";
 import { XIcon } from "@/components/icons/x";
 import { WhatsAppIcon } from "@/components/icons/whatsapp";
 
+export type SocialShareChannel = "reddit" | "x" | "linkedin" | "facebook" | "whatsapp";
+
 export type ShareTarget = {
-  name: string;
+  name: SocialShareChannel;
   label: string;
   href: (url: string, title: string) => string;
   className?: string;

@@ -71,8 +71,12 @@ export function UrlBar({
       return false;
     }
 
+    const source = suggestedApps.some((app) => normalizeWebUrl(app.url) === nextUrl)
+      ? "catalog"
+      : "custom";
+
     store.getState().setUrl(nextUrl);
-    load(nextUrl);
+    load(nextUrl, source);
     void setUrlParam(nextUrl);
     recordRecent(nextUrl);
     clearSelection();

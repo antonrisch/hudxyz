@@ -5,6 +5,7 @@ allowBuilds:
   "@mercuryworkshop/scramjet": false
   "@sentry/cli": true
   bufferutil: false
+  core-js: false
   esbuild: false
   sharp: false
 minimumReleaseAgeExclude:
