@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
 const SITE_NAV = [
-  { label: "Home", href: "/" },
   { label: "Simulator", href: "/simulator" },
   { label: "Apps and games", href: "/apps" },
 ] as const;
