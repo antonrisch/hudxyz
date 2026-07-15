@@ -8,8 +8,6 @@ import { useState } from "react";
 
 import { Logo } from "@/components/layout/logo";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import type { ListingType } from "@/db/schema";
-import { findCategoryDefinition } from "@/lib/category/categories";
 import { legal } from "@/lib/legal/config";
 import { FEEDBACK_MAILTO } from "@/lib/simulator/config";
 import { useMountEffect } from "@/lib/use-mount-effect";
@@ -23,7 +21,6 @@ type FooterLink = {
 
 type FooterSection = {
   title: string;
-  href?: string;
   links: readonly FooterLink[];
 };
 
@@ -42,23 +39,10 @@ const FOOTER_LINK_CLASS = cn(
   "text-muted-foreground transition-colors hover:text-foreground",
 );
 
-const FOOTER_HEADING_LINK_CLASS =
-  "underline-offset-4 transition-colors hover:text-foreground hover:underline";
-
-const FOOTER_APP_CATEGORY_SLUGS = [
-  "productivity",
-  "entertainment",
-  "utilities",
-  "navigation",
-] as const;
-
-const FOOTER_GAME_CATEGORY_SLUGS = ["casual", "puzzle", "action", "strategy"] as const;
-
 const HOME_LINKS: readonly FooterLink[] = [
   { href: "/simulator", label: "Simulator" },
   { href: "/apps", label: "All apps & games" },
-  { href: "/apps?type=app", label: "Apps" },
-  { href: "/apps?type=game", label: "Games" },
+  { href: "/apps/categories", label: "Categories" },
   { href: "/apps/submit", label: "Submit a Web App" },
 ];
 
@@ -74,14 +58,6 @@ const THEME_OPTIONS: readonly ThemeOption[] = [
   { value: "light", label: "Light", Icon: Sun },
   { value: "dark", label: "Dark", Icon: Moon },
 ];
-
-function buildCategoryLinks(listingType: ListingType, slugs: readonly string[]): FooterLink[] {
-  return slugs.flatMap((slug) => {
-    const category = findCategoryDefinition(listingType, slug);
-    if (!category) return [];
-    return { href: `/apps/category/${slug}`, label: category.name };
-  });
-}
 
 function footerSectionId(title: string) {
   return `footer-${title.toLowerCase().replace(/[^\w]+/g, "-")}`;
@@ -103,19 +79,13 @@ function FooterLinkItem({ href, label, external }: FooterLink) {
   );
 }
 
-function FooterNavSection({ title, href, links }: FooterSection) {
+function FooterNavSection({ title, links }: FooterSection) {
   const id = footerSectionId(title);
 
   return (
     <nav aria-labelledby={id} className="w-full min-w-0">
       <h2 id={id} className={cn(FOOTER_ROW_CLASS, "font-semibold text-foreground sm:text-base")}>
-        {href ? (
-          <Link href={href} className={FOOTER_HEADING_LINK_CLASS}>
-            {title}
-          </Link>
-        ) : (
-          title
-        )}
+        {title}
       </h2>
       <ul>
         {links.map((link) => (
@@ -174,23 +144,13 @@ function FooterThemeSelect() {
 export function AppFooter() {
   const sections: FooterSection[] = [
     { title: "Simulator & apps", links: HOME_LINKS },
-    {
-      title: "Apps",
-      href: "/apps?type=app",
-      links: buildCategoryLinks("app", FOOTER_APP_CATEGORY_SLUGS),
-    },
-    {
-      title: "Games",
-      href: "/apps?type=game",
-      links: buildCategoryLinks("game", FOOTER_GAME_CATEGORY_SLUGS),
-    },
     { title: "Support", links: SUPPORT_LINKS },
   ];
 
   return (
     <footer id="site-footer" className="mt-auto shrink-0 bg-muted">
       <div className="page-px mx-auto max-w-6xl py-6 sm:py-8">
-        <div className="grid grid-cols-1 items-start gap-x-10 gap-y-6 sm:grid-cols-2 sm:gap-y-8 lg:grid-cols-6">
+        <div className="grid grid-cols-1 items-start gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="min-w-0 px-3 sm:col-span-2">
             <Logo showWordmarkOnMobile />
             <p className="mt-2 max-w-sm text-base leading-relaxed text-muted-foreground sm:text-sm">

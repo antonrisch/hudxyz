@@ -30,6 +30,7 @@
     "@mercuryworkshop/scramjet": "2.0.67-alpha.2",
     "@mercuryworkshop/scramjet-controller": "^0.0.14",
     "@mercuryworkshop/wisp-js": "^0.4.1",
+    "@phosphor-icons/react": "^2.1.10",
     "@sentry/nextjs": "^10.63.0",
     "@tanstack/react-form": "^1.33.1",
     "@vercel/analytics": "^2.0.1",

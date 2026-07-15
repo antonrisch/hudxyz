@@ -1,77 +1,75 @@
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 import {
-  Activity,
+  Airplane,
+  Armchair,
   BookOpen,
-  Boxes,
+  BookOpenText,
   Briefcase,
   Camera,
   Car,
+  Cards,
   Cloud,
-  Code2,
+  Code,
   Compass,
   Crown,
+  Cube,
   Folder,
   GraduationCap,
-  Grid3x3,
-  HelpCircle,
-  Layers,
-  ListTodo,
-  Map,
-  Music,
+  GridFour,
+  Heartbeat,
+  ListChecks,
+  MapTrifold,
+  MusicNotes,
   Newspaper,
-  Plane,
-  Puzzle,
-  Smile,
-  Sparkles,
-  Swords,
-  Tv,
-  Type,
+  PuzzlePiece,
+  Question,
+  Smiley,
+  SoccerBall,
+  Sword,
+  Television,
+  TextT,
   Users,
+  UsersThree,
   Wallet,
   Wrench,
-} from "lucide-react";
+} from "@phosphor-icons/react/ssr";
 
-import type { ListingType } from "@/db/schema";
-
-const APP_CATEGORY_ICONS: Record<string, LucideIcon> = {
+/** Slug → icon across app/game taxonomies (shared slugs like sports resolve once). */
+const CATEGORY_ICONS: Record<string, Icon> = {
   business: Briefcase,
-  "developer-tools": Code2,
+  "developer-tools": Code,
   education: GraduationCap,
-  entertainment: Tv,
+  entertainment: Television,
   finance: Wallet,
-  "health-fitness": Activity,
-  lifestyle: Sparkles,
-  music: Music,
-  navigation: Map,
+  "health-fitness": Heartbeat,
+  lifestyle: Armchair,
+  music: MusicNotes,
+  navigation: MapTrifold,
   news: Newspaper,
   "photo-video": Camera,
-  productivity: ListTodo,
+  productivity: ListChecks,
   reference: BookOpen,
   social: Users,
-  sports: Activity,
-  travel: Plane,
+  sports: SoccerBall,
+  travel: Airplane,
   utilities: Wrench,
   weather: Cloud,
-};
-
-const GAME_CATEGORY_ICONS: Record<string, LucideIcon> = {
-  action: Swords,
+  action: Sword,
   adventure: Compass,
-  board: Grid3x3,
-  card: Layers,
-  casual: Smile,
-  family: Users,
-  puzzle: Puzzle,
+  board: GridFour,
+  card: Cards,
+  casual: Smiley,
+  family: UsersThree,
+  puzzle: PuzzlePiece,
   racing: Car,
-  "role-playing": BookOpen,
-  simulation: Boxes,
-  sports: Activity,
+  "role-playing": BookOpenText,
+  simulation: Cube,
   strategy: Crown,
-  trivia: HelpCircle,
-  word: Type,
+  trivia: Question,
+  word: TextT,
 };
 
-export function getCategoryIcon(listingType: ListingType, slug: string): LucideIcon {
-  const icons = listingType === "game" ? GAME_CATEGORY_ICONS : APP_CATEGORY_ICONS;
-  return icons[slug] ?? Folder;
+/** Icon for a category slug (apps ∪ games). */
+export function getCategoryIconBySlug(slug: string): Icon {
+  return CATEGORY_ICONS[slug] ?? Folder;
 }
