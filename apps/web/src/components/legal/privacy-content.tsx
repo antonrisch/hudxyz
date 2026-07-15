@@ -36,7 +36,16 @@ export function PrivacyContent() {
           Error reports, performance data, and session recordings via Sentry (we may record sessions
           when errors occur)
         </li>
-        <li>Aggregated usage metrics via Vercel Analytics</li>
+        <li>
+          Aggregated usage metrics via Vercel Analytics (page views, during a temporary overlap with
+          PostHog)
+        </li>
+        <li>
+          Product analytics via PostHog in cookieless mode: page paths, referrers, and explicit
+          interaction events (for example opening a listing, loading the simulator, or completing a
+          submission). We do not send search query text, simulator target URLs, contact emails, or
+          draft form contents to PostHog
+        </li>
         <li>
           Connection logs on our proxy servers (for example, when a request is allowed or refused)
         </li>
@@ -51,23 +60,24 @@ export function PrivacyContent() {
         personal information.
       </p>
       <p>
-        We do not use non-essential cookies in v1. Third-party sites you load in the simulator may
-        set their own cookies. Our service providers may use cookies or similar technologies as part
-        of their services.
+        We do not use non-essential cookies in v1. PostHog runs in cookieless mode and does not set
+        analytics cookies. Third-party sites you load in the simulator may set their own cookies.
+        Our service providers may use cookies or similar technologies as part of their services.
       </p>
 
       <h2>Why we use it</h2>
       <p>
         To run the simulator, process URLs you submit, keep the service reliable, diagnose errors,
-        prevent abuse, understand usage, and meet legal obligations.
+        prevent abuse, understand product usage and conversion funnels, and meet legal obligations.
       </p>
 
       <h2>Who we share it with</h2>
       <p>
         We use service providers that may process personal information on our behalf, including
-        Vercel (hosting and analytics, United States) and Sentry (error monitoring, United States).
-        Personal information may be stored and processed outside Australia, including in the United
-        States. Overseas recipients may be subject to foreign laws.
+        Vercel (hosting and analytics, United States), PostHog (product analytics, United States),
+        and Sentry (error monitoring, United States). Personal information may be stored and
+        processed outside Australia, including in the United States. Overseas recipients may be
+        subject to foreign laws.
       </p>
       <p>We may also disclose information where required or permitted by law.</p>
 
