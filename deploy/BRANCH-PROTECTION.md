@@ -8,13 +8,13 @@ protection via the API — configure these in the GitHub UI when available.
 
 Apply to both branches:
 
-| Setting                                   | Value                                                                                  |
-| ----------------------------------------- | -------------------------------------------------------------------------------------- |
-| Require a pull request before merging     | On                                                                                     |
-| Require status checks to pass             | On — require the CI job `Lint, typecheck, test, build` from `.github/workflows/ci.yml` |
-| Require conversation resolution           | On (recommended)                                                                       |
-| Do not allow bypassing the above settings | On for everyone except emergency break-glass accounts                                  |
-| Restrict who can push                     | No direct pushes; PR-only                                                              |
+| Setting                                   | Value                                                   |
+| ----------------------------------------- | ------------------------------------------------------- |
+| Require a pull request before merging     | On (when available on your GitHub plan)                 |
+| Require status checks to pass             | Skip on free private repos — use husky + Vercel instead |
+| Require conversation resolution           | On (recommended)                                        |
+| Do not allow bypassing the above settings | On for everyone except emergency break-glass accounts   |
+| Restrict who can push                     | No direct pushes; PR-only                               |
 
 ## `main`-specific policy
 
@@ -22,6 +22,7 @@ Apply to both branches:
 - After that PR merges, Release Please opens a version / developer-changelog PR on `main`.
 - Merging the Release Please PR creates the GitHub Release + tag (`vX.Y.Z`).
 - Do not open feature PRs directly into `main`.
+- Quality gates run locally (husky pre-commit / pre-push) and via Vercel preview builds — there is no GitHub Actions CI workflow on the free private plan.
 
 ## Bot permissions
 
@@ -29,7 +30,6 @@ Workflows use `secrets.GITHUB_TOKEN` by default:
 
 | Workflow             | Permissions needed                        |
 | -------------------- | ----------------------------------------- |
-| `ci.yml`             | `contents: read` (default)                |
 | `promote-dev.yml`    | `pull-requests: write`, `contents: read`  |
 | `release-please.yml` | `contents: write`, `pull-requests: write` |
 

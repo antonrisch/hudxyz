@@ -59,7 +59,7 @@ jobs:
           - Customer-facing product notes are deferred (MDX docs /changelog — PRD 07).
 
           ## Test plan
-          - [ ] CI is green on this PR
+          - [ ] Local quality gates are clean (husky / lint)
           - [ ] Spot-check production-critical paths after merge (`/simulator`, `/hubs`)
           EOF
           )"

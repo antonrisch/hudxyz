@@ -134,7 +134,7 @@ Per-app: `pnpm --filter @hudxyz/web <script>`. Type-check with `pnpm --filter @h
 
 - pnpm workspaces throughout. Lint is **oxlint**; format is **oxfmt**.
 - `pnpm-workspace.yaml` scopes the workspace to `apps/*` and lists `allowBuilds` (esbuild / sharp / scramjet / bufferutil ship prebuilt, so they stay unbuilt).
-- **CI:** `.github/workflows/ci.yml` on PRs/pushes to `dev` and `main`. Promotion and Release Please: `.github/workflows/promote-dev.yml`, `.github/workflows/release-please.yml`.
+- **CI:** quality gates are local (husky) + Vercel preview builds. Promotion and Release Please: `.github/workflows/promote-dev.yml`, `.github/workflows/release-please.yml`.
 - **File naming:** kebab-case / lowercase for every `.ts` / `.tsx` file, components included (`simulator.tsx`, `theme-provider.tsx`, `proxy.ts`); lowercase for App Router route files (`page.tsx`). Keeps imports stable on case-sensitive build hosts (Vercel/Linux) even though macOS is case-insensitive.
 
 See `apps/web/AGENTS.md` for Next.js 16 notes, simulator state ownership, and hub submit form rules.

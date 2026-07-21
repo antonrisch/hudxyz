@@ -58,7 +58,6 @@ with a new patch release when needed.
 
 ## Related files
 
-- `.github/workflows/ci.yml`
 - `.github/workflows/promote-dev.yml`
 - `.github/workflows/release-please.yml`
 - `release-please-config.json`
