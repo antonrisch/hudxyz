@@ -143,7 +143,7 @@ export function DirectoryList({ hubs }: { hubs: HubListItem[] }) {
                 <ItemActions>
                   <Link
                     href={`/simulator?url=${encodeURIComponent(hub.launchUrl)}`}
-                    className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    className={cn(buttonVariants({ variant: "brand", size: "sm" }))}
                   >
                     Try
                   </Link>
