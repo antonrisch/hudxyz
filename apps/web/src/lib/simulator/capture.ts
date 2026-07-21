@@ -9,22 +9,28 @@ import {
 } from "@/lib/simulator/background";
 import { VIEWPORT } from "@/lib/simulator/config";
 import { captureStagePixels } from "@/lib/simulator/pixel-capture";
+import { applyWatermark } from "@/lib/simulator/watermark";
+
+/** Still-export scale vs CSS layout (SnapDOM path). 2× keeps the 600 waveguide at 1200px. */
+export const SCREENSHOT_SCALE = 2;
 
 const WAVEGUIDE = {
   width: VIEWPORT,
   height: VIEWPORT,
-  dpr: 1,
 } as const;
 
-const WAVEGUIDE_SNAP_OPTS = {
-  ...WAVEGUIDE,
-  fast: true,
-  backgroundColor: "#000",
-  embedFonts: false,
-  cache: "disabled" as const,
-  exclude: ["script", "link"],
-  excludeMode: "remove" as const,
-};
+function waveguideSnapOpts(scale: number) {
+  return {
+    ...WAVEGUIDE,
+    dpr: scale,
+    fast: true,
+    backgroundColor: "#000",
+    embedFonts: false,
+    cache: "disabled" as const,
+    exclude: ["script", "link"],
+    excludeMode: "remove" as const,
+  };
+}
 
 export type BackgroundCaptureContext = {
   preset: BackgroundPreset;
@@ -49,8 +55,12 @@ export type StageCaptureTarget = {
 };
 
 type CaptureStageOptions = {
+  /** CSS layout width override (multiplied by scale). */
   width?: number;
+  /** CSS layout height override (multiplied by scale). */
   height?: number;
+  /** Pixel scale vs CSS layout. Defaults to SCREENSHOT_SCALE. */
+  scale?: number;
   preferPixel?: boolean;
 };
 
@@ -84,7 +94,10 @@ function waveguideRoot(doc: Document): HTMLElement {
   return doc.body?.childNodes.length ? doc.body : doc.documentElement;
 }
 
-async function captureWaveguide(iframe: HTMLIFrameElement): Promise<HTMLCanvasElement | null> {
+async function captureWaveguide(
+  iframe: HTMLIFrameElement,
+  scale: number,
+): Promise<HTMLCanvasElement | null> {
   const doc = iframeDocument(iframe);
   if (!doc?.body) return null;
 
@@ -94,9 +107,10 @@ async function captureWaveguide(iframe: HTMLIFrameElement): Promise<HTMLCanvasEl
     roots.push(firstChild);
   }
 
+  const opts = waveguideSnapOpts(scale);
   for (const root of roots) {
     try {
-      return await snapdom.toCanvas(root, WAVEGUIDE_SNAP_OPTS);
+      return await snapdom.toCanvas(root, opts);
     } catch (e) {
       console.error("SnapDOM waveguide capture failed", e);
     }
@@ -107,14 +121,15 @@ async function captureWaveguide(iframe: HTMLIFrameElement): Promise<HTMLCanvasEl
 
 async function captureBackdrop(
   backdrop: HTMLElement,
-  width: number,
-  height: number,
+  cssWidth: number,
+  cssHeight: number,
+  scale: number,
 ): Promise<HTMLCanvasElement | null> {
   try {
     return await snapdom.toCanvas(backdrop, {
-      width,
-      height,
-      dpr: 1,
+      width: cssWidth,
+      height: cssHeight,
+      dpr: scale,
       fast: false,
       embedFonts: false,
       cache: "disabled",
@@ -196,10 +211,13 @@ async function captureMediaBackdrop(
 
 async function captureStageBackground(
   backdrop: HTMLElement,
-  width: number,
-  height: number,
+  cssWidth: number,
+  cssHeight: number,
+  scale: number,
   capture?: BackgroundCaptureContext,
 ): Promise<HTMLCanvasElement | null> {
+  const width = Math.max(1, Math.round(cssWidth * scale));
+  const height = Math.max(1, Math.round(cssHeight * scale));
   // Photo + video share one path (live element under stage or #hud-display).
   if (capture?.preset.video || capture?.preset.image) {
     return captureMediaBackdrop(
@@ -211,20 +229,23 @@ async function captureStageBackground(
       capture.backgroundBlur,
     );
   }
-  return captureBackdrop(backdrop, width, height);
+  return captureBackdrop(backdrop, cssWidth, cssHeight, scale);
 }
 
 // Root the snap on the SVG itself — avoids nested-svg + overflow clipping in the stage chrome pass.
-async function captureGlassesFrames(svg: SVGSVGElement): Promise<HTMLCanvasElement | null> {
+async function captureGlassesFrames(
+  svg: SVGSVGElement,
+  scale: number,
+): Promise<HTMLCanvasElement | null> {
   const rect = svg.getBoundingClientRect();
-  const width = Math.max(1, Math.round(rect.width));
-  const height = Math.max(1, Math.round(rect.height));
+  const cssWidth = Math.max(1, Math.round(rect.width));
+  const cssHeight = Math.max(1, Math.round(rect.height));
 
   try {
     return await snapdom.toCanvas(svg, {
-      width,
-      height,
-      dpr: 1,
+      width: cssWidth,
+      height: cssHeight,
+      dpr: scale,
       fast: true,
       backgroundColor: "transparent",
     });
@@ -333,8 +354,8 @@ async function paintAdditiveBackdropSlice(
   ctx.filter = "none";
 }
 
-// Canvas composite at layout resolution (600×600) — snapdom can't screen-blend the iframe
-// with the host backdrop slice when the device plane is CSS-scaled.
+// Canvas composite of the waveguide — snapdom can't screen-blend the iframe with the
+// host backdrop slice when the device plane is CSS-scaled. `scale` raises export pixels.
 async function captureAdditiveDisplay(
   bg: HTMLCanvasElement | null,
   stage: HTMLElement,
@@ -344,25 +365,35 @@ async function captureAdditiveDisplay(
   geometry: AdditiveBackdropGeometry,
   backgroundBrightness: number,
   backgroundBlur: number,
+  scale: number,
 ): Promise<HTMLCanvasElement | null> {
+  const size = VIEWPORT * scale;
   const canvas = document.createElement("canvas");
-  canvas.width = VIEWPORT;
-  canvas.height = VIEWPORT;
+  canvas.width = size;
+  canvas.height = size;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
+  const scaledGeometry: AdditiveBackdropGeometry = {
+    left: geometry.left * scale,
+    top: geometry.top * scale,
+    width: geometry.width * scale,
+    height: geometry.height * scale,
+    displayScale: geometry.displayScale,
+  };
+
   ctx.save();
   ctx.beginPath();
-  ctx.rect(0, 0, VIEWPORT, VIEWPORT);
+  ctx.rect(0, 0, size, size);
   ctx.clip();
   if (bg) {
     const { x, y, w, h } = elementRectOnStage(stage, display, bg.width, bg.height);
-    ctx.drawImage(bg, x, y, w, h, 0, 0, VIEWPORT, VIEWPORT);
+    ctx.drawImage(bg, x, y, w, h, 0, 0, size, size);
   } else {
     await paintAdditiveBackdropSlice(
       ctx,
       preset,
-      geometry,
+      scaledGeometry,
       backgroundBrightness,
       backgroundBlur,
       resolveBackdropMediaSource(display),
@@ -370,12 +401,12 @@ async function captureAdditiveDisplay(
   }
   ctx.restore();
 
-  const waveguide = await captureWaveguide(iframe);
+  const waveguide = await captureWaveguide(iframe, scale);
   if (!waveguide) return canvas;
 
   ctx.save();
   ctx.globalCompositeOperation = "screen";
-  ctx.drawImage(waveguide, 0, 0, VIEWPORT, VIEWPORT);
+  ctx.drawImage(waveguide, 0, 0, size, size);
   ctx.restore();
 
   return canvas;
@@ -392,14 +423,17 @@ function stageChromeFilter(options: StageChromeOptions) {
   return (node: Element) => {
     if (backdrop && node === backdrop) return false;
     if (frames && node === frames) return false;
+    // Live recording watermark — stamped onto the canvas at download instead.
+    if (node.getAttribute("data-capture") === "watermark") return false;
     return true;
   };
 }
 
 async function captureStageChrome(
   stage: HTMLElement,
-  width: number,
-  height: number,
+  cssWidth: number,
+  cssHeight: number,
+  scale: number,
   options: StageChromeOptions,
 ): Promise<HTMLCanvasElement> {
   const { display, hideDisplay } = options;
@@ -409,9 +443,9 @@ async function captureStageChrome(
 
   try {
     return await snapdom.toCanvas(stage, {
-      width,
-      height,
-      dpr: 1,
+      width: cssWidth,
+      height: cssHeight,
+      dpr: scale,
       fast: true,
       exclude: ["iframe"],
       excludeMode: "remove",
@@ -474,8 +508,11 @@ export async function captureStageSnapdom(
 ): Promise<HTMLCanvasElement | null> {
   const { stage, backdrop, display, iframe, frames, additive, backgroundCapture } = target;
   const stageRect = stage.getBoundingClientRect();
-  const width = options.width ?? Math.max(1, Math.round(stageRect.width));
-  const height = options.height ?? Math.max(1, Math.round(stageRect.height));
+  const scale = options.scale ?? SCREENSHOT_SCALE;
+  const cssWidth = options.width ?? Math.max(1, Math.round(stageRect.width));
+  const cssHeight = options.height ?? Math.max(1, Math.round(stageRect.height));
+  const width = Math.max(1, Math.round(cssWidth * scale));
+  const height = Math.max(1, Math.round(cssHeight * scale));
 
   if (iframe) await waitForIframePaint(iframe, () => false);
 
@@ -492,7 +529,7 @@ export async function captureStageSnapdom(
     hideDisplay: Boolean(display && iframe),
   };
 
-  const glassesFrames = frames ? await captureGlassesFrames(frames) : null;
+  const glassesFrames = frames ? await captureGlassesFrames(frames, scale) : null;
 
   if (additive && display && iframe && target.additiveContext) {
     const { preset, backgroundBrightness, backgroundBlur, onBeforeCapture } =
@@ -502,7 +539,7 @@ export async function captureStageSnapdom(
     if (!geometry) return null;
 
     const bg = backdrop
-      ? await captureStageBackground(backdrop, width, height, {
+      ? await captureStageBackground(backdrop, cssWidth, cssHeight, scale, {
           preset,
           backgroundBrightness,
           backgroundBlur,
@@ -513,7 +550,7 @@ export async function captureStageSnapdom(
     setVisibility(slices, false);
     const iframeWas = iframe.style.visibility;
     iframe.style.visibility = "hidden";
-    const chrome = await captureStageChrome(stage, width, height, chromeOptions);
+    const chrome = await captureStageChrome(stage, cssWidth, cssHeight, scale, chromeOptions);
     setVisibility(slices, true);
     iframe.style.visibility = iframeWas;
 
@@ -526,6 +563,7 @@ export async function captureStageSnapdom(
       geometry,
       backgroundBrightness,
       backgroundBlur,
+      scale,
     );
 
     paintStageBackground(ctx, bg, width, height);
@@ -533,22 +571,22 @@ export async function captureStageSnapdom(
       drawCanvasOnStage(ctx, stage, frames, glassesFrames, width, height);
     }
     if (surface) drawCanvasOnStage(ctx, stage, display, surface, width, height);
-    ctx.drawImage(chrome, 0, 0);
+    ctx.drawImage(chrome, 0, 0, width, height);
     return frame;
   }
 
   const bg = backdrop
-    ? await captureStageBackground(backdrop, width, height, backgroundCapture)
+    ? await captureStageBackground(backdrop, cssWidth, cssHeight, scale, backgroundCapture)
     : null;
-  const chrome = await captureStageChrome(stage, width, height, chromeOptions);
-  const surface = iframe ? await captureWaveguide(iframe) : null;
+  const chrome = await captureStageChrome(stage, cssWidth, cssHeight, scale, chromeOptions);
+  const surface = iframe ? await captureWaveguide(iframe, scale) : null;
 
   paintStageBackground(ctx, bg, width, height);
   if (glassesFrames && frames) {
     drawCanvasOnStage(ctx, stage, frames, glassesFrames, width, height);
   }
   if (surface && display) drawCanvasOnStage(ctx, stage, display, surface, width, height);
-  ctx.drawImage(chrome, 0, 0);
+  ctx.drawImage(chrome, 0, 0, width, height);
 
   return frame;
 }
@@ -572,6 +610,8 @@ export async function captureStage(
 export async function downloadStage(target: StageCaptureTarget): Promise<void> {
   const canvas = await captureStage(target, { preferPixel: false });
   if (!canvas) return;
+
+  applyWatermark(canvas);
 
   const url = canvas.toDataURL("image/png");
   const anchor = document.createElement("a");

@@ -125,8 +125,15 @@ export async function openStageCapture(
   }
 }
 
+/** Wait after share-picker accept so the window can finish resizing before encode. */
+export const POST_PERMISSION_RESIZE_MS = 1000;
+
 /** One decoded video frame (or 2 rAF) + 2 display frames after the share picker. */
 export async function settleBeforeEncode(stage: HTMLElement): Promise<void> {
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, POST_PERMISSION_RESIZE_MS);
+  });
+
   // Live media (video or photo) may be on the stage fill or under #hud-display.
   const video =
     stage.querySelector<HTMLVideoElement>('[data-capture="backdrop"] video') ??
