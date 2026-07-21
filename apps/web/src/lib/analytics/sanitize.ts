@@ -33,7 +33,11 @@ const URL_PROPERTY_KEYS = [
   "$session_entry_referrer",
 ] as const;
 
-/** Sanitize URL properties PostHog adds automatically to every event. */
+/**
+ * Sanitize URL properties PostHog adds automatically to every event.
+ * Only strips query/hash from URL fields — leaves `$utm_*` acquisition
+ * properties intact so inbound campaign tags (Reddit, Product Hunt) survive.
+ */
 export function sanitizeAnalyticsProperties(
   properties: Record<string, unknown> | undefined,
 ): Record<string, unknown> {

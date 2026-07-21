@@ -7,6 +7,9 @@ export type AnalyticsEventMap = {
     public_id?: string;
     source: SearchResultSource;
   };
+  hub_try_clicked: {
+    public_id: string;
+  };
   simulator_load_requested: {
     source: SimulatorLoadSource;
   };

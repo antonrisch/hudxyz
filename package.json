@@ -1,5 +1,5 @@
 {
-  "name": "hudxyz",
+  "name": "@hudxyz/monorepo",
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @hudxyz/web dev",
@@ -15,7 +15,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
     "oxfmt": "^0.56.0",
-    "oxlint": "^1.70.0"
+    "oxlint": "^1.70.0",
+    "typescript": "^7.0.2"
   },
   "lint-staged": {
     "*.{js,ts,tsx,mjs,cjs,json,jsonc,css,md}": "oxfmt --write",

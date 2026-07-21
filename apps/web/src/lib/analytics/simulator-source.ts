@@ -1,7 +1,11 @@
 const CATALOG_LOAD_KEY = "hud:analytics:catalog-load";
 const CATALOG_LOAD_TTL_MS = 30_000;
 
-/** Mark a directory CTA navigation without adding analytics state to the share URL. */
+/**
+ * Mark the next simulator navigation as directory-sourced (`source: "catalog"`).
+ * Owned by hub directory Try — call before navigating to `/simulator?url=…`.
+ * Uses sessionStorage so analytics state never lands in the share URL.
+ */
 export function markNextSimulatorLoadAsCatalog(): void {
   try {
     sessionStorage.setItem(CATALOG_LOAD_KEY, String(Date.now()));

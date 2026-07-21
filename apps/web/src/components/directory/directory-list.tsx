@@ -23,6 +23,8 @@ import {
   ItemSeparator,
   ItemTitle,
 } from "@/components/ui/item";
+import { markNextSimulatorLoadAsCatalog } from "@/lib/analytics/simulator-source";
+import { track } from "@/lib/analytics/track";
 import type { HubListItem } from "@/lib/hubs/queries";
 import { cn } from "@/lib/utils";
 
@@ -143,7 +145,11 @@ export function DirectoryList({ hubs }: { hubs: HubListItem[] }) {
                 <ItemActions>
                   <Link
                     href={`/simulator?url=${encodeURIComponent(hub.launchUrl)}`}
-                    className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    className={cn(buttonVariants({ variant: "brand", size: "sm" }))}
+                    onClick={() => {
+                      track("hub_try_clicked", { public_id: hub.publicId });
+                      markNextSimulatorLoadAsCatalog();
+                    }}
                   >
                     Try
                   </Link>
