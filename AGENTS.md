@@ -138,3 +138,11 @@ Per-app: `pnpm --filter @hudxyz/web <script>`. Type-check with `pnpm --filter @h
 - **File naming:** kebab-case / lowercase for every `.ts` / `.tsx` file, components included (`simulator.tsx`, `theme-provider.tsx`, `proxy.ts`); lowercase for App Router route files (`page.tsx`). Keeps imports stable on case-sensitive build hosts (Vercel/Linux) even though macOS is case-insensitive.
 
 See `apps/web/AGENTS.md` for Next.js 16 notes, simulator state ownership, and hub submit form rules.
+
+## Cursor Cloud specific instructions
+
+- **Run everything with one command:** `pnpm dev` (root) starts both required dev services via `concurrently` — Next on `:3000` and the Wisp egress server on `:4000`. `predev`/`postinstall` stage the pinned Scramjet bundles into `public/`, so no separate proxy build step is needed. Do NOT background `next build`/`next start` for iteration — use `pnpm dev`.
+- **The simulator (the core product) needs no secrets.** `/` 308-redirects to `/simulator`; the client defaults `NEXT_PUBLIC_WISP_URL` to `ws://localhost:4000/wisp/`. End-to-end proof: open `/simulator`, type a URL (e.g. `example.com`), press Enter — the page renders inside the 600×600 surface through the Scramjet service worker + local Wisp. This works fully offline of any external service.
+- **Hub directory / submit / `/padme` review flows require external credentials that are not present by default.** Any request that touches the DB throws without `TURSO_CONNECTION_URL` + `TURSO_AUTH_TOKEN`; logo upload needs the `R2_*` vars; `/padme` needs `REVIEW_SECRET`; mutating `/api/hubs/*` needs `SUBMIT_SESSION_SECRET`. `/hubs` and `/hubs/submit` render, but data/submit/review actions fail closed until those secrets are set (see `apps/web/.env.example`, copy to `.env.local`).
+- Wisp binds `127.0.0.1:4000`; if `:3000`/`:4000` are occupied by a prior `pnpm dev`, reuse that session instead of starting a second one.
+- Standard commands (`pnpm lint`, `pnpm --filter @hudxyz/web typecheck`, `pnpm --filter @hudxyz/web test`, `pnpm build`) are documented under `## Commands` — all pass on a clean checkout.
