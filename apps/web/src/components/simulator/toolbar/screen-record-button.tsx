@@ -33,15 +33,16 @@ export function ScreenRecordButton({
   size?: ButtonSize;
   showLabel?: boolean;
 }) {
-  const { recordScreen, isRecording } = useSimulator();
+  const { recordScreen, isRecording, recordCountdown } = useSimulator();
   const recordingSupported = useRegionCaptureSupported();
   const canCapture = useSimulatorState((s) => s.screen === "app" && s.status === "ready");
   const showWelcome = useSimulatorState((s) => s.screen === "app" && s.status === "idle");
+  const countingDown = recordCountdown !== null;
 
   const onClick = () => {
     if (!recordingSupported) return;
-    if (isRecording || canCapture) {
-      recordScreen();
+    if (isRecording || countingDown || canCapture) {
+      void recordScreen();
       return;
     }
     if (showWelcome) {
@@ -51,9 +52,19 @@ export function ScreenRecordButton({
 
   const tooltip = !recordingSupported
     ? UNSUPPORTED_RECORD_TOOLTIP
-    : isRecording
-      ? "Stop recording"
-      : "Record stage";
+    : countingDown
+      ? `Starting in ${recordCountdown} — click to cancel`
+      : isRecording
+        ? "Stop recording"
+        : "Record stage";
+
+  const ariaLabel = !recordingSupported
+    ? UNSUPPORTED_RECORD_TOOLTIP
+    : countingDown
+      ? `Recording starts in ${recordCountdown}. Click to cancel.`
+      : isRecording
+        ? "Stop recording"
+        : "Start recording";
 
   return (
     <Tooltip>
@@ -66,23 +77,27 @@ export function ScreenRecordButton({
               variant="outline"
               size={showLabel ? size : "icon"}
               disabled={!recordingSupported}
-              aria-label={
-                !recordingSupported
-                  ? UNSUPPORTED_RECORD_TOOLTIP
-                  : isRecording
-                    ? "Stop recording"
-                    : "Start recording"
-              }
+              aria-label={ariaLabel}
               aria-pressed={isRecording}
               className={cn(
                 showLabel && "w-full",
+                countingDown && "tabular-nums",
                 isRecording &&
                   "border-destructive bg-destructive text-white hover:bg-destructive/90 hover:text-white",
               )}
               onMouseDown={dropFocus}
               onClick={onClick}
             >
-              {isRecording ? (
+              {countingDown ? (
+                <span
+                  className={cn(
+                    "font-semibold tabular-nums text-destructive",
+                    showLabel ? "text-base" : "text-sm",
+                  )}
+                >
+                  {recordCountdown}
+                </span>
+              ) : isRecording ? (
                 <RecordingIcon
                   data-icon={showLabel ? "inline-start" : undefined}
                   className="animate-pulse"
@@ -93,7 +108,7 @@ export function ScreenRecordButton({
                   className="text-destructive"
                 />
               )}
-              {showLabel ? (
+              {showLabel && !countingDown ? (
                 <span>
                   {isRecording ? (
                     <>
