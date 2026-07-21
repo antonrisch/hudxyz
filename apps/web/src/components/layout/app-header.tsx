@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/layout/logo";
-import { SearchCommand } from "@/components/layout/search-command";
+// SearchCommand (header search + ⌘K) — kept in search-command.tsx; re-enable when ready.
 import { SubmitAppLink } from "@/components/layout/submit-app-link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -28,7 +28,6 @@ export function AppHeader() {
           ))}
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-3">
-          <SearchCommand />
           <SubmitAppLink className={cn(buttonVariants({ variant: "brand" }), "shrink-0")}>
             Submit Hub
           </SubmitAppLink>
