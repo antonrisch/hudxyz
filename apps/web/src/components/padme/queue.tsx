@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -10,7 +12,7 @@ import {
   ItemSeparator,
   ItemTitle,
 } from "@/components/ui/item";
-import type { AdminListItem, AdminListStatus } from "@/lib/apps/admin";
+import type { AdminListItem, AdminListStatus } from "@/lib/hubs/admin";
 import { cn } from "@/lib/utils";
 
 const FILTERS: { key: string; label: string; href: string }[] = [
@@ -50,7 +52,7 @@ export function PadmeQueue({
   return (
     <main className="page-px mx-auto w-full max-w-3xl flex-1 py-10 min-h-[calc(100svh-12rem)]">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-bold text-3xl tracking-tight">Queue</h1>
+        <h1 className="font-bold text-3xl tracking-tight">Hubs</h1>
         <nav className="flex flex-wrap gap-1">
           {FILTERS.map((filter) => (
             <Link
@@ -70,7 +72,7 @@ export function PadmeQueue({
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-10 text-muted-foreground">No apps in this view.</p>
+        <p className="mt-10 text-muted-foreground">No hubs in this view.</p>
       ) : (
         <ItemGroup className="mt-8 gap-0">
           {items.flatMap((item, index) => [
@@ -82,7 +84,7 @@ export function PadmeQueue({
               <ItemContent>
                 <ItemTitle>{item.name}</ItemTitle>
                 <ItemDescription>
-                  {item.author} · {item.categoryName} · {item.listingType}
+                  {item.homepage} · {item.contactEmail}
                 </ItemDescription>
               </ItemContent>
               <ItemActions>

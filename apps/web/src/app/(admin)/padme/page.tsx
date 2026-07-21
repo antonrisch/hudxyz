@@ -1,4 +1,4 @@
-import { adminListStatuses, listAppsForAdmin, type AdminListStatus } from "@/lib/apps/admin";
+import { adminListStatuses, listHubsForAdmin, type AdminListStatus } from "@/lib/hubs/admin";
 import { PadmeQueue } from "@/components/padme/queue";
 
 export const dynamic = "force-dynamic";
@@ -22,8 +22,8 @@ export default async function PadmePage({
       : "pending";
 
   const items = recent
-    ? await listAppsForAdmin({ recent: true })
-    : await listAppsForAdmin({ status });
+    ? await listHubsForAdmin({ recent: true })
+    : await listHubsForAdmin({ status });
 
   return <PadmeQueue items={items} active={recent ? "recent" : status} />;
 }
