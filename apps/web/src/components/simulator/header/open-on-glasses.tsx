@@ -18,24 +18,24 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { SuggestedApp } from "@/lib/simulator/config";
+import type { SuggestedHub } from "@/lib/simulator/config";
 import { dropFocus } from "@/lib/simulator/input";
 import { buildDeviceSetupDeepLink, normalizeWebUrl } from "@/lib/simulator/search-params";
 import { useMobileLayout } from "@/lib/use-mobile-layout";
 import { cn } from "@/lib/utils";
 
-function suggestedAppNameForUrl(rawUrl: string, suggestedApps: SuggestedApp[]): string {
+function suggestedHubNameForUrl(rawUrl: string, suggestedHubs: SuggestedHub[]): string {
   const href = normalizeWebUrl(rawUrl);
   if (!href) return "";
-  return suggestedApps.find((app) => normalizeWebUrl(app.url) === href)?.name ?? "";
+  return suggestedHubs.find((hub) => normalizeWebUrl(hub.url) === href)?.name ?? "";
 }
 
 export function OpenOnGlasses({
   className,
-  suggestedApps,
+  suggestedHubs,
 }: {
   className?: string;
-  suggestedApps: SuggestedApp[];
+  suggestedHubs: SuggestedHub[];
 }) {
   const isMobile = useMobileLayout();
   const url = useSimulatorState((s) => s.url);
@@ -65,7 +65,7 @@ export function OpenOnGlasses({
       open={open}
       onOpenChange={(nextOpen) => {
         if (nextOpen) {
-          setAppName(suggestedAppNameForUrl(url, suggestedApps));
+          setAppName(suggestedHubNameForUrl(url, suggestedHubs));
           setCopied(false);
         }
         setOpen(nextOpen);

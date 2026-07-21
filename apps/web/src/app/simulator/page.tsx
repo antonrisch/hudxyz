@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import Simulator from "@/components/simulator";
 import { listPublishedHubs } from "@/lib/hubs/queries";
 import { legal } from "@/lib/legal/config";
-import { SIMULATOR_TAGLINE, SIMULATOR_TITLE, type SuggestedApp } from "@/lib/simulator/config";
+import { SIMULATOR_TAGLINE, SIMULATOR_TITLE, type SuggestedHub } from "@/lib/simulator/config";
 import { backgroundPreloadHref, DEFAULT_BACKGROUND } from "@/lib/simulator/background";
 import { loadSimulatorSearchParams, seedFromParams } from "@/lib/simulator/search-params";
 import {
@@ -14,7 +14,7 @@ import {
   parseToolbarPlacementCookie,
 } from "@/lib/simulator/store";
 
-async function loadSuggestedApps(): Promise<SuggestedApp[]> {
+async function loadSuggestedHubs(): Promise<SuggestedHub[]> {
   try {
     const hubs = await listPublishedHubs();
     return hubs.slice(0, 5).map((hub) => ({
@@ -75,7 +75,7 @@ export default async function SimulatorPage({
 }) {
   const params = await loadSimulatorSearchParams(searchParams);
   const cookieStore = await cookies();
-  const suggestedApps = await loadSuggestedApps();
+  const suggestedHubs = await loadSuggestedHubs();
   const preloadBackground =
     backgroundPreloadHref(params.bg === "custom" ? DEFAULT_BACKGROUND : params.bg) ?? null;
   return (
@@ -103,7 +103,7 @@ export default async function SimulatorPage({
             cookieStore.get(TOOLBAR_PLACEMENT_COOKIE)?.value,
           ),
         }}
-        suggestedApps={suggestedApps}
+        suggestedHubs={suggestedHubs}
       />
     </main>
   );

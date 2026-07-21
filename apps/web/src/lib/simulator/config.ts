@@ -83,11 +83,11 @@ export const INTENT_BY_KEY: Record<string, Intent> = {
   Escape: "back",
 };
 
-/** Top published apps shown in the simulator URL-bar dropdown. */
-export type SuggestedApp = {
+/** Top published hubs shown in the simulator URL-bar dropdown (launch URL + logo). */
+export type SuggestedHub = {
   name: string;
   url: string;
-  /** R2 public URL; may be empty when the listing has no icon. */
+  /** R2 public URL; may be empty when the hub has no logo. */
   iconUrl: string;
 };
 

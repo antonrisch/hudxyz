@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CommandGroup, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
-import type { SuggestedApp } from "@/lib/simulator/config";
+import type { SuggestedHub } from "@/lib/simulator/config";
 import { simulatorParsers, normalizeWebUrl } from "@/lib/simulator/search-params";
 import { dropFocus } from "@/lib/simulator/input";
 import { pushRecentApp, readRecentApps, type RecentApp } from "@/lib/simulator/recents";
@@ -25,7 +25,7 @@ function hostnameLabel(url: string): string {
   }
 }
 
-const VIEW_ALL_VALUE = "view-all-apps";
+const VIEW_ALL_VALUE = "view-all-hubs";
 // A cmdk value no item uses. Keeps the list mounted with nothing highlighted:
 // cmdk only auto-selects the first row when its value is falsy, so a non-empty
 // sentinel both suppresses the mount-time highlight and stays in sync with our state.
@@ -38,10 +38,10 @@ function suggestionValue(kind: "recent" | "popular", url: string) {
 // address bar: cmdk for ↑/↓/Enter row nav, chrome styled like a browser field.
 export function UrlBar({
   className,
-  suggestedApps,
+  suggestedHubs,
 }: {
   className?: string;
-  suggestedApps: SuggestedApp[];
+  suggestedHubs: SuggestedHub[];
 }) {
   const router = useRouter();
   const { store, load, urlInputRef } = useSimulator();
@@ -56,7 +56,7 @@ export function UrlBar({
   useMountEffect(() => setRecents(readRecentApps()));
 
   const recordRecent = (nextUrl: string) => {
-    const name = suggestedApps.find((app) => app.url === nextUrl)?.name ?? hostnameLabel(nextUrl);
+    const name = suggestedHubs.find((hub) => hub.url === nextUrl)?.name ?? hostnameLabel(nextUrl);
     setRecents(pushRecentApp({ url: nextUrl, name }));
   };
 
@@ -71,7 +71,7 @@ export function UrlBar({
       return false;
     }
 
-    const source = suggestedApps.some((app) => normalizeWebUrl(app.url) === nextUrl)
+    const source = suggestedHubs.some((hub) => normalizeWebUrl(hub.url) === nextUrl)
       ? "catalog"
       : "custom";
 
@@ -94,7 +94,7 @@ export function UrlBar({
     router.push("/hubs");
   };
 
-  const hasSuggestions = recents.length > 0 || suggestedApps.length > 0;
+  const hasSuggestions = recents.length > 0 || suggestedHubs.length > 0;
 
   const itemClassName =
     "gap-2 rounded-lg px-2 py-2 data-selected:bg-input data-selected:text-foreground";
@@ -210,20 +210,20 @@ export function UrlBar({
           </CommandGroup>
         ) : null}
 
-        {suggestedApps.length > 0 ? (
+        {suggestedHubs.length > 0 ? (
           <>
             {recents.length > 0 ? <CommandSeparator alwaysRender className="mx-1 my-1" /> : null}
-            <CommandGroup heading="Popular apps" className="p-0">
-              {suggestedApps.map((app) => (
+            <CommandGroup heading="Popular hubs" className="p-0">
+              {suggestedHubs.map((hub) => (
                 <CommandItem
-                  key={suggestionValue("popular", app.url)}
-                  value={suggestionValue("popular", app.url)}
-                  onSelect={() => selectUrl(app.url)}
+                  key={suggestionValue("popular", hub.url)}
+                  value={suggestionValue("popular", hub.url)}
+                  onSelect={() => selectUrl(hub.url)}
                   className={itemClassName}
                 >
-                  {app.iconUrl ? (
+                  {hub.iconUrl ? (
                     <img
-                      src={app.iconUrl}
+                      src={hub.iconUrl}
                       alt=""
                       loading="lazy"
                       decoding="async"
@@ -232,9 +232,9 @@ export function UrlBar({
                   ) : (
                     <span className="size-5 shrink-0 rounded-sm bg-muted-foreground/20" />
                   )}
-                  <span className="shrink-0">{app.name}</span>
-                  <span title={app.url} className="max-w-48 truncate text-muted-foreground">
-                    {app.url}
+                  <span className="shrink-0">{hub.name}</span>
+                  <span title={hub.url} className="max-w-48 truncate text-muted-foreground">
+                    {hub.url}
                   </span>
                 </CommandItem>
               ))}
@@ -245,7 +245,7 @@ export function UrlBar({
         {hasSuggestions ? <CommandSeparator alwaysRender className="mx-1 my-1" /> : null}
         <CommandItem value={VIEW_ALL_VALUE} onSelect={selectViewAll} className={itemClassName}>
           <LayoutGrid className="size-5 shrink-0 fill-brand-dark text-brand-dark" />
-          View all apps & games
+          Browse community hubs
         </CommandItem>
       </CommandList>
     </CommandPrimitive>
