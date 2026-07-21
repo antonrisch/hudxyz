@@ -4,6 +4,8 @@ The Scramjet proxy needs a Wisp server to make the outbound requests (browsers c
 
 Live on **`kenobi.hudbox.dev`**: wisp on `127.0.0.1:4000`, nginx terminates TLS and proxies `wss://kenobi.hudbox.dev/wisp/` to it.
 
+App release / promotion flow (dev → main, Release Please): [RELEASE.md](./RELEASE.md). Branch rules: [BRANCH-PROTECTION.md](./BRANCH-PROTECTION.md). Incidents: [RUNBOOK.md](./RUNBOOK.md). Public MDX docs/changelog: deferred — [`docs/prd/07-mdx-docs-and-changelog.md`](../docs/prd/07-mdx-docs-and-changelog.md).
+
 ```
 browser ──wss──> nginx (:443 TLS) ──> 127.0.0.1:4000 (wisp) ──> internet
 ```
