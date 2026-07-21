@@ -152,7 +152,7 @@ function FooterThemeSelect() {
 /** Site footer for non-simulator pages (directory, legal, submit). */
 export function AppFooter() {
   const sections: FooterSection[] = [
-    { title: "Simulator & hubs", links: HOME_LINKS },
+    { title: "Tools", links: HOME_LINKS },
     { title: "Support", links: SUPPORT_LINKS },
   ];
 
