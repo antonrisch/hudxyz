@@ -21,7 +21,7 @@ import {
   type ToolbarPlacement,
   type View,
 } from "@/lib/simulator/store";
-import { INTENT_BY_KEY, SIMULATOR_TITLE, type SuggestedApp } from "@/lib/simulator/config";
+import { INTENT_BY_KEY, SIMULATOR_TITLE, type SuggestedHub } from "@/lib/simulator/config";
 import { dispatchDeviceKey, isHostChromeInput } from "@/lib/simulator/input";
 import { releaseChromeFocus } from "@/lib/simulator/input";
 import { BackgroundBackdrop } from "@/components/simulator/background/backdrop";
@@ -91,10 +91,10 @@ export function useSimulatorState<T>(selector: (s: SimulatorState) => T): T {
 // -- root ---------------------------------------------------
 export default function Simulator({
   seed,
-  suggestedApps = [],
+  suggestedHubs = [],
 }: {
   seed: Seed;
-  suggestedApps?: SuggestedApp[];
+  suggestedHubs?: SuggestedHub[];
 }) {
   const storeRef = useRef<SimulatorStore>(undefined);
   const store = (storeRef.current ??= createSimulatorStore(seed));
@@ -142,12 +142,12 @@ export default function Simulator({
       if (explicit) return explicit;
       if (consumeCatalogSimulatorLoad()) return "catalog";
       const normalized = normalizeWebUrl(url);
-      if (normalized && suggestedApps.some((app) => normalizeWebUrl(app.url) === normalized)) {
+      if (normalized && suggestedHubs.some((hub) => normalizeWebUrl(hub.url) === normalized)) {
         return "catalog";
       }
       return "custom";
     },
-    [suggestedApps],
+    [suggestedHubs],
   );
 
   // navigate: route the target through the same-origin proxy. created once, reused.
@@ -706,7 +706,7 @@ export default function Simulator({
       <TooltipProvider delay={1000}>
         <div className="flex min-h-0 flex-1 flex-col">
           <h1 className="sr-only">{SIMULATOR_TITLE}</h1>
-          <SimulatorHeader suggestedApps={suggestedApps} />
+          <SimulatorHeader suggestedHubs={suggestedHubs} />
 
           <div
             className={cn(

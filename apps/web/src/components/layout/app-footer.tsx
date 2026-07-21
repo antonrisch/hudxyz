@@ -42,9 +42,8 @@ const FOOTER_LINK_CLASS = cn(
 
 const HOME_LINKS: readonly FooterLink[] = [
   { href: "/simulator", label: "Simulator" },
-  { href: "/apps", label: "All apps & games" },
-  { href: "/apps/categories", label: "Categories" },
-  { href: "/apps/submit", label: "Submit a Web App" },
+  { href: "/hubs", label: "Hub directory" },
+  { href: "/hubs/submit", label: "Submit a hub" },
 ];
 
 const SUPPORT_LINKS: readonly FooterLink[] = [
@@ -153,7 +152,7 @@ function FooterThemeSelect() {
 /** Site footer for non-simulator pages (directory, legal, submit). */
 export function AppFooter() {
   const sections: FooterSection[] = [
-    { title: "Simulator & apps", links: HOME_LINKS },
+    { title: "Tools", links: HOME_LINKS },
     { title: "Support", links: SUPPORT_LINKS },
   ];
 

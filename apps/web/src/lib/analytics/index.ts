@@ -9,7 +9,6 @@ export type { AnalyticsIdentityMode } from "@/lib/analytics/identity";
 export type {
   AnalyticsEventMap,
   AnalyticsEventName,
-  ListingShareChannel,
   SearchResultSource,
   SimulatorLoadSource,
 } from "@/lib/analytics/events";

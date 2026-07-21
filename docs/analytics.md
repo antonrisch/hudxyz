@@ -49,14 +49,15 @@ Turso `launch_count` / `sim_count` remain the authoritative business counters.
 ## Funnels to create
 
 1. **Directory → try**  
-   `$pageview` where pathname starts with `/apps` → `$pageview` matching `/apps/:slug/:publicId` → `listing_opened`
+   `$pageview` where pathname starts with `/hubs` → directory browse
+   (legacy listing detail paths redirect; no per-hub public detail page)
 
 2. **Simulator load**  
    `$pageview` pathname `/simulator` → `simulator_load_requested` → `simulator_load_succeeded`  
    (break down failures with `simulator_load_failed` by `failure_stage`)
 
 3. **Submit**  
-   `$pageview` pathname `/apps/submit` → `submission_started` → `submission_icon_uploaded` → `submission_completed`
+   `$pageview` pathname `/hubs/submit` → `submission_started` → `submission_icon_uploaded` → `submission_completed`
 
 ## Launch dashboard
 

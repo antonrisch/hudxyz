@@ -1,37 +1,36 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { ArrowLeft, Glasses, Info } from "lucide-react";
+import { ArrowLeft, Glasses } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmAlertDialog } from "@/components/padme/confirm-alert-dialog";
-import {
-  SubmitDetailsFields,
-  type SubmitCategoryOption,
-  type SubmitFormApi,
-} from "@/components/submit/submit-details-fields";
-import { SubmitIconField, SubmitMedia } from "@/components/submit/submit-media";
+import { OptionalMark } from "@/components/submit/optional-mark";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { AdminDetailDto } from "@/lib/apps/admin";
-import { parseApiError } from "@/lib/apps/api-error";
-import { type SubmitFormValues, submitFormValuesSchema } from "@/lib/apps/draft-schema";
-import { listingPath } from "@/lib/apps/public-id";
-import { mediaFromAssets, type MediaState } from "@/lib/apps/upload-client";
+import type { AdminDetailDto } from "@/lib/hubs/admin";
+import { parseApiError } from "@/lib/hubs/api-error";
+import { type SubmitHubFormValues, submitHubFormValuesSchema } from "@/lib/hubs/draft-schema";
+import {
+  deleteHubLogo,
+  logoFromUrl,
+  type LogoState,
+  uploadHubLogo,
+  validateLogoFile,
+} from "@/lib/hubs/upload-client";
+import { cn } from "@/lib/utils";
 
-function valuesFromDetail(detail: AdminDetailDto): SubmitFormValues {
+function valuesFromDetail(detail: AdminDetailDto): SubmitHubFormValues {
   return {
     name: detail.name,
-    author: detail.author,
+    homepage: detail.homepage,
     contactEmail: detail.contactEmail,
     launchUrl: detail.launchUrl,
-    listingType: detail.listingType,
-    primaryCategoryId: detail.primaryCategoryId,
-    secondaryCategoryId: detail.secondaryCategoryId ?? "",
     description: detail.description ?? "",
   };
 }
@@ -58,23 +57,21 @@ function statusLabel(status: AdminDetailDto["status"]): string {
       return "Published";
     case "rejected":
       return "Rejected";
-    default:
-      return status;
+    case "archived":
+      return "Archived";
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
   }
 }
 
-export function PadmeDetail({
-  initial,
-  categories,
-  appsMediaEnabled,
-}: {
-  initial: AdminDetailDto;
-  categories: readonly SubmitCategoryOption[];
-  appsMediaEnabled: boolean;
-}) {
+export function PadmeDetail({ initial }: { initial: AdminDetailDto }) {
   const router = useRouter();
   const [detail, setDetail] = useState(initial);
-  const [media, setMedia] = useState<MediaState>(() => mediaFromAssets(initial.assets));
+  const [logo, setLogo] = useState<LogoState>(() =>
+    logoFromUrl(initial.logoUrl, initial.logoObjectKey),
+  );
   const [reviewerNotes, setReviewerNotes] = useState(initial.reviewerNotes ?? "");
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -82,14 +79,14 @@ export function PadmeDetail({
   const form = useForm({
     defaultValues: valuesFromDetail(initial),
     validators: {
-      onSubmit: submitFormValuesSchema,
+      onSubmit: submitHubFormValuesSchema,
     },
-  }) as SubmitFormApi;
+  });
 
   async function putPatch(patch: Record<string, unknown>) {
     setSaving(true);
     try {
-      const response = await fetch(`/api/padme/apps/${detail.publicId}`, {
+      const response = await fetch(`/api/padme/hubs/${detail.publicId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
@@ -99,58 +96,73 @@ export function PadmeDetail({
       }
       const next = (await response.json()) as AdminDetailDto;
       setDetail(next);
-      setReviewerNotes(next.reviewerNotes ?? "");
       form.reset(valuesFromDetail(next));
-      router.refresh();
+      setLogo(logoFromUrl(next.logoUrl, next.logoObjectKey));
+      setReviewerNotes(next.reviewerNotes ?? "");
+      toast.success("Saved");
       return next;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Save failed");
+      return null;
     } finally {
       setSaving(false);
     }
   }
 
-  async function saveFields() {
-    const parsed = submitFormValuesSchema.safeParse(form.state.values);
+  async function saveDetails() {
+    const parsed = submitHubFormValuesSchema.safeParse(form.state.values);
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Validation failed");
+      toast.error(parsed.error.issues[0]?.message ?? "Fix the form errors");
       return;
     }
-    try {
-      await putPatch({
-        ...parsed.data,
-        description: parsed.data.description.trim() || null,
-        secondaryCategoryId: parsed.data.secondaryCategoryId.trim() || null,
-        reviewerNotes: reviewerNotes.trim() || null,
-      });
-      toast.success("Saved");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Save failed");
-    }
+    await putPatch({
+      ...parsed.data,
+      description: parsed.data.description.trim() ? parsed.data.description : null,
+      reviewerNotes: reviewerNotes.trim() ? reviewerNotes : null,
+    });
   }
 
   async function setStatus(status: "published" | "rejected" | "pending") {
+    await putPatch({ status, reviewerNotes: reviewerNotes.trim() ? reviewerNotes : null });
+  }
+
+  async function onLogoSelected(file: File | null) {
+    if (!file) return;
+    const validationError = validateLogoFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+    setLogo({ status: "uploading", progress: 0, fileName: file.name });
     try {
-      await putPatch({
-        status,
-        reviewerNotes: reviewerNotes.trim() || null,
+      const result = await uploadHubLogo({
+        hubId: detail.publicId,
+        file,
+        apiBase: "/api/padme",
+        onProgress: (progress) => setLogo((prev) => ({ ...prev, progress })),
       });
-      toast.success(
-        status === "published"
-          ? "Published"
-          : status === "rejected"
-            ? "Rejected"
-            : detail.status === "draft"
-              ? "Sent to pending"
-              : "Sent back to pending",
-      );
+      setLogo({
+        status: "ready",
+        progress: 100,
+        publicUrl: result.publicUrl,
+        objectKey: result.objectKey,
+        fileName: file.name,
+      });
+      toast.success("Logo updated");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Update failed");
+      setLogo({
+        status: "error",
+        progress: 0,
+        error: error instanceof Error ? error.message : "Upload failed",
+      });
+      toast.error(error instanceof Error ? error.message : "Upload failed");
     }
   }
 
-  async function remove() {
+  async function onDelete() {
     setSaving(true);
     try {
-      const response = await fetch(`/api/padme/apps/${detail.publicId}`, { method: "DELETE" });
+      const response = await fetch(`/api/padme/hubs/${detail.publicId}`, { method: "DELETE" });
       if (!response.ok && response.status !== 204) {
         throw new Error(await parseApiError(response));
       }
@@ -159,168 +171,217 @@ export function PadmeDetail({
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Delete failed");
+    } finally {
       setSaving(false);
+      setConfirmDelete(false);
     }
   }
 
   const sim = simulatorHref(detail.launchUrl);
-  const listingHref =
-    detail.status === "published" ? listingPath(detail.slug, detail.publicId) : null;
 
   return (
-    <main className="page-px mx-auto w-full max-w-3xl flex-1 py-10 min-h-[calc(100svh-12rem)]">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-        <Link href="/padme" className={buttonVariants({ variant: "secondary" })}>
-          <ArrowLeft data-icon="inline-start" />
-          Queue
-        </Link>
-        <div className="flex flex-wrap gap-2">
-          {sim ? (
-            <Link href={sim} target="_blank" className={buttonVariants({ variant: "outline" })}>
-              <Glasses data-icon="inline-start" />
-              Preview in simulator
-            </Link>
-          ) : null}
-          {listingHref ? (
-            <Link href={listingHref} className={buttonVariants({ variant: "secondary" })}>
-              View in directory
-            </Link>
-          ) : null}
+    <main className="page-px mx-auto w-full max-w-3xl flex-1 space-y-8 py-10">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <Link
+            href="/padme"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "-ml-2")}
+          >
+            <ArrowLeft data-icon="inline-start" />
+            Queue
+          </Link>
+          <h1 className="font-bold text-3xl tracking-tight">{detail.name}</h1>
+          <p className="text-sm text-muted-foreground">{statusLabel(detail.status)}</p>
         </div>
+        {sim ? (
+          <Link
+            href={sim}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <Glasses data-icon="inline-start" />
+            Try
+          </Link>
+        ) : null}
       </div>
 
-      <h1 className="font-bold text-3xl tracking-tight">{detail.name}</h1>
-      <p className="mt-2 text-muted-foreground">{statusLabel(detail.status)}</p>
-
-      <div className="mt-8 space-y-10">
-        <SubmitIconField
-          media={media}
-          onChange={setMedia}
-          ensureAppId={async () => detail.publicId}
-          disabled={saving}
-          apiBase="/api/padme"
-        />
-
-        <form.Subscribe selector={(state) => state.values.listingType}>
-          {(listingType) => (
-            <SubmitDetailsFields
-              form={form}
-              categories={categories}
-              listingType={listingType}
-              initialSecondaryCategoryId={detail.secondaryCategoryId}
-              defaultCatalogOpen
-            />
-          )}
-        </form.Subscribe>
-
-        {!appsMediaEnabled ? (
-          <div className="flex gap-2.5 rounded-xl bg-muted px-3 py-2.5 text-sm text-muted-foreground">
-            <Info aria-hidden className="mt-0.5 size-4 shrink-0" />
-            <p>
-              Screenshots and preview videos are hidden on listing pages and can&apos;t be uploaded
-              by submitters. You can still add or replace them here.
-            </p>
-          </div>
-        ) : null}
-
-        <SubmitMedia
-          media={media}
-          onChange={setMedia}
-          ensureAppId={async () => detail.publicId}
-          disabled={saving}
-          apiBase="/api/padme"
-        />
-
-        <section className="space-y-4">
-          <h2 className="font-semibold text-xl tracking-tight">Review</h2>
-          <FieldGroup>
+      <FieldGroup>
+        <form.Field name="name">
+          {(field) => (
             <Field>
-              <FieldLabel htmlFor="reviewerNotes">Notes</FieldLabel>
-              <Textarea
-                id="reviewerNotes"
-                value={reviewerNotes}
-                onChange={(event) => setReviewerNotes(event.target.value)}
-                rows={3}
-                disabled={saving}
+              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <Input
+                id={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
               />
             </Field>
-          </FieldGroup>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-2">
+          )}
+        </form.Field>
+        <form.Field name="homepage">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor={field.name}>Homepage</FieldLabel>
+              <Input
+                id={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+              />
+            </Field>
+          )}
+        </form.Field>
+        <form.Field name="launchUrl">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor={field.name}>Launch URL</FieldLabel>
+              <Input
+                id={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+              />
+            </Field>
+          )}
+        </form.Field>
+        <form.Field name="contactEmail">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor={field.name}>Contact email</FieldLabel>
+              <Input
+                id={field.name}
+                type="email"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+              />
+            </Field>
+          )}
+        </form.Field>
+        <form.Field name="description">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor={field.name}>
+                Description
+                <OptionalMark />
+              </FieldLabel>
+              <Textarea
+                id={field.name}
+                rows={4}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+              />
+            </Field>
+          )}
+        </form.Field>
+
+        <Field>
+          <FieldLabel>Logo</FieldLabel>
+          <div className="flex flex-wrap items-center gap-3">
+            {logo.publicUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logo.publicUrl}
+                alt=""
+                className="size-16 rounded-md border border-border object-cover"
+              />
+            ) : null}
+            <label
+              className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "cursor-pointer")}
+            >
+              {logo.status === "uploading" ? `Uploading ${logo.progress}%` : "Replace logo"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  event.target.value = "";
+                  void onLogoSelected(file);
+                }}
+              />
+            </label>
+            {logo.status === "ready" ? (
               <Button
                 type="button"
-                variant="brand"
-                disabled={saving}
-                onClick={() => void saveFields()}
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  void deleteHubLogo(detail.publicId, "/api/padme")
+                    .then(() => setLogo({ status: "idle", progress: 0 }))
+                    .catch((error: unknown) => {
+                      toast.error(error instanceof Error ? error.message : "Could not remove logo");
+                    });
+                }}
               >
-                Save details
+                Remove
               </Button>
-              {detail.status === "draft" ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={saving}
-                  onClick={() => void setStatus("pending")}
-                >
-                  Send to pending
-                </Button>
-              ) : (
-                <>
-                  {detail.status !== "published" ? (
-                    <Button
-                      type="button"
-                      disabled={saving}
-                      onClick={() => void setStatus("published")}
-                    >
-                      Approve
-                    </Button>
-                  ) : null}
-                  {detail.status !== "rejected" ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={saving}
-                      onClick={() => void setStatus("rejected")}
-                    >
-                      Reject
-                    </Button>
-                  ) : null}
-                  {detail.status !== "pending" ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={saving}
-                      onClick={() => void setStatus("pending")}
-                    >
-                      Send to pending
-                    </Button>
-                  ) : null}
-                </>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={saving}
-                onClick={() => setConfirmDelete(true)}
-              >
-                Delete
-              </Button>
-            </div>
+            ) : null}
           </div>
-        </section>
+          {logo.error ? <FieldError>{logo.error}</FieldError> : null}
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="reviewer-notes">Reviewer notes</FieldLabel>
+          <Textarea
+            id="reviewer-notes"
+            rows={3}
+            value={reviewerNotes}
+            onChange={(event) => setReviewerNotes(event.target.value)}
+          />
+        </Field>
+      </FieldGroup>
+
+      <div className="flex flex-wrap gap-2 border-t border-border pt-6">
+        <Button type="button" disabled={saving} onClick={() => void saveDetails()}>
+          Save details
+        </Button>
+        <Button
+          type="button"
+          variant="brand"
+          disabled={saving || detail.status === "published"}
+          onClick={() => void setStatus("published")}
+        >
+          Approve
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={saving || detail.status === "rejected"}
+          onClick={() => void setStatus("rejected")}
+        >
+          Reject
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={saving || detail.status === "pending"}
+          onClick={() => void setStatus("pending")}
+        >
+          Send to pending
+        </Button>
+        <Button
+          type="button"
+          variant="destructive"
+          disabled={saving}
+          onClick={() => setConfirmDelete(true)}
+        >
+          Delete
+        </Button>
       </div>
 
       <ConfirmAlertDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title="Delete listing?"
-        description={`Delete “${detail.name}”? This removes the listing and all media. This cannot be undone.`}
+        title="Delete this hub?"
+        description="This permanently deletes the hub and its logo. This cannot be undone."
         actionLabel="Delete"
         actionVariant="destructive"
         busy={saving}
-        onConfirm={() => void remove()}
+        onConfirm={() => void onDelete()}
       />
     </main>
   );

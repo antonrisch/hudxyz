@@ -33,19 +33,19 @@ describe("analytics sanitize", () => {
       "https://hudxyz.com/simulator",
     );
     assert.equal(
-      sanitizeAnalyticsPath("/apps/submit?id=ABC123&email=a%40b.com", origin),
-      "/apps/submit",
+      sanitizeAnalyticsPath("/hubs/submit?id=ABC123&email=a%40b.com", origin),
+      "/hubs/submit",
     );
   });
 
   it("sanitizes automatic PostHog URL properties", () => {
     const sanitized = sanitizeAnalyticsProperties({
-      $current_url: "https://hudxyz.com/apps?q=hidden",
+      $current_url: "https://hudxyz.com/hubs?q=hidden",
       $referrer: "https://google.com/search?q=hud",
       keep: "ok",
     });
-    assert.equal(sanitized.$current_url, "https://hudxyz.com/apps");
-    assert.equal(sanitized.$pathname, "/apps");
+    assert.equal(sanitized.$current_url, "https://hudxyz.com/hubs");
+    assert.equal(sanitized.$pathname, "/hubs");
     assert.equal(sanitized.$referrer, "https://google.com/search");
     assert.equal(sanitized.keep, "ok");
   });
@@ -99,19 +99,17 @@ describe("analytics consent gating", () => {
       captured.push({ event, properties });
     });
 
-    track("listing_shared", {
+    track("submission_completed", {
       public_id: "TEST",
-      channel: "copy",
     });
     assert.equal(captured.length, 0);
 
     setAnalyticsIdentityMode("persistent");
-    track("listing_shared", {
+    track("submission_completed", {
       public_id: "TEST",
-      channel: "copy",
     });
     assert.equal(captured.length, 1);
-    assert.equal(captured[0]?.event, "listing_shared");
+    assert.equal(captured[0]?.event, "submission_completed");
   });
 
   it("emits the deferred initial pageview only once when consent syncs", () => {
@@ -131,7 +129,7 @@ describe("analytics consent gating", () => {
     const previousWindow = globalThis.window;
     Object.defineProperty(globalThis, "window", {
       configurable: true,
-      value: { location: { href: "https://hudxyz.com/apps?q=secret" } },
+      value: { location: { href: "https://hudxyz.com/hubs?q=secret" } },
     });
     try {
       syncPostHogMeasurementConsent(false);

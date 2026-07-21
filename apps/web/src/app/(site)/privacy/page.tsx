@@ -6,7 +6,7 @@ import { legal } from "@/lib/legal/config";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How hudxyz.com collects, uses, and discloses personal information for the simulator, apps directory, submissions, cookies, and analytics.",
+    "How hudxyz.com collects, uses, and discloses personal information for the simulator, Hub Directory, hub submissions, cookies, and analytics.",
   alternates: { canonical: "/privacy" },
   robots: { index: true, follow: true },
 };
