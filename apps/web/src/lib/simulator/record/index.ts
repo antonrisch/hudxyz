@@ -45,10 +45,15 @@ export type StageRecordStopResult = {
   duration_ms: number;
 };
 
+export type StageRecordStartOptions = {
+  /** Runs after display permission is granted, before settle/encode. Return false to abort. */
+  afterPermission?: () => Promise<boolean>;
+};
+
 export type StageRecorder = {
   readonly isRecording: boolean;
-  /** Opens capture, settles, then encodes. */
-  start: () => Promise<StageRecordStartResult>;
+  /** Opens capture, optional after-permission hook, settles, then encodes. */
+  start: (options?: StageRecordStartOptions) => Promise<StageRecordStartResult>;
   stop: () => Promise<StageRecordStopResult | null>;
 };
 
@@ -109,7 +114,7 @@ export function createStageRecorder(deps: StageRecorderDeps): StageRecorder {
       return recording;
     },
 
-    async start() {
+    async start(options?: StageRecordStartOptions) {
       if (recording) return { ok: true };
       const stage = deps.getStage();
       if (!stage) return { ok: false, reason: "unsupported" };
@@ -142,6 +147,16 @@ export function createStageRecorder(deps: StageRecorderDeps): StageRecorder {
       }
 
       session = opened;
+
+      if (options?.afterPermission) {
+        const cont = await options.afterPermission();
+        if (!cont || !recording || gen !== generation) {
+          recording = false;
+          cleanupSession();
+          return { ok: false, reason: "aborted" };
+        }
+      }
+
       await settleBeforeEncode(stage);
       if (!recording || gen !== generation) {
         cleanupSession();

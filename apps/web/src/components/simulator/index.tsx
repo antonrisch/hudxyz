@@ -83,6 +83,8 @@ interface SimulatorContextValue {
   captureDisplay: (trigger?: ScreenshotTrigger) => Promise<void>;
   recordScreen: () => void | Promise<void>;
   isRecording: boolean;
+  /** 3 / 2 / 1 while counting down before capture; null otherwise. */
+  recordCountdown: number | null;
   setView: (view: View, options?: { surface?: SimulatorViewSurface }) => void;
   panZoom: PanZoom;
   syncAdditive: () => void;
@@ -289,12 +291,61 @@ export default function Simulator({
 
   const stageRecorderRef = useRef<ReturnType<typeof createStageRecorder> | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordCountdown, setRecordCountdown] = useState<number | null>(null);
+  const recordCountdownGenRef = useRef(0);
+  const recordCountdownActiveRef = useRef(false);
+  const recordCountdownTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   type RecordChromeSnapshot = {
     toolbarPlacement: ToolbarPlacement;
     displayPanelOpen: boolean;
   };
   const recordChromeRestoreRef = useRef<RecordChromeSnapshot | null>(null);
+
+  const clearRecordCountdown = useCallback(() => {
+    recordCountdownGenRef.current += 1;
+    recordCountdownActiveRef.current = false;
+    for (const id of recordCountdownTimersRef.current) clearTimeout(id);
+    recordCountdownTimersRef.current = [];
+    setRecordCountdown(null);
+  }, []);
+
+  const runRecordCountdown = useCallback(async (): Promise<boolean> => {
+    const gen = ++recordCountdownGenRef.current;
+    recordCountdownActiveRef.current = true;
+    for (const id of recordCountdownTimersRef.current) clearTimeout(id);
+    recordCountdownTimersRef.current = [];
+
+    setRecordCountdown(3);
+    for (const next of [2, 1] as const) {
+      const ok = await new Promise<boolean>((resolve) => {
+        const id = setTimeout(() => {
+          if (gen !== recordCountdownGenRef.current) {
+            resolve(false);
+            return;
+          }
+          setRecordCountdown(next);
+          resolve(true);
+        }, 1000);
+        recordCountdownTimersRef.current.push(id);
+      });
+      if (!ok) return false;
+    }
+
+    const ok = await new Promise<boolean>((resolve) => {
+      const id = setTimeout(() => {
+        if (gen !== recordCountdownGenRef.current) {
+          resolve(false);
+          return;
+        }
+        recordCountdownActiveRef.current = false;
+        setRecordCountdown(null);
+        resolve(true);
+      }, 1000);
+      recordCountdownTimersRef.current.push(id);
+    });
+    return ok;
+  }, []);
 
   const restoreRecordChrome = useCallback(() => {
     const saved = recordChromeRestoreRef.current;
@@ -332,6 +383,7 @@ export default function Simulator({
       },
     });
     return () => {
+      clearRecordCountdown();
       void stageRecorderRef.current?.stop();
       stageRecorderRef.current = null;
       restoreRecordChrome();
@@ -341,6 +393,15 @@ export default function Simulator({
   const recordScreen = useCallback(async () => {
     const recorder = stageRecorderRef.current;
     if (!recorder) return;
+
+    // Cancel 3-2-1 after permission (capture armed, encode not started yet).
+    if (recordCountdownActiveRef.current) {
+      clearRecordCountdown();
+      await recorder.stop();
+      setIsRecording(false);
+      restoreRecordChrome();
+      return;
+    }
 
     if (recorder.isRecording) {
       const result = await recorder.stop();
@@ -368,16 +429,21 @@ export default function Simulator({
     setIsRecording(true);
     await prepareRecordChrome();
 
-    const started = await recorder.start();
+    const started = await recorder.start({
+      afterPermission: runRecordCountdown,
+    });
     if (started.ok) {
       track("screen_record_started", {});
       return;
     }
 
+    clearRecordCountdown();
     setIsRecording(false);
     restoreRecordChrome();
-    track("screen_record_failed", { reason: started.reason });
-  }, [prepareRecordChrome, restoreRecordChrome, store]);
+    if (started.reason !== "aborted") {
+      track("screen_record_failed", { reason: started.reason });
+    }
+  }, [clearRecordCountdown, prepareRecordChrome, restoreRecordChrome, runRecordCountdown, store]);
 
   // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
   // reset in usePanZoom once the new chrome has laid out).
@@ -764,6 +830,7 @@ export default function Simulator({
       captureDisplay,
       recordScreen,
       isRecording,
+      recordCountdown,
       setView,
       panZoom,
       syncAdditive,
@@ -779,6 +846,7 @@ export default function Simulator({
       captureDisplay,
       recordScreen,
       isRecording,
+      recordCountdown,
       setView,
       panZoom,
       syncAdditive,
