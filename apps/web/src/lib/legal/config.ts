@@ -4,10 +4,10 @@ export const legal = {
   contactEmail: "antonhudxyz@gmail.com",
   address: "PO Box 314, Varsity Lakes QLD 4227, Australia",
   /** Stable Terms version stored with submission acceptance. Bump when Terms change materially. */
-  termsVersion: "07-16-2026",
-  termsLastUpdated: "16 July 2026",
+  termsVersion: "07-21-2026",
+  termsLastUpdated: "21 July 2026",
   /** Privacy policy revision date. Independent of Terms so acceptance stays stable. */
-  privacyVersion: "07-16-2026",
-  privacyLastUpdated: "16 July 2026",
+  privacyVersion: "07-21-2026",
+  privacyLastUpdated: "21 July 2026",
   siteUrl: "https://hudxyz.com",
 } as const;
