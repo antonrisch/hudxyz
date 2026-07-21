@@ -19,6 +19,7 @@ import {
   sanitizeAnalyticsProperties,
   sanitizeAnalyticsUrl,
 } from "./sanitize";
+import { consumeCatalogSimulatorLoad, markNextSimulatorLoadAsCatalog } from "./simulator-source";
 import { bindAnalyticsCapture, resetAnalyticsTrackForTests, track } from "./track";
 import { settledMeasurementConsent } from "../consent/config";
 
@@ -48,6 +49,55 @@ describe("analytics sanitize", () => {
     assert.equal(sanitized.$pathname, "/hubs");
     assert.equal(sanitized.$referrer, "https://google.com/search");
     assert.equal(sanitized.keep, "ok");
+  });
+
+  it("preserves $utm_* acquisition properties while stripping URL query strings", () => {
+    const sanitized = sanitizeAnalyticsProperties({
+      $current_url: "https://hudxyz.com/hubs?utm_source=reddit&utm_campaign=week1",
+      $utm_source: "reddit",
+      $utm_medium: "social",
+      $utm_campaign: "week1",
+    });
+    assert.equal(sanitized.$current_url, "https://hudxyz.com/hubs");
+    assert.equal(sanitized.$pathname, "/hubs");
+    assert.equal(sanitized.$utm_source, "reddit");
+    assert.equal(sanitized.$utm_medium, "social");
+    assert.equal(sanitized.$utm_campaign, "week1");
+  });
+});
+
+describe("catalog simulator load marker", () => {
+  it("marks and consumes a directory Try within the TTL", () => {
+    const store = new Map<string, string>();
+    const previousSessionStorage = globalThis.sessionStorage;
+    Object.defineProperty(globalThis, "sessionStorage", {
+      configurable: true,
+      value: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          store.set(key, value);
+        },
+        removeItem: (key: string) => {
+          store.delete(key);
+        },
+      },
+    });
+
+    try {
+      assert.equal(consumeCatalogSimulatorLoad(), false);
+      markNextSimulatorLoadAsCatalog();
+      assert.equal(consumeCatalogSimulatorLoad(), true);
+      assert.equal(consumeCatalogSimulatorLoad(), false);
+    } finally {
+      if (previousSessionStorage === undefined) {
+        Reflect.deleteProperty(globalThis, "sessionStorage");
+      } else {
+        Object.defineProperty(globalThis, "sessionStorage", {
+          configurable: true,
+          value: previousSessionStorage,
+        });
+      }
+    }
   });
 });
 
@@ -99,17 +149,14 @@ describe("analytics consent gating", () => {
       captured.push({ event, properties });
     });
 
-    track("submission_completed", {
-      public_id: "TEST",
-    });
+    track("hub_try_clicked", { public_id: "TEST" });
     assert.equal(captured.length, 0);
 
     setAnalyticsIdentityMode("persistent");
-    track("submission_completed", {
-      public_id: "TEST",
-    });
+    track("hub_try_clicked", { public_id: "TEST" });
     assert.equal(captured.length, 1);
-    assert.equal(captured[0]?.event, "submission_completed");
+    assert.equal(captured[0]?.event, "hub_try_clicked");
+    assert.deepEqual(captured[0]?.properties, { public_id: "TEST" });
   });
 
   it("emits the deferred initial pageview only once when consent syncs", () => {

@@ -23,55 +23,78 @@ Client config lives in `apps/web/src/lib/analytics/` and is initialized from `in
 6. Set a **billing limit of $0** (or the free-tier ceiling) so usage stays free at current scale.
 7. Do **not** enable autocapture, session replay, or person profiles for this site without a privacy review.
 
+## Success definition
+
+A visitor successfully loads a real third-party URL into the 600×600 D-pad surface and reaches ready — preferably arriving from a published hub.
+
 ## North-star metrics
 
-- **Weekly Successful Preview Sessions (WSPS)** — distinct PostHog sessions with ≥1 `simulator_load_succeeded`. Primary success metric.
-- **Daily Core Users (DCU)** — unique daily visitors with `listing_opened` (`kind = launch`) **or** `simulator_load_succeeded`. Supporting daily metric; prefer the 7-day average.
+- **Weekly Successful Preview Sessions (WSPS)** — distinct PostHog sessions with ≥1 `simulator_load_succeeded`. **Primary** success metric.
+- **Supporting:** catalog share of successful loads (`source = catalog`); `/hubs` → `hub_try_clicked` → `simulator_load_succeeded` funnel; submit started → completed; simulator success rate (`succeeded` / `requested`).
+- **Daily Core Users (DCU)** — **frozen / omit** until hubs has a few weeks of clean traffic. Do not redefine as `hub_try_clicked OR simulator_load_succeeded` (that counts intent without success). If revived later, use successful engagement only (`simulator_load_succeeded`).
 - Raw `$pageview` DAU is acquisition-only. Do **not** use all-user WAU / MAU / retention across mixed identity modes.
+- Retention charts must filter `analytics_identity_mode = persistent` only.
+
+### Deprecated (apps listings)
+
+Do not use for new dashboards: `listing_opened`, `listing_shared`, `submission_icon_uploaded`. Historical events may still exist in PostHog taxonomy.
 
 ## Events
 
-| Event                      | When                                                           |
-| -------------------------- | -------------------------------------------------------------- |
-| `$pageview`                | Sanitized pathname only (no query / simulator URL)             |
-| `search_result_selected`   | Palette result or “view all”                                   |
-| `listing_opened`           | Try in Simulator / Open on Glasses (`kind`: `sim` \| `launch`) |
-| `listing_shared`           | Native share, copy, or social channel                          |
-| `simulator_load_requested` | Any simulator navigation (seed, URL bar, reload)               |
-| `simulator_load_succeeded` | App surface reaches ready                                      |
-| `simulator_load_failed`    | Timeout or proxy failure                                       |
-| `submission_started`       | First stub draft created                                       |
-| `submission_icon_uploaded` | Icon upload or URL autofill import                             |
-| `submission_completed`     | Submit for review succeeds                                     |
+| Event                      | When                                                    |
+| -------------------------- | ------------------------------------------------------- |
+| `$pageview`                | Sanitized pathname only (no query / simulator URL)      |
+| `search_result_selected`   | Palette hub result or “view all”                        |
+| `hub_try_clicked`          | Directory **Try** (marks next load as `source=catalog`) |
+| `simulator_load_requested` | Any simulator navigation (seed, URL bar, reload)        |
+| `simulator_load_succeeded` | App surface reaches ready                               |
+| `simulator_load_failed`    | Timeout or proxy failure                                |
+| `submission_started`       | First hub stub draft created                            |
+| `submission_completed`     | Hub submit for review succeeds                          |
 
-Turso `launch_count` / `sim_count` remain the authoritative business counters.
+`simulator_load_*` carry `source: "catalog" | "custom"`. Directory Try sets a short-lived sessionStorage marker so the following load is `catalog` without putting analytics state in the share URL.
 
-## Funnels to create
+Outbound hub homepage links stamp `utm_source=hudxyz.com&utm_medium=referral&utm_campaign=directory` for **hub owners’** analytics — not captured as PostHog product events.
 
-1. **Directory → try**  
-   `$pageview` where pathname starts with `/hubs` → directory browse
-   (legacy listing detail paths redirect; no per-hub public detail page)
+## Inbound acquisition (Reddit / Product Hunt)
+
+URL sanitize strips query strings from `$current_url` / referrer fields but **leaves PostHog `$utm_*` properties intact**. Use this convention on outreach links:
+
+| Param          | Reddit (P0)         | Product Hunt (later) |
+| -------------- | ------------------- | -------------------- |
+| `utm_source`   | `reddit`            | `producthunt`        |
+| `utm_medium`   | `social`            | `social`             |
+| `utm_campaign` | thread-or-week slug | launch slug          |
+
+Example: `https://hudxyz.com/hubs?utm_source=reddit&utm_medium=social&utm_campaign=2026-07-mrbd`.
+
+Break WSPS (and directory → try) down by `$utm_source` / `$utm_campaign` to measure outreach.
+
+## Funnels
+
+1. **Directory → try → success**  
+   `$pageview` pathname `/hubs` → `hub_try_clicked` → `simulator_load_succeeded` (filter or break down by `source = catalog`)
 
 2. **Simulator load**  
    `$pageview` pathname `/simulator` → `simulator_load_requested` → `simulator_load_succeeded`  
-   (break down failures with `simulator_load_failed` by `failure_stage`)
+   (failures: `simulator_load_failed` by `failure_stage`; catalog vs custom via `source`)
 
 3. **Submit**  
-   `$pageview` pathname `/hubs/submit` → `submission_started` → `submission_icon_uploaded` → `submission_completed`
+   `$pageview` pathname `/hubs/submit` → `submission_started` → `submission_completed`
 
 ## Launch dashboard
 
-Pinned **[hudxyz Launch](https://us.posthog.com/project/513589/dashboard/1852567)** dashboard (production `$host = hudxyz.com`):
+Pinned **[hudxyz Hubs Launch](https://us.posthog.com/project/513589/dashboard/1880501)** (production `$host = hudxyz.com`). Tiles:
 
-1. Weekly Successful Preview Sessions (vs previous week)
-2. 7-day average Daily Core Users (vs previous 7 days)
-3. Daily Core Users trend (30 days)
-4. Daily visitors and core-user rate (`$pageview` DAU + DCU/visitor)
-5. Consented retention (filter `analytics_identity_mode = persistent` only — never label as total-site retention)
+1. Weekly Successful Preview Sessions (vs previous week) — **primary**
+2. Catalog vs custom share of `simulator_load_succeeded` (`source`)
+3. Directory → try → success funnel (`/hubs` → `hub_try_clicked` → `simulator_load_succeeded`)
+4. Simulator success rate (`succeeded` / `requested`)
+5. Submit funnel (`submission_started` → `submission_completed`)
+6. WSPS broken down by `$utm_source` / `$utm_campaign` for Reddit outreach
+7. Consented retention (`analytics_identity_mode = persistent` only — never label as total-site retention)
 
-Supporting tiles on the same dashboard: simulator success rate, submission funnel, listing opens by kind, listing shares. The generic starter dashboard is unpinned — its all-user WAU / retention tiles are misleading under cookieless identity.
-
-As of dashboard creation, production custom events (`simulator_load_succeeded`, `listing_opened`, `analytics_identity_mode`, etc.) were not yet visible in PostHog taxonomy — re-check `$host`, `kind`, `source`, and `analytics_identity_mode` after a controlled production visit, then compare DCU with Turso `launch_count` / `sim_count` for obvious collection gaps.
+The apps-era **hudxyz Launch** dashboard (`1852567`) is soft-deleted. The generic starter dashboard stays unpinned — its all-user WAU / retention tiles are misleading under cookieless identity.
 
 ## After 14 days
 
