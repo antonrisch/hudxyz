@@ -84,17 +84,17 @@ Break WSPS (and directory → try) down by `$utm_source` / `$utm_campaign` to me
 
 ## Launch dashboard
 
-Pinned **[hudxyz Launch](https://us.posthog.com/project/513589/dashboard/1852567)** (production `$host = hudxyz.com`). After this hubs refactor, update tiles to:
+Pinned **[hudxyz Hubs Launch](https://us.posthog.com/project/513589/dashboard/1880501)** (production `$host = hudxyz.com`). Tiles:
 
 1. Weekly Successful Preview Sessions (vs previous week) — **primary**
 2. Catalog vs custom share of `simulator_load_succeeded` (`source`)
 3. Directory → try → success funnel (`/hubs` → `hub_try_clicked` → `simulator_load_succeeded`)
 4. Simulator success rate (`succeeded` / `requested`)
 5. Submit funnel (`submission_started` → `submission_completed`)
-6. WSPS (or try funnel) broken down by `$utm_source` / `$utm_campaign` for Reddit outreach
+6. WSPS broken down by `$utm_source` / `$utm_campaign` for Reddit outreach
 7. Consented retention (`analytics_identity_mode = persistent` only — never label as total-site retention)
 
-**Archive / remove** apps-era tiles: Daily Core Users (listing-based), listing opens by kind, listing shares. The generic starter dashboard stays unpinned — its all-user WAU / retention tiles are misleading under cookieless identity.
+The apps-era **hudxyz Launch** dashboard (`1852567`) is soft-deleted. The generic starter dashboard stays unpinned — its all-user WAU / retention tiles are misleading under cookieless identity.
 
 ## After 14 days
 
