@@ -12,10 +12,10 @@ import { buttonVariants } from "@/components/ui/button";
 import type { SuggestedHub } from "@/lib/simulator/config";
 import { cn } from "@/lib/utils";
 
-/** Simulator toolbar: logo + url bar + record/open-on-glasses (+ desktop display panel toggle). */
+/** Simulator header (top bar): logo + url bar + record/open-on-glasses (+ desktop display panel toggle). Distinct from in-stage `toolbar/` controls. */
 export function SimulatorHeader({ suggestedHubs }: { suggestedHubs: SuggestedHub[] }) {
   return (
-    <header aria-label="Simulator toolbar" className="z-50 shrink-0">
+    <header aria-label="Simulator header" className="z-50 shrink-0">
       <div className="page-px grid h-(--header-h) grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
         <div className="flex items-center gap-5 justify-self-start">
           <Logo />

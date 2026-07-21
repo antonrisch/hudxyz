@@ -47,10 +47,21 @@ import { MobileFooter } from "@/components/simulator/mobile-footer";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadStage } from "@/lib/simulator/capture";
-import { createStageRecorder, downloadStageRecording } from "@/lib/simulator/record";
-import { track } from "@/lib/analytics/track";
-import type { SimulatorLoadSource } from "@/lib/analytics/events";
-import { consumeCatalogSimulatorLoad } from "@/lib/analytics/simulator-source";
+import { canUseRegionCapture, createStageRecorder } from "@/lib/simulator/record";
+import { track, trackOnce } from "@/lib/analytics/track";
+import { finishScreenRecordAnalytics } from "@/lib/analytics/screen-record";
+import type {
+  ScreenshotTrigger,
+  SimulatorLoadTrigger,
+  SimulatorViewSurface,
+} from "@/lib/analytics/events";
+import {
+  beginLoadAttempt,
+  trackLoadFailed,
+  trackLoadRequested,
+  trackLoadSucceeded,
+  type SimulatorLoadAttempt,
+} from "@/lib/analytics/load-attempt";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -62,15 +73,16 @@ interface SimulatorContextValue {
   iframeRef: RefObject<HTMLIFrameElement | null>;
   displayRef: RefObject<HTMLDivElement | null>;
   urlInputRef: RefObject<HTMLInputElement | null>;
-  load: (raw: string, source?: SimulatorLoadSource) => void;
+  load: (raw: string, options?: { trigger?: SimulatorLoadTrigger }) => void;
+  reload: (trigger?: SimulatorLoadTrigger) => void;
   press: (intent: Intent) => void;
   pressDown: (intent: Intent) => void;
   pressUp: (intent: Intent) => void;
   pressedIntents: ReadonlySet<Intent>;
-  captureDisplay: () => Promise<void>;
+  captureDisplay: (trigger?: ScreenshotTrigger) => Promise<void>;
   recordScreen: () => void | Promise<void>;
   isRecording: boolean;
-  setView: (view: View) => void;
+  setView: (view: View, options?: { surface?: SimulatorViewSurface }) => void;
   panZoom: PanZoom;
   syncAdditive: () => void;
 }
@@ -133,34 +145,43 @@ export default function Simulator({
   panZoomRef.current = panZoom;
   const displayScaleRef = useRef(1);
   const filterRafRef = useRef<number | null>(null);
-  const loadSourceRef = useRef<SimulatorLoadSource>("custom");
-  const pendingLoadSourceRef = useRef<SimulatorLoadSource | null>(null);
-  const failureStageRef = useRef<"timeout" | "proxy" | "unknown">("unknown");
-
-  const resolveLoadSource = useCallback(
-    (url: string, explicit?: SimulatorLoadSource): SimulatorLoadSource => {
-      if (explicit) return explicit;
-      if (consumeCatalogSimulatorLoad()) return "catalog";
-      const normalized = normalizeWebUrl(url);
-      if (normalized && suggestedHubs.some((hub) => normalizeWebUrl(hub.url) === normalized)) {
-        return "catalog";
-      }
-      return "custom";
-    },
-    [suggestedHubs],
-  );
+  const pendingLoadOptionsRef = useRef<{
+    trigger?: SimulatorLoadTrigger;
+    isSeed?: boolean;
+  } | null>(null);
+  const activeLoadAttemptRef = useRef<SimulatorLoadAttempt | null>(null);
+  const seedLoadHandledRef = useRef(false);
+  const failureStageRef = useRef<"timeout" | "proxy" | "navigation_aborted" | "unknown">("unknown");
 
   // navigate: route the target through the same-origin proxy. created once, reused.
   const load = useCallback(
-    (raw: string, source?: SimulatorLoadSource) => {
+    (raw: string, options?: { trigger?: SimulatorLoadTrigger }) => {
       const url = normalizeWebUrl(raw);
       if (!url) return;
-      pendingLoadSourceRef.current = resolveLoadSource(url, source);
-      failureStageRef.current = "unknown";
+      pendingLoadOptionsRef.current = { trigger: options?.trigger ?? "typed" };
       store.getState().requestLoad(url);
     },
-    [resolveLoadSource, store],
+    [store],
   );
+
+  const reload = useCallback(
+    (trigger: SimulatorLoadTrigger = "reload") => {
+      pendingLoadOptionsRef.current = { trigger };
+      store.getState().reload();
+    },
+    [store],
+  );
+
+  // OS stubs call store.launchApp — stamp os_launch so loads aren't mislabeled typed.
+  useMountEffect(() => {
+    const originalLaunchApp = store.getState().launchApp;
+    store.setState({
+      launchApp: (url: string) => {
+        pendingLoadOptionsRef.current = { trigger: "os_launch" };
+        originalLaunchApp(url);
+      },
+    });
+  });
 
   // inject a d-pad gesture. app mode -> synthesize the mapped key into the proxied frame.
   // os mode -> drive the baby os (stub seam).
@@ -212,47 +233,55 @@ export default function Simulator({
   const additiveSyncKeyRef = useRef("");
   const syncHostAdditiveLayersRef = useRef<() => void>(() => {});
 
-  const captureDisplay = useCallback(async () => {
-    const {
-      screen,
-      status,
-      additive,
-      background: backgroundKey,
-      customBackgroundImages,
-      activeCustomBackgroundId,
-      backgroundBrightness,
-      backgroundBlur,
-    } = store.getState();
-    if (screen !== "app" || status !== "ready") return;
-    const stage = stageRef.current;
-    if (!stage) return;
-    const preset = resolveBackground(
-      backgroundKey,
-      customBackgroundImages,
-      activeCustomBackgroundId,
-    );
-    await downloadStage({
-      stage,
-      backdrop: backdropRef.current,
-      display: displayRef.current,
-      iframe: iframeRef.current,
-      frames: stage.querySelector<SVGSVGElement>('[data-capture="frames"]'),
-      additive,
-      backgroundCapture: {
-        preset,
+  const captureDisplay = useCallback(
+    async (trigger: ScreenshotTrigger = "button") => {
+      const {
+        screen,
+        status,
+        additive,
+        background: backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
         backgroundBrightness,
         backgroundBlur,
-      },
-      additiveContext: additive
-        ? {
+      } = store.getState();
+      if (screen !== "app" || status !== "ready") return;
+      const stage = stageRef.current;
+      if (!stage) return;
+      const preset = resolveBackground(
+        backgroundKey,
+        customBackgroundImages,
+        activeCustomBackgroundId,
+      );
+      try {
+        await downloadStage({
+          stage,
+          backdrop: backdropRef.current,
+          display: displayRef.current,
+          iframe: iframeRef.current,
+          frames: stage.querySelector<SVGSVGElement>('[data-capture="frames"]'),
+          additive,
+          backgroundCapture: {
             preset,
             backgroundBrightness,
             backgroundBlur,
-            onBeforeCapture: () => syncHostAdditiveLayersRef.current(),
-          }
-        : undefined,
-    });
-  }, [store]);
+          },
+          additiveContext: additive
+            ? {
+                preset,
+                backgroundBrightness,
+                backgroundBlur,
+                onBeforeCapture: () => syncHostAdditiveLayersRef.current(),
+              }
+            : undefined,
+        });
+        track("simulator_screenshot_completed", { trigger });
+      } catch {
+        track("simulator_screenshot_failed", { trigger });
+      }
+    },
+    [store],
+  );
 
   const captureRef = useRef(captureDisplay);
   captureRef.current = captureDisplay;
@@ -291,10 +320,14 @@ export default function Simulator({
   useMountEffect(() => {
     stageRecorderRef.current = createStageRecorder({
       getStage: () => stageRef.current,
-      onAutoStop: (blob) => {
-        if (blob) downloadStageRecording(blob);
+      onAutoStop: (meta) => {
         setIsRecording(false);
         restoreRecordChrome();
+        finishScreenRecordAnalytics({
+          blob: meta.blob,
+          duration_ms: meta.duration_ms,
+          stop_reason: "max_duration",
+        });
       },
     });
     return () => {
@@ -309,35 +342,60 @@ export default function Simulator({
     if (!recorder) return;
 
     if (recorder.isRecording) {
-      const blob = await recorder.stop();
-      if (blob) downloadStageRecording(blob);
+      const result = await recorder.stop();
       setIsRecording(false);
       restoreRecordChrome();
+      if (result) {
+        finishScreenRecordAnalytics({
+          blob: result.blob,
+          duration_ms: result.duration_ms,
+          stop_reason: "manual",
+        });
+      }
       return;
     }
 
     const { screen, status } = store.getState();
     if (screen !== "app" || status !== "ready" || !stageRef.current) return;
 
+    if (!canUseRegionCapture()) {
+      track("screen_record_failed", { reason: "unsupported" });
+      return;
+    }
+
     // keepPlaying before the share picker so the HW video doesn't pause on document.hidden.
     setIsRecording(true);
     await prepareRecordChrome();
 
-    const ok = await recorder.start();
-    if (!ok) {
-      setIsRecording(false);
-      restoreRecordChrome();
+    const started = await recorder.start();
+    if (started.ok) {
+      track("screen_record_started", {});
+      return;
     }
+
+    setIsRecording(false);
+    restoreRecordChrome();
+    track("screen_record_failed", { reason: started.reason });
   }, [prepareRecordChrome, restoreRecordChrome, store]);
 
   // switch chrome, mirror to url, reset zoom when re-selecting the active view (switches
   // reset in usePanZoom once the new chrome has laid out).
   const setView = useCallback(
-    (next: View) => {
-      const same = store.getState().view === next;
+    (next: View, options?: { surface?: SimulatorViewSurface }) => {
+      const from = store.getState().view;
+      const same = from === next;
       store.getState().setView(next);
       void setModeParam(next);
-      if (same) panZoomRef.current.reset(next);
+      if (same) {
+        panZoomRef.current.reset(next);
+        return;
+      }
+      const surface = options?.surface ?? "panel";
+      trackOnce(`simulator_view_selected:${next}`, "simulator_view_selected", {
+        from,
+        to: next,
+        surface,
+      });
     },
     [store, setModeParam],
   );
@@ -347,19 +405,23 @@ export default function Simulator({
     migrateLegacySimulatorPreferences(store);
   });
 
-  // Product analytics for load outcomes (no URL / host PII).
+  // Product analytics for load outcomes + record capability (no URL / host PII).
   useMountEffect(() => {
     return store.subscribe((state, prev) => {
       if (state.status === prev.status) return;
+
       if (state.status === "ready" && prev.status === "revealing") {
-        track("simulator_load_succeeded", { source: loadSourceRef.current });
+        const attempt = activeLoadAttemptRef.current;
+        if (attempt) trackLoadSucceeded(attempt);
+        trackOnce("screen_record_capability", "screen_record_capability", {
+          supported: canUseRegionCapture(),
+        });
         return;
       }
+
       if (state.status === "error" && prev.status !== "error") {
-        track("simulator_load_failed", {
-          source: loadSourceRef.current,
-          failure_stage: failureStageRef.current,
-        });
+        const attempt = activeLoadAttemptRef.current;
+        if (attempt) trackLoadFailed(attempt, failureStageRef.current);
       }
     });
   });
@@ -369,6 +431,11 @@ export default function Simulator({
     let cancelNav = () => {};
 
     const navigate = () => {
+      const previous = activeLoadAttemptRef.current;
+      if (previous && !previous.terminalEmitted) {
+        trackLoadFailed(previous, "navigation_aborted");
+      }
+
       cancelNav();
       let cancelled = false;
       cancelNav = () => {
@@ -381,12 +448,18 @@ export default function Simulator({
       const navToken = store.getState().loadToken;
       const isStale = () => cancelled || store.getState().loadToken !== navToken;
 
-      // Prefer source from `load()`; otherwise derive from URL / referrer (seed + reload).
-      const pendingSource = pendingLoadSourceRef.current;
-      pendingLoadSourceRef.current = null;
-      loadSourceRef.current = pendingSource ?? resolveLoadSource(url);
+      const pending = pendingLoadOptionsRef.current;
+      pendingLoadOptionsRef.current = null;
+      const isSeed = pending?.isSeed === true || (!seedLoadHandledRef.current && !pending);
+      if (isSeed) seedLoadHandledRef.current = true;
+
+      const attempt = beginLoadAttempt({
+        trigger: pending?.trigger,
+        isSeed,
+      });
+      activeLoadAttemptRef.current = attempt;
       failureStageRef.current = "unknown";
-      track("simulator_load_requested", { source: loadSourceRef.current });
+      trackLoadRequested(attempt);
 
       const onLoad = () => {
         void (async () => {
@@ -449,10 +522,18 @@ export default function Simulator({
       if (state.loadToken !== prev.loadToken && state.loadToken !== 0) navigate();
     });
 
-    if (store.getState().loadToken > 0) navigate();
+    if (store.getState().loadToken > 0) {
+      pendingLoadOptionsRef.current ??= { isSeed: true };
+      navigate();
+    }
 
     return () => {
       cancelNav();
+      const attempt = activeLoadAttemptRef.current;
+      if (attempt && !attempt.terminalEmitted) {
+        trackLoadFailed(attempt, "navigation_aborted");
+      }
+      activeLoadAttemptRef.current = null;
       unsub();
     };
   });
@@ -580,7 +661,7 @@ export default function Simulator({
       if (!e.isTrusted) return;
       if (e.metaKey && e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        void captureRef.current();
+        void captureRef.current("keyboard");
         return;
       }
       const intent = appIntent(e);
@@ -674,6 +755,7 @@ export default function Simulator({
       displayRef,
       urlInputRef,
       load,
+      reload,
       press,
       pressDown,
       pressUp,
@@ -688,6 +770,7 @@ export default function Simulator({
     [
       store,
       load,
+      reload,
       press,
       pressDown,
       pressUp,
