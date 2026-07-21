@@ -8,7 +8,7 @@ import {
 } from "@/lib/analytics/identity";
 import { enrichAnalyticsProperties } from "@/lib/analytics/enrich";
 import { sanitizeAnalyticsPath, sanitizeAnalyticsUrl } from "@/lib/analytics/sanitize";
-import { bindAnalyticsCapture } from "@/lib/analytics/track";
+import { bindAnalyticsCapture, flushPendingAnalyticsEvents } from "@/lib/analytics/track";
 
 let initialized = false;
 let initialPageviewSent = false;
@@ -46,7 +46,6 @@ export function initPostHog(): void {
   posthog.opt_out_capturing();
 
   bindAnalyticsCapture((event, properties) => {
-    if (!isAnalyticsConsentResolved()) return;
     posthog.capture(event, properties);
   });
 
@@ -75,6 +74,9 @@ export function syncPostHogMeasurementConsent(hasMeasurementConsent: boolean): v
       // ignore
     }
   }
+
+  // Product events may have fired before the banner settled (e.g. seeded loads).
+  flushPendingAnalyticsEvents();
 
   // Gate once per page load even if PostHog is unavailable, so consent changes
   // never enqueue a second "initial" pageview later.
