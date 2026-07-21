@@ -7,12 +7,14 @@ import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { cn } from "@/lib/utils";
 import { BACKGROUNDS, type BackgroundKey, type BackgroundPreset } from "@/lib/simulator/background";
 import {
+  customBackgroundFailReason,
   prepareCustomBackgroundImage,
   revokeBackgroundImageUrl,
 } from "@/lib/simulator/background-image";
 import { simulatorParsers } from "@/lib/simulator/search-params";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { dropFocus } from "@/lib/simulator/input";
+import { track } from "@/lib/analytics/track";
 
 const GRADIENT_SWATCH = {
   day: {
@@ -151,11 +153,13 @@ export function BackgroundPicker() {
   const selectPreset = (key: BackgroundKey) => {
     store.getState().setBackground(key);
     void setBackgroundParam(key);
+    track("background_selected", { background: key });
   };
 
   const selectCustom = (id: string) => {
     store.getState().selectCustomBackground(id);
     void setBackgroundParam("custom");
+    track("background_selected", { background: "custom" });
   };
 
   const removeCustom = (id: string) => {
@@ -168,6 +172,9 @@ export function BackgroundPicker() {
 
     const nextBg = store.getState().background;
     void setBackgroundParam(nextBg);
+    track("custom_background_removed", {
+      custom_count: store.getState().customBackgroundImages.length,
+    });
   };
 
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -179,8 +186,14 @@ export function BackgroundPicker() {
       .then(({ url, thumbUrl }) => {
         store.getState().addCustomBackground(url, thumbUrl);
         void setBackgroundParam("custom");
+        track("custom_background_added", {
+          custom_count: store.getState().customBackgroundImages.length,
+        });
+        track("background_selected", { background: "custom" });
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        track("custom_background_failed", { reason: customBackgroundFailReason(error) });
+      });
   };
 
   return (

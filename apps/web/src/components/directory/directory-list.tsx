@@ -148,7 +148,7 @@ export function DirectoryList({ hubs }: { hubs: HubListItem[] }) {
                     className={cn(buttonVariants({ variant: "brand", size: "sm" }))}
                     onClick={() => {
                       track("hub_try_clicked", { public_id: hub.publicId });
-                      markNextSimulatorLoadAsCatalog();
+                      markNextSimulatorLoadAsCatalog(hub.publicId);
                     }}
                   >
                     Try

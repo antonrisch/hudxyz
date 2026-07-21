@@ -25,7 +25,7 @@ export function ViewSwitcher() {
       value={[view]}
       onValueChange={(vals) => {
         const next = vals[0];
-        if (next) setView(next as View); // ignore deselect so a view is always active
+        if (next) setView(next as View, { surface: "panel" }); // ignore deselect so a view is always active
       }}
     >
       {VIEWS.map((v) => (
@@ -33,7 +33,7 @@ export function ViewSwitcher() {
           key={v.key}
           value={v.key}
           onMouseDown={dropFocus}
-          onClick={() => setView(v.key)}
+          onClick={() => setView(v.key, { surface: "panel" })}
         >
           {v.label}
         </ToggleGroupItem>
@@ -56,7 +56,7 @@ export function ViewToggleButton() {
       size="icon-lg"
       aria-label={`Switch to ${nextLabel}`}
       onMouseDown={dropFocus}
-      onClick={() => setView(next)}
+      onClick={() => setView(next, { surface: "mobile_toolbar" })}
       className="shrink-0"
     >
       <ArrowLeftRight />

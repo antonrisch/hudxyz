@@ -1,12 +1,10 @@
 "use client";
 
-import { Check } from "lucide-react";
 import Link from "next/link";
 
-import { Copy } from "@/components/icons/copy";
+import { CopyLinkRow } from "@/components/copy-link-row";
 import { buttonVariants } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard";
-import { cn } from "@/lib/utils";
 
 export function SubmitConfirmation({ name, publicId }: { name: string; publicId: string }) {
   const { copied, copy } = useCopyToClipboard();
@@ -24,34 +22,22 @@ export function SubmitConfirmation({ name, publicId }: { name: string; publicId:
       {publicId ? (
         <div className="space-y-2">
           <p className="text-sm font-medium">Submission ID</p>
-          <button
-            type="button"
-            aria-label={copied ? "Copied submission ID" : "Copy submission ID"}
-            onClick={() =>
+          <CopyLinkRow
+            value={publicId}
+            copied={copied}
+            label="Copy"
+            copiedLabel="Copied"
+            ariaLabel="Copy submission ID"
+            ariaCopiedLabel="Copied submission ID"
+            className="max-w-xs"
+            valueClassName="font-mono tracking-wide text-foreground"
+            onCopy={() =>
               void copy(publicId, {
                 successMessage: "Submission ID copied",
                 errorMessage: "Could not copy submission ID",
               })
             }
-            className={cn(
-              "flex w-full max-w-xs min-w-0 items-center gap-2 rounded-xl border border-border bg-background p-1 pl-3 text-left outline-none select-none",
-              "hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-              "transition-transform active:scale-[0.99]",
-            )}
-          >
-            <span className="min-w-0 flex-1 truncate font-mono text-sm tracking-wide text-foreground">
-              {publicId}
-            </span>
-            <span
-              className={cn(
-                buttonVariants({ variant: "brand-secondary", size: "sm" }),
-                "pointer-events-none shrink-0",
-              )}
-            >
-              {copied ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
-              {copied ? "Copied" : "Copy"}
-            </span>
-          </button>
+          />
         </div>
       ) : null}
 

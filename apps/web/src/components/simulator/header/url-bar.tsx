@@ -14,7 +14,9 @@ import type { SuggestedHub } from "@/lib/simulator/config";
 import { simulatorParsers, normalizeWebUrl } from "@/lib/simulator/search-params";
 import { dropFocus } from "@/lib/simulator/input";
 import { pushRecentApp, readRecentApps, type RecentApp } from "@/lib/simulator/recents";
+import { suggestedHubNameForUrl } from "@/lib/simulator/suggested-hubs";
 import { useMountEffect } from "@/lib/use-mount-effect";
+import type { SimulatorLoadTrigger } from "@/lib/analytics/events";
 import { cn } from "@/lib/utils";
 
 function hostnameLabel(url: string): string {
@@ -56,14 +58,14 @@ export function UrlBar({
   useMountEffect(() => setRecents(readRecentApps()));
 
   const recordRecent = (nextUrl: string) => {
-    const name = suggestedHubs.find((hub) => hub.url === nextUrl)?.name ?? hostnameLabel(nextUrl);
+    const name = suggestedHubNameForUrl(nextUrl, suggestedHubs) || hostnameLabel(nextUrl);
     setRecents(pushRecentApp({ url: nextUrl, name }));
   };
 
   const clearSelection = () => setSelected(NO_SELECTION);
   const hasSelection = selected !== NO_SELECTION;
 
-  const submitUrl = (rawUrl: string) => {
+  const submitUrl = (rawUrl: string, trigger: SimulatorLoadTrigger = "typed") => {
     const nextUrl = normalizeWebUrl(rawUrl);
     if (!nextUrl) {
       toast.message("Enter a web app URL like https://example.com");
@@ -71,12 +73,8 @@ export function UrlBar({
       return false;
     }
 
-    const source = suggestedHubs.some((hub) => normalizeWebUrl(hub.url) === nextUrl)
-      ? "catalog"
-      : "custom";
-
     store.getState().setUrl(nextUrl);
-    load(nextUrl, source);
+    load(nextUrl, { trigger });
     void setUrlParam(nextUrl);
     recordRecent(nextUrl);
     clearSelection();
@@ -84,8 +82,8 @@ export function UrlBar({
     return true;
   };
 
-  const selectUrl = (nextUrl: string) => {
-    submitUrl(nextUrl);
+  const selectUrl = (nextUrl: string, trigger: SimulatorLoadTrigger) => {
+    submitUrl(nextUrl, trigger);
   };
 
   const selectViewAll = () => {
@@ -174,7 +172,7 @@ export function UrlBar({
               aria-label="Reload"
               onMouseDown={dropFocus}
               onClick={() => {
-                if (submitUrl(url)) setReloadSpin((n) => n + 1);
+                if (submitUrl(url, "reload")) setReloadSpin((n) => n + 1);
               }}
             >
               <RotateCw
@@ -197,7 +195,7 @@ export function UrlBar({
               <CommandItem
                 key={suggestionValue("recent", app.url)}
                 value={suggestionValue("recent", app.url)}
-                onSelect={() => selectUrl(app.url)}
+                onSelect={() => selectUrl(app.url, "recent")}
                 className={itemClassName}
               >
                 <History className="size-5 shrink-0 text-muted-foreground" />
@@ -218,7 +216,7 @@ export function UrlBar({
                 <CommandItem
                   key={suggestionValue("popular", hub.url)}
                   value={suggestionValue("popular", hub.url)}
-                  onSelect={() => selectUrl(hub.url)}
+                  onSelect={() => selectUrl(hub.url, "popular")}
                   className={itemClassName}
                 >
                   {hub.iconUrl ? (

@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/analytics/analytics.test.ts src/lib/hubs/draft-edit-token.test.ts src/lib/legal/terms-acceptance.test.ts",
+    "test": "tsx --test src/lib/analytics/analytics.test.ts src/lib/analytics/load-attempt.test.ts src/lib/analytics/workflow-analytics.test.ts src/lib/hubs/draft-edit-token.test.ts src/lib/legal/terms-acceptance.test.ts src/lib/simulator/suggested-hubs.test.ts",
     "format": "oxfmt",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",

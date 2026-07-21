@@ -14,6 +14,7 @@ import { BackgroundPicker } from "@/components/simulator/background/picker";
 import { useQueryState } from "nuqs";
 import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { simulatorParsers } from "@/lib/simulator/search-params";
+import { track } from "@/lib/analytics/track";
 
 // Display panel: Zustand for live preview. Shareable scene fields (additive)
 // also mirror to the URL once per toggle — not on every slider tick.
@@ -78,6 +79,7 @@ export function PanelContent() {
               onCheckedChange={(next) => {
                 store.getState().setAdditive(next);
                 void setAdditiveParam(next);
+                track("simulator_additive_changed", { additive: next });
               }}
               aria-label="Display transparency"
             />

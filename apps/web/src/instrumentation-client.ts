@@ -2,6 +2,7 @@ import { initBotId } from "botid/client/core";
 import * as Sentry from "@sentry/nextjs";
 
 import { captureSanitizedPageview, initPostHog } from "@/lib/analytics/client";
+import { sanitizeAnalyticsUrl } from "@/lib/analytics/sanitize";
 import { isSentryEnabled } from "@/lib/sentry/enabled";
 import "@/lib/sentry/client";
 
@@ -19,8 +20,9 @@ initBotId({
 initPostHog();
 
 export function onRouterTransitionStart(url: string, navigationType: string): void {
+  const sanitizedUrl = sanitizeAnalyticsUrl(url);
   if (isSentryEnabled) {
-    Sentry.captureRouterTransitionStart(url, navigationType);
+    Sentry.captureRouterTransitionStart(sanitizedUrl, navigationType);
   }
-  captureSanitizedPageview(url);
+  captureSanitizedPageview(sanitizedUrl);
 }

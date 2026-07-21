@@ -7,6 +7,7 @@
 
 import {
   CAPTURE_FRAME_RATE,
+  canUseRegionCapture,
   openStageCapture,
   settleBeforeEncode,
   type CaptureSession,
@@ -18,6 +19,7 @@ import {
   logRecord,
   type StreamEncoder,
 } from "@/lib/simulator/record/encode";
+import type { ScreenRecordFailReason } from "@/lib/analytics/events";
 
 export {
   CAPTURE_FRAME_RATE,
@@ -31,16 +33,28 @@ export {
   downloadStageRecording,
 } from "@/lib/simulator/record/encode";
 
+export type StageRecordStopMeta = {
+  duration_ms: number;
+  blob: Blob | null;
+};
+
+export type StageRecordStartResult = { ok: true } | { ok: false; reason: ScreenRecordFailReason };
+
+export type StageRecordStopResult = {
+  blob: Blob | null;
+  duration_ms: number;
+};
+
 export type StageRecorder = {
   readonly isRecording: boolean;
-  /** Opens capture, settles, then encodes. Resolves false if unavailable/denied. */
-  start: () => Promise<boolean>;
-  stop: () => Promise<Blob | null>;
+  /** Opens capture, settles, then encodes. */
+  start: () => Promise<StageRecordStartResult>;
+  stop: () => Promise<StageRecordStopResult | null>;
 };
 
 export type StageRecorderDeps = {
   getStage: () => HTMLElement | null;
-  onAutoStop?: (blob: Blob | null) => void;
+  onAutoStop?: (meta: StageRecordStopMeta) => void;
 };
 
 export function createStageRecorder(deps: StageRecorderDeps): StageRecorder {
@@ -56,7 +70,7 @@ export function createStageRecorder(deps: StageRecorderDeps): StageRecorder {
     session = null;
   };
 
-  const stopRecording = async (): Promise<Blob | null> => {
+  const stopRecording = async (): Promise<StageRecordStopResult | null> => {
     if (!recording) return null;
     recording = false;
     generation += 1;
@@ -67,26 +81,27 @@ export function createStageRecorder(deps: StageRecorderDeps): StageRecorder {
     }
 
     const elapsedMs = startedAt ? performance.now() - startedAt : 0;
+    const duration_ms = Math.max(0, Math.round(elapsedMs));
     const active = encoder;
     encoder = null;
     cleanupSession();
 
     if (!active) {
-      logRecord("stop", { elapsedMs: Math.round(elapsedMs), blobBytes: 0 });
-      return null;
+      logRecord("stop", { elapsedMs: duration_ms, blobBytes: 0 });
+      return { blob: null, duration_ms };
     }
 
     const blob = await active.stop();
     const sec = elapsedMs / 1000;
     logRecord("stop", {
-      elapsedMs: Math.round(elapsedMs),
+      elapsedMs: duration_ms,
       mimeType: blob?.type ?? active.mimeType,
       blobBytes: blob?.size ?? 0,
       chunks: active.chunkCount,
       avgMbps: blob && sec > 0 ? Number(((blob.size * 8) / sec / 1e6).toFixed(2)) : null,
       targetMbps: VIDEO_BITRATE / 1e6,
     });
-    return blob;
+    return { blob, duration_ms };
   };
 
   return {
@@ -95,9 +110,13 @@ export function createStageRecorder(deps: StageRecorderDeps): StageRecorder {
     },
 
     async start() {
-      if (recording) return true;
+      if (recording) return { ok: true };
       const stage = deps.getStage();
-      if (!stage) return false;
+      if (!stage) return { ok: false, reason: "unsupported" };
+
+      if (!canUseRegionCapture()) {
+        return { ok: false, reason: "unsupported" };
+      }
 
       recording = true;
       generation += 1;
@@ -110,7 +129,7 @@ export function createStageRecorder(deps: StageRecorderDeps): StageRecorder {
       const opened = await openStageCapture(stage, CAPTURE_FRAME_RATE);
       if (!recording || gen !== generation) {
         opened?.stop();
-        return false;
+        return { ok: false, reason: "aborted" };
       }
 
       if (!opened) {
@@ -119,28 +138,28 @@ export function createStageRecorder(deps: StageRecorderDeps): StageRecorder {
           reason: "capture-unavailable-or-denied",
           openMs: Math.round(performance.now() - openStarted),
         });
-        return false;
+        return { ok: false, reason: "denied" };
       }
 
       session = opened;
       await settleBeforeEncode(stage);
       if (!recording || gen !== generation) {
         cleanupSession();
-        return false;
+        return { ok: false, reason: "aborted" };
       }
 
       encoder = createStreamEncoder(opened.stream);
       encoder.start();
       startedAt = performance.now();
 
-      const track = opened.stream.getVideoTracks()[0];
-      const settings = track?.getSettings() as MediaTrackSettings | undefined;
+      const mediaTrack = opened.stream.getVideoTracks()[0];
+      const settings = mediaTrack?.getSettings() as MediaTrackSettings | undefined;
       logRecord("start", {
         openMs: Math.round(performance.now() - openStarted),
         mimeType: encoder.mimeType,
         videoBitsPerSecond: VIDEO_BITRATE,
         captureFps: CAPTURE_FRAME_RATE,
-        track: track
+        track: mediaTrack
           ? {
               width: settings?.width ?? null,
               height: settings?.height ?? null,
@@ -151,13 +170,16 @@ export function createStageRecorder(deps: StageRecorderDeps): StageRecorder {
 
       timeoutId = setTimeout(() => {
         if (recording && gen === generation) {
-          void stopRecording().then((blob) => {
-            deps.onAutoStop?.(blob);
+          void stopRecording().then((result) => {
+            deps.onAutoStop?.({
+              blob: result?.blob ?? null,
+              duration_ms: result?.duration_ms ?? 0,
+            });
           });
         }
       }, MAX_RECORD_MS);
 
-      return true;
+      return { ok: true };
     },
 
     stop: stopRecording,

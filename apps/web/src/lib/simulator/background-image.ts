@@ -1,5 +1,7 @@
 // custom background photos are resized client-side and held as blob: urls on the host stage.
 
+import type { CustomBackgroundFailReason } from "@/lib/analytics/events";
+
 const DISPLAY_EDGE = 2400;
 const DISPLAY_QUALITY = 0.78;
 // custom uploads get a dedicated thumb blob; preset swatches use pre-built thumb webp assets.
@@ -7,17 +9,35 @@ const THUMB_EDGE = 96; // 2× the 48px picker swatch (size-12) for retina
 const THUMB_QUALITY = 0.75;
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
+export class CustomBackgroundError extends Error {
+  readonly reason: CustomBackgroundFailReason;
+
+  constructor(reason: CustomBackgroundFailReason, message: string) {
+    super(message);
+    this.name = "CustomBackgroundError";
+    this.reason = reason;
+  }
+}
+
+export function customBackgroundFailReason(error: unknown): CustomBackgroundFailReason {
+  if (error instanceof CustomBackgroundError) return error.reason;
+  return "processing";
+}
+
 async function encodeJpeg(bitmap: ImageBitmap, width: number, height: number, quality: number) {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Could not process image");
+  if (!ctx) throw new CustomBackgroundError("processing", "Could not process image");
   ctx.drawImage(bitmap, 0, 0, width, height);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
-      (next) => (next ? resolve(next) : reject(new Error("Could not compress image"))),
+      (next) =>
+        next
+          ? resolve(next)
+          : reject(new CustomBackgroundError("processing", "Could not compress image")),
       "image/jpeg",
       quality,
     );
@@ -52,13 +72,22 @@ export async function prepareCustomBackgroundImage(file: File): Promise<{
   thumbUrl: string;
 }> {
   if (file.size > MAX_UPLOAD_BYTES) {
-    throw new Error(`Image must be under ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB`);
+    throw new CustomBackgroundError(
+      "size",
+      `Image must be under ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB`,
+    );
   }
   if (!file.type.startsWith("image/")) {
-    throw new Error("File must be an image");
+    throw new CustomBackgroundError("type", "File must be an image");
   }
 
-  const bitmap = await createImageBitmap(file);
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new CustomBackgroundError("processing", "Could not decode image");
+  }
+
   try {
     const [displayBlob, thumbBlob] = await Promise.all([
       compressBitmapForDisplay(bitmap),

@@ -17,7 +17,7 @@ export function ScreenshotButton({ className }: { className?: string }) {
 
   const onClick = () => {
     if (canCapture) {
-      void captureDisplay();
+      void captureDisplay("button");
       return;
     }
     if (showWelcome) {
