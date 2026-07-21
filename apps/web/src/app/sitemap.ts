@@ -15,7 +15,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
 
   const staticEntries: MetadataRoute.Sitemap = [
-    entry(base),
     entry(`${base}/simulator`),
     entry(`${base}/apps`),
     entry(`${base}/apps/categories`),
