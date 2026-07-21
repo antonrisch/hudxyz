@@ -12,7 +12,7 @@ export function SubmitAppLink({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const href = "/apps/submit";
+  const href = "/hubs/submit";
 
   // Full navigation when already on submit — clears confirmation state and ?id= draft links.
   if (pathname === href) {

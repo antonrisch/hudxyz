@@ -91,7 +91,7 @@ export function UrlBar({
   const selectViewAll = () => {
     clearSelection();
     (document.activeElement as HTMLElement | null)?.blur();
-    router.push("/apps");
+    router.push("/hubs");
   };
 
   const hasSuggestions = recents.length > 0 || suggestedApps.length > 0;

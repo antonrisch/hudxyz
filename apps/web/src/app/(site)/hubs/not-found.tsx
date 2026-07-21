@@ -10,10 +10,10 @@ export default function AppsNotFound() {
         That app, category, or collection isn’t in the directory — or it isn’t published yet.
       </p>
       <div className="flex flex-wrap gap-2">
-        <Link href="/apps" className={buttonVariants({ variant: "default" })}>
+        <Link href="/hubs" className={buttonVariants({ variant: "default" })}>
           Browse apps
         </Link>
-        <Link href="/apps/submit" className={buttonVariants({ variant: "outline" })}>
+        <Link href="/hubs/submit" className={buttonVariants({ variant: "outline" })}>
           Submit an app
         </Link>
       </div>

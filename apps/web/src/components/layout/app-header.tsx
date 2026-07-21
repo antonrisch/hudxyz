@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 const SITE_NAV = [
   { label: "Simulator", href: "/simulator" },
-  { label: "Apps and games", href: "/apps" },
+  { label: "Hubs Directory", href: "/hubs" },
 ] as const;
 
 export function AppHeader() {
@@ -30,7 +30,7 @@ export function AppHeader() {
         <div className="ml-auto flex shrink-0 items-center gap-3">
           <SearchCommand />
           <SubmitAppLink className={cn(buttonVariants({ variant: "brand" }), "shrink-0")}>
-            Submit App
+            Submit Hub
           </SubmitAppLink>
         </div>
       </div>

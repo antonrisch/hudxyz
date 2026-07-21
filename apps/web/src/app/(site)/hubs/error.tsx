@@ -26,7 +26,7 @@ export default function AppsError({
         <Button type="button" onClick={reset}>
           Try again
         </Button>
-        <Link href="/apps" className={buttonVariants({ variant: "outline" })}>
+        <Link href="/hubs" className={buttonVariants({ variant: "outline" })}>
           Back to apps
         </Link>
       </div>

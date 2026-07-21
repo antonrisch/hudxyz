@@ -42,8 +42,8 @@ const marketingHeaders = [
 
 const marketingRoutes = [
   "/",
-  "/apps",
-  "/apps/:path*",
+  "/hubs",
+  "/hubs/:path*",
   "/padme",
   "/padme/:path*",
   "/privacy",
@@ -62,6 +62,14 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+  },
+  async redirects() {
+    return [
+      { source: "/apps", destination: "/hubs", permanent: true },
+      { source: "/apps/submit", destination: "/hubs/submit", permanent: true },
+      { source: "/apps/submit/:path*", destination: "/hubs/submit/:path*", permanent: true },
+      { source: "/apps/:path*", destination: "/hubs", permanent: true },
+    ];
   },
   async headers() {
     return [

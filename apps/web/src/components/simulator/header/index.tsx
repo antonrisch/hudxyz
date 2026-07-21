@@ -21,7 +21,7 @@ export function SimulatorHeader({ suggestedApps }: { suggestedApps: SuggestedApp
         <div className="flex items-center gap-5 justify-self-start">
           <Logo />
           <nav className="hidden items-center sm:flex">
-            <Link href="/apps" className={cn(buttonVariants({ variant: "outline", size: "lg" }))}>
+            <Link href="/hubs" className={cn(buttonVariants({ variant: "outline", size: "lg" }))}>
               <LayoutGrid
                 fill="currentColor"
                 data-icon="inline-start"
