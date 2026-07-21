@@ -32,7 +32,7 @@ const APP_REVEAL_MS = 300;
 // the frames svg off it decoratively, so glasses ≡ 1:1 at a smaller default zoom). the
 // iframe stays the same element across views/modes/zoom.
 export function Device() {
-  const { iframeRef, displayRef, panZoom, store, urlInputRef, syncAdditive, isRecording } =
+  const { iframeRef, displayRef, panZoom, store, urlInputRef, syncAdditive, isRecording, reload } =
     useSimulator();
   const view = useSimulatorState((s) => s.view);
   const screen = useSimulatorState((s) => s.screen);
@@ -176,7 +176,7 @@ export function Device() {
             <div className="absolute inset-0 flex flex-col justify-end bg-background/10 backdrop-blur-md">
               <div className="flex justify-center gap-2 p-3">
                 {[
-                  { Icon: RotateCw, label: "Reload", onClick: () => store.getState().reload() },
+                  { Icon: RotateCw, label: "Reload", onClick: () => reload("settings") },
                   { Icon: Home, label: "Home", onClick: () => store.getState().setScreen("home") },
                   {
                     Icon: LayoutGrid,

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Glasses } from "lucide-react";
+import { Glasses } from "lucide-react";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 
-import { Copy } from "@/components/icons/copy";
-import { useSimulatorState } from "@/components/simulator";
+import { CopyLinkRow } from "@/components/copy-link-row";
+import { useSimulator, useSimulatorState } from "@/components/simulator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,16 +18,36 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { track } from "@/lib/analytics/track";
+import { readProxiedDocumentTitle } from "@/lib/simulator/app-load";
 import type { SuggestedHub } from "@/lib/simulator/config";
 import { dropFocus } from "@/lib/simulator/input";
 import { buildDeviceSetupDeepLink, normalizeWebUrl } from "@/lib/simulator/search-params";
+import { suggestedHubNameForUrl } from "@/lib/simulator/suggested-hubs";
+import { useCopyToClipboard } from "@/lib/use-copy-to-clipboard";
 import { useMobileLayout } from "@/lib/use-mobile-layout";
 import { cn } from "@/lib/utils";
 
-function suggestedHubNameForUrl(rawUrl: string, suggestedHubs: SuggestedHub[]): string {
+function hostnameLabel(rawUrl: string): string {
   const href = normalizeWebUrl(rawUrl);
   if (!href) return "";
-  return suggestedHubs.find((hub) => normalizeWebUrl(hub.url) === href)?.name ?? "";
+  try {
+    return new URL(href).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function resolveOpeningAppName(
+  iframe: HTMLIFrameElement | null,
+  url: string,
+  suggestedHubs: SuggestedHub[],
+): string {
+  return (
+    readProxiedDocumentTitle(iframe) ||
+    suggestedHubNameForUrl(url, suggestedHubs) ||
+    hostnameLabel(url)
+  );
 }
 
 export function OpenOnGlasses({
@@ -38,10 +58,11 @@ export function OpenOnGlasses({
   suggestedHubs: SuggestedHub[];
 }) {
   const isMobile = useMobileLayout();
+  const { iframeRef } = useSimulator();
   const url = useSimulatorState((s) => s.url);
   const [open, setOpen] = useState(false);
   const [appName, setAppName] = useState("");
-  const [copied, setCopied] = useState(false);
+  const { copied, copy, resetCopied } = useCopyToClipboard();
 
   const deviceDeepLink = buildDeviceSetupDeepLink(appName, url);
 
@@ -50,14 +71,9 @@ export function OpenOnGlasses({
       toast.message("Enter an app name and URL first");
       return;
     }
-    try {
-      await navigator.clipboard.writeText(deviceDeepLink);
-      setCopied(true);
-      toast.message("Link copied");
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Could not copy link");
-    }
+    const has_url = Boolean(normalizeWebUrl(url));
+    const ok = await copy(deviceDeepLink);
+    track(ok ? "device_setup_link_copied" : "device_setup_link_copy_failed", { has_url });
   };
 
   return (
@@ -65,8 +81,13 @@ export function OpenOnGlasses({
       open={open}
       onOpenChange={(nextOpen) => {
         if (nextOpen) {
-          setAppName(suggestedHubNameForUrl(url, suggestedHubs));
-          setCopied(false);
+          const prefilled = resolveOpeningAppName(iframeRef.current, url, suggestedHubs);
+          setAppName(prefilled);
+          resetCopied();
+          track("open_on_glasses_opened", {
+            has_url: Boolean(normalizeWebUrl(url)),
+            app_name_prefilled: prefilled.length > 0,
+          });
         }
         setOpen(nextOpen);
       }}
@@ -122,26 +143,13 @@ export function OpenOnGlasses({
           </p>
         )}
 
-        <div className="flex min-w-0 items-center gap-2">
-          <Input
-            readOnly
-            value={deviceDeepLink ?? ""}
-            placeholder="fb-viewapp://…"
-            aria-label="Device setup link"
-            className="min-w-0 font-mono text-xs"
-            onFocus={(e) => e.currentTarget.select()}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            disabled={!deviceDeepLink}
-            aria-label={copied ? "Copied" : "Copy link"}
-            onClick={() => void copyLink()}
-          >
-            {copied ? <Check /> : <Copy />}
-          </Button>
-        </div>
+        <CopyLinkRow
+          value={deviceDeepLink ?? ""}
+          copied={copied}
+          disabled={!deviceDeepLink}
+          onCopy={() => void copyLink()}
+          valueClassName="font-mono text-xs"
+        />
       </PopoverContent>
     </Popover>
   );
