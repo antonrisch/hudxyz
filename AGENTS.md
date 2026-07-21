@@ -4,9 +4,9 @@ Guidance for AI agents when working in this repo.
 
 ## What this is
 
-A browser-based **simulator for the Meta Ray-Ban Display** (MRBD) — a monocular waveguide smart-glasses screen — plus a public **apps directory** and **submit** flow for MRBD web apps. The simulator loads real apps in a faithful **600×600** surface on an ordinary desktop browser and drives them with the glasses' D-pad input model, so MRBD apps can be built and previewed without the hardware.
+A browser-based **simulator for the Meta Ray-Ban Display** (MRBD) — a monocular waveguide smart-glasses screen — plus a public **hub directory** and **submit** flow for MRBD developer hubs. The simulator loads real apps in a faithful **600×600** surface on an ordinary desktop browser and drives them with the glasses' D-pad input model, so MRBD apps can be built and previewed without the hardware.
 
-Single Next.js app in **`apps/web`**. pnpm monorepo, Next.js 16 (App Router) + React 19 + Tailwind v4, shadcn/ui on Base UI primitives. Node >= 22.12. Turso (SQLite) for listings; Cloudflare R2 for icons / screenshots / preview video.
+Single Next.js app in **`apps/web`**. pnpm monorepo, Next.js 16 (App Router) + React 19 + Tailwind v4, shadcn/ui on Base UI primitives. Node >= 22.12. Turso (SQLite) for hubs; Cloudflare R2 for hub logos.
 
 ## The MRBD target
 
@@ -19,7 +19,7 @@ The simulator reproduces the two things that make the device different from a no
 
 ## The simulator
 
-The simulator lives at **`/simulator`**. **`/`** permanently redirects there (params preserved). The app directory lives under **`/apps`**. `/simulator` renders the `Simulator` component (`src/components/simulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
+The simulator lives at **`/simulator`**. **`/`** permanently redirects there (params preserved). The hub directory lives under **`/hubs`**. `/simulator` renders the `Simulator` component (`src/components/simulator/`) as an SPA. A segmented control swaps the **cosmetic chrome** around one persistent device surface — the live iframe never re-mounts on a view switch, so the Scramjet frame stays attached and the proxied page keeps running:
 
 - **Glasses** — the display embedded in the right lens of a glasses-frame SVG (`src/components/simulator/frames.tsx`).
 - **1:1** — the surface at its exact 600×600 size, no scaling (`pixel` in `?mode=`).
@@ -44,66 +44,60 @@ Key files:
 
 **Prod note:** Wisp wants a persistent WebSocket host, so production runs it on a dedicated always-on box with `NEXT_PUBLIC_WISP_URL` pointing at it. Egress originates from that host, so it carries SSRF protection (hostname blacklist + port restriction) for the public deployment.
 
-## Apps directory & submit
+## Hub directory & submit
 
-Public catalog of MRBD (and later other) web apps, plus a form to list a new one.
+Public catalog of **hubs** (developer/studio entries, shadcn-registry analog), plus a form to submit a new one. Individual app listings are deferred; when they return, `apps.hubId` must be a required FK to `hubs`.
 
 **Routes**
 
-| Route                      | Purpose                                                                        |
-| -------------------------- | ------------------------------------------------------------------------------ |
-| `/apps`                    | Shelves-only hub                                                               |
-| `/apps?q=`                 | Search results (top 20, no filters; `noindex`)                                 |
-| `/apps/categories`         | Occupied categories index (apps ∪ games by slug)                               |
-| `/apps/category/{slug}`    | Category detail — collection-style grid; empty → 404                           |
-| `/apps/collections/{slug}` | Published collection / shelf detail                                            |
-| `/apps/{slug}/{publicId}`  | Canonical listing detail — resolve by **publicId**; slug is cosmetic SEO crumb |
-| `/apps/{slug}`             | Legacy → permanent redirect when exactly one published row matches             |
-| `/apps/submit`             | Draft → media upload → submit for review (`?id=` = publicId)                   |
-| `/padme`                   | Internal review queue — unlock with `/padme?secret=<REVIEW_SECRET>` (else 404) |
-| `/padme/collections`       | Collections list, hub order, create                                            |
-| `/padme/collections/[id]`  | Collection editor (editorial membership or smart filters)                      |
+| Route          | Purpose                                                                            |
+| -------------- | ---------------------------------------------------------------------------------- |
+| `/hubs`        | Flat searchable hub directory (client filter + pagination)                         |
+| `/hubs?q=`     | Same page, search query in URL                                                     |
+| `/hubs/submit` | Hub draft → logo upload → submit for review (`?id=` = publicId)                    |
+| `/padme`       | Internal hub review queue — unlock with `/padme?secret=<REVIEW_SECRET>` (else 404) |
+| `/padme/[id]`  | Hub review detail                                                                  |
 
-**Identity.** Each app has a stable **publicId** (10-char Crockford Base32, `lib/apps/public-id.ts`) used in URLs and draft deep-links, plus a **slug** derived from `name` (not unique). Prefer `listingPath(slug, publicId)` over hand-rolled paths.
+Legacy `/apps` and `/apps/*` (including old category/collection/listing paths) permanently redirect to `/hubs`.
 
-**Lifecycle.** `draft` → `pending` (submit) → `published` / `rejected` (via `/padme`). Public directory queries only `published`. Contact email is private (review only).
+**Identity.** Each hub has a stable **publicId** (10-char Crockford Base32, `lib/hubs/public-id.ts`) used in draft deep-links, plus a **slug** derived from `name` (not unique).
 
-**Submit (v1).** One page: details → media (icon required; ≤10 screenshots; optional MP4 preview) → submit. Client creates a **stub draft** on first save/upload (`POST /api/apps` `{ stub: true }`), then `PATCH /api/apps/[id]`, asset presign → R2 PUT → register, then `POST /api/apps/[id]/submit`. Mutating `/api/apps/*` requires a submit-session cookie (minted by `src/proxy.ts` on `/apps/submit` via `SUBMIT_SESSION_SECRET`) plus Vercel BotID (`checkBotId`). PRDs: `docs/prd/`.
+**Lifecycle.** `draft` → `pending` (submit) → `published` / `rejected` (via `/padme`). Public directory queries only `published`. Contact email is private (review only). `launchUrl` is required (Try → simulator). Logo is required before submit (R2).
 
-**Review (v1).** `(admin)/padme` — filtered queue + detail (edit metadata/media, approve/reject/send-back). Unlock once via `/padme?secret=<REVIEW_SECRET>` (sets signed cookie, redirects to `/padme`); missing/wrong secret → App Router **`notFound()`** on pages, **404** on `/api/padme/*`. Email notifications to submitters are **v1.1**.
+**Submit.** One page: details + logo. Client creates a **stub draft** on first save/upload (`POST /api/hubs` `{ stub: true }`), then `PATCH /api/hubs/[id]`, logo presign → R2 PUT → register, then `POST /api/hubs/[id]/submit`. Mutating `/api/hubs/*` requires a submit-session cookie (minted by `src/proxy.ts` on `/hubs/submit` via `SUBMIT_SESSION_SECRET`) plus Vercel BotID (`checkBotId`).
 
-**Collections admin (v1).** `/padme/collections` — create/reorder/publish editorial and smart shelves without a deploy. Kind is immutable after create. Membership and hub reorder use full ordered ID arrays in one transaction. Cover uploads are deferred (column exists; not rendered publicly yet). Mutations call `revalidatePath` on `/apps` and the collection detail route.
+**Review.** `(admin)/padme` — filtered hub queue + detail (edit metadata/logo, approve/reject/send-back). Unlock once via `/padme?secret=<REVIEW_SECRET>` (sets signed cookie, redirects to `/padme`); missing/wrong secret → App Router **`notFound()`** on pages, **404** on `/api/padme/*`.
 
-**Key code.** `src/lib/apps/` (draft, admin, schema, queries, browse-params, search, search-index, upload-client, asset-limits, submit-session, botid), `src/lib/collections/` (`queries.ts` public resolver + `admin.ts` Padme CRUD), `src/components/listings/`, `src/components/submit/`, `src/components/padme/` (queue, detail, collections list/editor), `src/app/api/apps/` (incl. `search`), `src/app/api/padme/` (apps + collections), R2 helpers in `src/lib/r2/`. Directory keyword search uses an FTS5 virtual table `app_search` (synced from `updateAppForAdmin`; rebuild with `pnpm db --rebuild-search`).
+**Key code.** `src/lib/hubs/` (draft, admin, queries, logo, upload-client, submit-session, botid), `src/components/directory/`, `src/components/submit/hub-submit-form.tsx`, `src/components/padme/` (queue, detail), `src/app/api/hubs/`, `src/app/api/padme/hubs/`, R2 helpers in `src/lib/r2/`. Search is client-side over published hubs (no FTS).
 
 ## Layout (`apps/web`)
 
 Application code lives under `src/`. Config, `public/`, and `scripts/` stay at the app root.
 
-- `src/app/(site)/` — marketing + directory: `/` (redirects to `/simulator`), `/apps`, `/apps/categories`, `/apps/submit`, legal; shared site header/footer.
-- `src/app/(admin)/padme/` — internal review UI (`noindex`); Apps queue + Collections admin (`?secret=` unlock).
-- `src/app/simulator/` — simulator SPA (legacy `/?…` redirects here).
-- `src/app/api/apps/` — draft/submit + asset presign/register/delete (submit-session + BotID on mutates); public `GET /api/apps/search` for header palette.
-- `src/app/api/padme/` — review list/detail + asset CRUD + collections CRUD (gated by review cookie via `src/proxy.ts`).
-- `src/components/` — `simulator/*`, `listings/*`, `submit/*`, `padme/*` (incl. collections list/editor), `layout/*` (incl. `search-command`), `ui/*` (shadcn; add with `pnpm dlx shadcn@latest add <name>`).
-- `src/lib/` — `proxy.ts` (Scramjet), `simulator/*`, `apps/*` (directory + drafts + admin + uploads + search), `collections/*` (public shelves + admin), `padme/*`, `r2/`, `utils.ts`.
-- `src/db/` — Drizzle schema + single baseline migration (Turso); FTS5 `app_search` is custom SQL in that baseline (not in `schema.ts`). Categories / collections via `pnpm db --seed`.
+- `src/app/(site)/` — marketing + directory: `/` (redirects to `/simulator`), `/hubs`, `/hubs/submit`, legal; shared site header/footer.
+- `src/app/(admin)/padme/` — internal hub review UI (`noindex`); unlock with `?secret=`.
+- `src/app/simulator/` — simulator SPA.
+- `src/app/api/hubs/` — draft/submit + logo presign/register/delete (submit-session + BotID on mutates); `GET /api/hubs/list` for header palette.
+- `src/app/api/padme/` — hub review list/detail + logo CRUD (gated by review cookie via `src/proxy.ts`).
+- `src/components/` — `simulator/*`, `directory/*`, `submit/*`, `padme/*`, `layout/*` (incl. `search-command`), `ui/*` (shadcn; add with `pnpm dlx shadcn@latest add <name>`).
+- `src/lib/` — `proxy.ts` (Scramjet), `simulator/*`, `hubs/*`, `padme/*`, `r2/`, `utils.ts`.
+- `src/db/` — Drizzle schema (`users`, `hubs`) + migrations (Turso).
 - `public/` — `sw.js` plus generated `scramjet/` + `controller/` bundles.
-- `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`, db helpers (`--rebuild-search` backfills FTS).
+- `scripts/` — `copy-proxy-assets.mjs`, `wisp-server.mjs`, db helpers.
 
 ## Deferred
 
-- **Auth + “my submissions”** — Better Auth; ownership on drafts before public exposure.
-- **Email on submit / approve / reject** — v1.1 (reviewer daily digest optional later).
-- **App preview video normalize** — v1 accepts browser-ready `video/mp4` only (`src/lib/apps/asset-limits.ts`). Later: background worker with ffprobe/ffmpeg (not App Router) to probe real dimensions/duration, transcode to H.264 MP4 +faststart, optional 600×600 square for MRBD, then write the canonical object to R2.
-- **Secondary category / multi-device catalog** — schema supports secondary category; submit UI is primary-only for v1. `targetDevice` stays a string.
+- **Auth + hub ownership** — Better Auth; wire `hubs.ownerUserId`.
+- **Email on submit / approve / reject** — v1.1.
+- **App listings under hubs** — reintroduce `apps` with required `hubId` FK; not on the flat directory until designed.
+- **Hub public detail pages** — out of scope while the directory stays one flat page.
 
 ## Doc ownership
 
-| Doc                         | Owns                                                                                                                                                   |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **`AGENTS.md` (this file)** | Product + monorepo: MRBD overview, proxy stack, **directory/submit architecture**, workspace layout, commands, styling tokens                          |
-| **`apps/web/AGENTS.md`**    | App-local only: Next.js 16 quirks, **button / link / Copy icon conventions**, **simulator state ownership**, **listing URL / submit form rules**, perf |
+| Doc                         | Owns                                                                                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`AGENTS.md` (this file)** | Product + monorepo: MRBD overview, proxy stack, **directory/submit architecture**, workspace layout, commands, styling tokens                |
+| **`apps/web/AGENTS.md`**    | App-local only: Next.js 16 quirks, **button / link / Copy icon conventions**, **simulator state ownership**, **hub submit form rules**, perf |
 
 Keep product architecture here. Keep Next/UI/state rules in `apps/web/AGENTS.md`. Do not duplicate either side.
 
@@ -132,4 +126,4 @@ Per-app: `pnpm --filter @hudxyz/web <script>`. Type-check with `pnpm --filter @h
 - `pnpm-workspace.yaml` scopes the workspace to `apps/*` and lists `allowBuilds` (esbuild / sharp / scramjet / bufferutil ship prebuilt, so they stay unbuilt).
 - **File naming:** kebab-case / lowercase for every `.ts` / `.tsx` file, components included (`simulator.tsx`, `theme-provider.tsx`, `proxy.ts`); lowercase for App Router route files (`page.tsx`). Keeps imports stable on case-sensitive build hosts (Vercel/Linux) even though macOS is case-insensitive.
 
-See `apps/web/AGENTS.md` for Next.js 16 notes, simulator state ownership, and listing URL / submit form rules.
+See `apps/web/AGENTS.md` for Next.js 16 notes, simulator state ownership, and hub submit form rules.
