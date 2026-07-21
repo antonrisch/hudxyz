@@ -86,7 +86,7 @@ export function DirectoryList({ hubs }: { hubs: HubListItem[] }) {
           }}
           aria-label="Search hubs"
         />
-        <InputGroupAddon align="inline-end">
+        <InputGroupAddon align="inline-end" className="pr-3">
           <InputGroupText className="text-muted-foreground">
             {filtered.length} {filtered.length === 1 ? "hub" : "hubs"}
           </InputGroupText>

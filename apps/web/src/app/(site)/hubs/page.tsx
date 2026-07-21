@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { DirectoryList } from "@/components/directory/directory-list";
+import { Item, ItemContent, ItemDescription } from "@/components/ui/item";
 import { listPublishedHubs } from "@/lib/hubs/queries";
 
 export const dynamic = "force-dynamic";
@@ -25,15 +26,20 @@ export default async function HubsDirectoryPage() {
       <h1 className="font-bold text-3xl tracking-tight">{COPY.title}</h1>
       <p className="mt-2 text-base text-muted-foreground">{COPY.description}</p>
 
-      <div className="mt-6 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-        Hubs are maintained by third-party developers. Always review what you open in the simulator.
-      </div>
+      <Item variant="muted" className="mt-6">
+        <ItemContent>
+          <ItemDescription className="line-clamp-none">
+            Hubs are maintained by third-party developers. Always review what you open in the
+            simulator.
+          </ItemDescription>
+        </ItemContent>
+      </Item>
 
       <p className="mt-4 text-sm text-muted-foreground">
         Don&apos;t see your hub?{" "}
         <Link
           href="/hubs/submit"
-          className="font-medium text-foreground underline-offset-4 hover:underline"
+          className="font-medium text-foreground underline underline-offset-1 decoration-muted-foreground hover:decoration-foreground"
         >
           Submit one here
         </Link>
