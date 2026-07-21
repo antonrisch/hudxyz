@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
 import { cookies } from "next/headers";
 import Simulator from "@/components/simulator";
-import { listPublishedListings } from "@/lib/apps/queries";
+import { listPublishedHubs } from "@/lib/hubs/queries";
 import { legal } from "@/lib/legal/config";
 import { SIMULATOR_TAGLINE, SIMULATOR_TITLE, type SuggestedApp } from "@/lib/simulator/config";
 import { backgroundPreloadHref, DEFAULT_BACKGROUND } from "@/lib/simulator/background";
@@ -16,15 +16,15 @@ import {
 
 async function loadSuggestedApps(): Promise<SuggestedApp[]> {
   try {
-    const listings = await listPublishedListings({ sort: "popular", limit: 5 });
-    return listings.map((listing) => ({
-      name: listing.name,
-      url: listing.launchUrl,
-      iconUrl: listing.iconUrl ?? "",
+    const hubs = await listPublishedHubs();
+    return hubs.slice(0, 5).map((hub) => ({
+      name: hub.name,
+      url: hub.launchUrl,
+      iconUrl: hub.logoUrl ?? "",
     }));
   } catch (error) {
     // Simulator should still load if Turso is unreachable.
-    console.error("Simulator suggested apps unavailable", error);
+    console.error("Simulator suggested hubs unavailable", error);
     return [];
   }
 }
