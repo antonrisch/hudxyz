@@ -8,7 +8,8 @@
     "lint": "oxlint",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db": "pnpm --filter @hudxyz/web db"
   },
   "devDependencies": {
     "husky": "^9.1.7",
