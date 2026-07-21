@@ -37,6 +37,8 @@ Fastest path when a bad deploy shipped:
 
 `NEXT_PUBLIC_*` vars are **build-time**. Rolling back does not change env; if the break was a bad env change, fix env and **Redeploy** instead.
 
+Release tags (`vX.Y.Z`) are historical records from Release Please — rollback the deploy, then ship a fix-forward patch. See [RELEASE.md](./RELEASE.md).
+
 ## Rollback / restart — Wisp (Hetzner)
 
 ```sh

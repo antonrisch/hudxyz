@@ -1,0 +1,80 @@
+name: Promote dev to main
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: promote-dev-to-main
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Open or update promotion PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure promotion PR exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_BRANCH: dev
+          BASE_BRANCH: main
+          PR_TITLE: "chore: promote dev to main"
+        run: |
+          set -euo pipefail
+
+          git fetch origin "$BASE_BRANCH" "$HEAD_BRANCH"
+
+          if git merge-base --is-ancestor "origin/$HEAD_BRANCH" "origin/$BASE_BRANCH"; then
+            echo "origin/$BASE_BRANCH already contains origin/$HEAD_BRANCH — no promotion PR needed."
+            exit 0
+          fi
+
+          existing_url="$(
+            gh pr list \
+              --base "$BASE_BRANCH" \
+              --head "$HEAD_BRANCH" \
+              --state open \
+              --json url \
+              --jq '.[0].url // empty'
+          )"
+
+          body="$(cat <<'EOF'
+          ## Summary
+          Automated promotion of `dev` into `main`.
+
+          - Merging this PR is the production deployment gate (Vercel deploys `main`).
+          - After merge, Release Please opens a version / developer-changelog PR on `main`.
+          - Customer-facing product notes are deferred (MDX docs /changelog — PRD 07).
+
+          ## Test plan
+          - [ ] Local quality gates are clean (husky / lint)
+          - [ ] Spot-check production-critical paths after merge (`/simulator`, `/hubs`)
+          EOF
+          )"
+
+          # Strip leading indentation from the heredoc for a clean PR body.
+          body="$(printf '%s\n' "$body" | sed -e 's/^          //')"
+
+          if [ -n "$existing_url" ]; then
+            echo "Promotion PR already open: $existing_url"
+            gh pr edit "$existing_url" --title "$PR_TITLE" --body "$body"
+            exit 0
+          fi
+
+          gh pr create \
+            --base "$BASE_BRANCH" \
+            --head "$HEAD_BRANCH" \
+            --title "$PR_TITLE" \
+            --body "$body"
