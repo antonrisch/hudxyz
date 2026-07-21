@@ -21,6 +21,10 @@ feature/* ──PR──> dev ──bot PR──> main ──Release Please PR�
 
 First managed product release: **`v0.1.0`** (manifest seeded at `0.0.0`).
 
+To force that first tag (instead of Release Please proposing `1.0.0` from full history),
+`release-please-config.json` may set `"release-as": "0.1.0"`. **Remove `release-as` after
+`v0.1.0` is tagged**, or every subsequent run will keep trying to release `0.1.0`.
+
 ## Conventional Commits
 
 Release Please versions from commit types on `main` (after promotion):
