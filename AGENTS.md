@@ -109,6 +109,16 @@ Tailwind v4 + the shadcn theme tokens in `src/app/globals.css` (`@theme inline` 
 - Brand accent lives in `--brand` (`#0067ff`), exposed as `bg-brand` / `text-brand`. Add custom colors the same two-step way: raw value in `:root`, then `--color-<name>: var(--<name>)` in `@theme inline`.
 - **Exception:** the 600×600 device surface is genuinely black with white-on-black overlays — the MRBD display is additive, so it stays literal `bg-black` / `text-white`, not themed.
 
+## Releases
+
+Feature PRs merge into **`dev` only**. A bot opens/updates a `dev` → `main` promotion PR; merging it deploys production (Vercel on `main`). Release Please then opens a version + developer-changelog PR on `main`; merging that creates the GitHub Release / `vX.Y.Z` tag. First managed release is **`v0.1.0`**.
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, …) so Release Please can version correctly. Root `CHANGELOG.md` is the developer log only.
+
+Public product notes (`/changelog`) and an MDX docs surface are **deferred** — see [`docs/prd/07-mdx-docs-and-changelog.md`](docs/prd/07-mdx-docs-and-changelog.md).
+
+Full procedure: [`deploy/RELEASE.md`](deploy/RELEASE.md). Branch rules / bot permissions: [`deploy/BRANCH-PROTECTION.md`](deploy/BRANCH-PROTECTION.md).
+
 ## Commands
 
 ```sh
@@ -124,6 +134,7 @@ Per-app: `pnpm --filter @hudxyz/web <script>`. Type-check with `pnpm --filter @h
 
 - pnpm workspaces throughout. Lint is **oxlint**; format is **oxfmt**.
 - `pnpm-workspace.yaml` scopes the workspace to `apps/*` and lists `allowBuilds` (esbuild / sharp / scramjet / bufferutil ship prebuilt, so they stay unbuilt).
+- **CI:** quality gates are local (husky) + Vercel preview builds. Promotion and Release Please: `.github/workflows/promote-dev.yml`, `.github/workflows/release-please.yml`.
 - **File naming:** kebab-case / lowercase for every `.ts` / `.tsx` file, components included (`simulator.tsx`, `theme-provider.tsx`, `proxy.ts`); lowercase for App Router route files (`page.tsx`). Keeps imports stable on case-sensitive build hosts (Vercel/Linux) even though macOS is case-insensitive.
 
 See `apps/web/AGENTS.md` for Next.js 16 notes, simulator state ownership, and hub submit form rules.
