@@ -19,3 +19,18 @@ export async function waitForIframePaint(
   }
   return false;
 }
+
+/**
+ * Trimmed `document.title` from a same-origin proxied iframe, or "" if unavailable / navigating.
+ * Does not parse separators or persist — callers read at the interaction boundary only.
+ */
+export function readProxiedDocumentTitle(iframe: HTMLIFrameElement | null | undefined): string {
+  if (!iframe) return "";
+  try {
+    const doc = iframe.contentDocument;
+    if (!doc || doc.readyState === "loading") return "";
+    return doc.title.trim();
+  } catch {
+    return "";
+  }
+}
