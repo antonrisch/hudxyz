@@ -47,6 +47,7 @@ import { MobileFooter } from "@/components/simulator/mobile-footer";
 import { usePanZoom, type PanZoom } from "@/components/simulator/use-pan-zoom";
 import { waitForIframePaint } from "@/lib/simulator/app-load";
 import { downloadStage } from "@/lib/simulator/capture";
+import { WATERMARK_DOM_CLASSNAME, WATERMARK_TEXT } from "@/lib/simulator/watermark";
 import { canUseRegionCapture, createStageRecorder } from "@/lib/simulator/record";
 import { track, trackOnce } from "@/lib/analytics/track";
 import { finishScreenRecordAnalytics } from "@/lib/analytics/screen-record";
@@ -813,6 +814,11 @@ export default function Simulator({
                   keepPlaying={isRecording}
                 />
                 <Device />
+                {isRecording ? (
+                  <div data-capture="watermark" aria-hidden className={WATERMARK_DOM_CLASSNAME}>
+                    {WATERMARK_TEXT}
+                  </div>
+                ) : null}
               </div>
               <div
                 className={cn(

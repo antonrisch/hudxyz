@@ -9,6 +9,7 @@ import {
 } from "@/lib/simulator/background";
 import { VIEWPORT } from "@/lib/simulator/config";
 import { captureStagePixels } from "@/lib/simulator/pixel-capture";
+import { applyWatermark } from "@/lib/simulator/watermark";
 
 const WAVEGUIDE = {
   width: VIEWPORT,
@@ -392,6 +393,8 @@ function stageChromeFilter(options: StageChromeOptions) {
   return (node: Element) => {
     if (backdrop && node === backdrop) return false;
     if (frames && node === frames) return false;
+    // Live recording watermark — stamped onto the canvas at download instead.
+    if (node.getAttribute("data-capture") === "watermark") return false;
     return true;
   };
 }
@@ -572,6 +575,8 @@ export async function captureStage(
 export async function downloadStage(target: StageCaptureTarget): Promise<void> {
   const canvas = await captureStage(target, { preferPixel: false });
   if (!canvas) return;
+
+  applyWatermark(canvas);
 
   const url = canvas.toDataURL("image/png");
   const anchor = document.createElement("a");
