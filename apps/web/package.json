@@ -11,15 +11,14 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/analytics/analytics.test.ts src/lib/apps/draft-asset-lifecycle.test.ts src/lib/apps/draft-edit-token.test.ts src/lib/legal/terms-acceptance.test.ts",
+    "test": "tsx --test src/lib/analytics/analytics.test.ts src/lib/hubs/draft-edit-token.test.ts src/lib/legal/terms-acceptance.test.ts",
     "format": "oxfmt",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "postinstall": "node scripts/copy-proxy-assets.mjs",
     "optimize-backgrounds": "node scripts/optimize-backgrounds.mjs",
     "optimize-background-video": "node scripts/optimize-background-video.mjs",
-    "db": "node scripts/db.mjs",
-    "seed:sample-media": "node scripts/seed-sample-media.mjs"
+    "db": "node scripts/db.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1084.0",
@@ -28,7 +27,6 @@
     "@better-auth/drizzle-adapter": "^1.6.23",
     "@c15t/nextjs": "^2.1.0",
     "@c15t/ui": "2.1.0",
-    "@flags-sdk/vercel": "^1.4.5",
     "@libsql/client": "^0.17.4",
     "@mercuryworkshop/libcurl-transport": "^2.0.5",
     "@mercuryworkshop/scramjet": "2.0.67-alpha.2",
@@ -47,7 +45,6 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "1.0.0-rc.4",
     "embla-carousel-react": "^8.6.0",
-    "flags": "^4.2.0",
     "lucide-react": "^1.21.0",
     "next": "16.2.6",
     "next-themes": "^0.4.6",

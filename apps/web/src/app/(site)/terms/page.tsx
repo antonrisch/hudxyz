@@ -6,7 +6,7 @@ import { legal } from "@/lib/legal/config";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "Terms governing use of the hudxyz.com Meta Ray-Ban Display simulator, apps directory, and submission flow.",
+    "Terms governing use of the hudxyz.com Meta Ray-Ban Display simulator, Hub Directory, and hub submission flow.",
   alternates: { canonical: "/terms" },
   robots: { index: true, follow: true },
 };

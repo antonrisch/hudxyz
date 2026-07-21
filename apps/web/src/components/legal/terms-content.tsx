@@ -11,29 +11,28 @@ export function TermsContent() {
       <p>
         These Terms of Service (&quot;Terms&quot;) govern your use of hudxyz.com, operated by {e}{" "}
         (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;). By using the service — including the Meta
-        Ray-Ban Display simulator, the public apps directory, and the submission flow — you agree to
-        these Terms. If you do not agree, do not use hudxyz.com.
+        Ray-Ban Display simulator, the public Hub Directory, and the hub submission flow — you agree
+        to these Terms. If you do not agree, do not use hudxyz.com.
       </p>
       <p>
         There are no general user accounts in the current version. Visiting or using the service
-        constitutes acceptance of these Terms. Submitting a listing for review also requires an
-        explicit acceptance of the then-current Terms version at submission time.
+        constitutes acceptance of these Terms. Submitting a hub for review also requires an explicit
+        acceptance of the then-current Terms version at submission time.
       </p>
 
       <h2>The service</h2>
       <p>hudxyz.com provides:</p>
       <ul>
         <li>
-          A browser-based simulator for previewing web apps in a Meta Ray-Ban Display–compatible
+          A browser-based simulator for previewing web content in a Meta Ray-Ban Display–compatible
           viewport, including a same-origin proxy so third-party pages can be framed and driven with
           D-pad input
         </li>
         <li>
-          A public directory of web apps and games, including search, categories, and curated
-          collections
+          A public Hub Directory of developer and studio hubs, including search over published hubs
         </li>
         <li>
-          A submission flow for developers to draft, upload media, and submit listings for editorial
+          A submission flow for developers to draft, upload a logo, and submit a hub for editorial
           review
         </li>
       </ul>
@@ -46,55 +45,56 @@ export function TermsContent() {
 
       <h2>Eligibility and authority to submit</h2>
       <p>
-        You may submit a listing only if you are at least 18 (or the age of majority where you live)
-        and have authority to grant the rights in these Terms for the app, metadata, and media you
+        You may submit a hub only if you are at least 18 (or the age of majority where you live) and
+        have authority to grant the rights in these Terms for the hub, metadata, and logo you
         provide. If you submit on behalf of an organisation, you represent that you are authorised
         to bind that organisation.
       </p>
 
-      <h2>Directory submissions</h2>
+      <h2>Hub submissions</h2>
       <p>
-        When you submit a listing, you retain ownership of your app, brand assets, and original
-        content. You grant {e} a worldwide, non-exclusive, royalty-free licence to host, reproduce,
-        resize, cache, display, distribute, and promote the listing metadata and media (including
-        icons, screenshots, and preview video) in connection with operating, showcasing, and
-        marketing the hudxyz.com directory and simulator.
+        When you submit a hub, you retain ownership of your brand assets and original content. You
+        grant {e} a worldwide, non-exclusive, royalty-free licence to host, reproduce, resize,
+        cache, display, distribute, and promote the hub metadata and logo in connection with
+        operating, showcasing, and marketing the hudxyz.com Hub Directory and simulator.
       </p>
       <p>You represent and warrant that:</p>
       <ul>
         <li>The information you provide is accurate and not misleading</li>
         <li>
-          You own or have all rights needed for the app URL, name, description, branding, icons,
-          screenshots, video, and any third-party material included
+          You own or have all rights needed for the name, homepage, launch URL, description,
+          branding, logo, and any third-party material included
         </li>
         <li>
-          The listing and linked app do not infringe intellectual property, privacy, publicity, or
+          The hub and linked sites do not infringe intellectual property, privacy, publicity, or
           other rights; do not contain malware or harmful code; and do not violate applicable law
         </li>
         <li>
-          The linked app is reasonably suitable for the stated target device and does not primarily
+          The launch URL is reasonably suitable for the stated target device and does not primarily
           promote illegal, abusive, or deceptive activity
         </li>
       </ul>
       <p>
         Contact email collected at submission is private and used for review and operational
-        communication about that listing. It is not shown on public directory pages.
+        communication about that hub. It is not shown on public directory pages.
       </p>
 
-      <h2>Editorial review and listing standards</h2>
+      <h2>Editorial review and hub standards</h2>
       <p>
-        Submissions are reviewed before publication. We may categorise, feature, edit metadata for
-        clarity or safety, reject, correct, suspend, unpublish, or remove listings at our discretion
-        — including for quality, safety, legal risk, trademark conflict, inactivity, or breach of
-        these Terms. Publication does not create an endorsement or partnership.
+        Submissions are reviewed before publication (including via our internal Padme review tools).
+        We may edit metadata for clarity or safety, reject, correct, suspend, unpublish, or remove
+        hubs at our discretion — including for quality, safety, legal risk, trademark conflict,
+        inactivity, or breach of these Terms. Publication does not create an endorsement or
+        partnership.
       </p>
 
-      <h2>Third-party apps and content</h2>
+      <h2>Third-party hubs and content</h2>
       <p>
-        Directory listings and simulator targets are third-party products. We do not operate those
-        apps, do not guarantee their availability or safety, and are not responsible for their
-        content, privacy practices, or terms. You interact with third-party apps at your own risk.
-        The simulator is a development and preview tool, not a general-purpose anonymous browser.
+        Directory hubs and simulator targets are third-party products maintained by their developers
+        or studios. We do not operate those sites, do not guarantee their availability or safety,
+        and are not responsible for their content, privacy practices, or terms. You should review
+        what you open in the simulator. You interact with third-party content at your own risk. The
+        simulator is a development and preview tool, not a general-purpose anonymous browser.
       </p>
 
       <h2>Acceptable use</h2>
@@ -108,15 +108,15 @@ export function TermsContent() {
         </li>
         <li>Impersonate others, commit fraud, harass others, or phish</li>
         <li>
-          Submit listings you do not have rights to, or use the directory to distribute malware or
+          Submit hubs you do not have rights to, or use the directory to distribute malware or
           deceptive software
         </li>
       </ul>
-      <p>We may block URLs, addresses, listings, or usage patterns at our discretion.</p>
+      <p>We may block URLs, addresses, hubs, or usage patterns at our discretion.</p>
 
       <h2>Intellectual property and takedowns</h2>
       <p>
-        If you believe a listing or content on hudxyz.com infringes your rights, contact{" "}
+        If you believe a hub or content on hudxyz.com infringes your rights, contact{" "}
         <a href={`mailto:${contact}`}>{contact}</a> with enough detail for us to identify the
         material and respond. We may remove or disable access to content while we investigate.
       </p>
@@ -141,9 +141,8 @@ export function TermsContent() {
       <h2>Disclaimers</h2>
       <p>
         hudxyz.com is provided &quot;as is&quot; and &quot;as available&quot;. We do not warrant
-        uninterrupted, error-free, or secure operation; that any particular site or listing will
-        load correctly; or that directory content is complete, current, or fit for a particular
-        purpose.
+        uninterrupted, error-free, or secure operation; that any particular site or hub will load
+        correctly; or that directory content is complete, current, or fit for a particular purpose.
       </p>
 
       <h2>Liability</h2>
@@ -167,8 +166,8 @@ export function TermsContent() {
 
       <h2>Termination</h2>
       <p>
-        We may suspend or terminate access, remove listings, or refuse submissions if you breach
-        these Terms, pose a security or legal risk, or if we discontinue the service.
+        We may suspend or terminate access, remove hubs, or refuse submissions if you breach these
+        Terms, pose a security or legal risk, or if we discontinue the service.
       </p>
 
       <h2>Governing law</h2>

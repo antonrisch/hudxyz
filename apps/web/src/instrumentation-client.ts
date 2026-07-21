@@ -7,14 +7,12 @@ import "@/lib/sentry/client";
 
 initBotId({
   protect: [
-    { path: "/api/apps", method: "POST" },
-    { path: "/api/apps/*", method: "PATCH" },
-    { path: "/api/apps/*/submit", method: "POST" },
-    { path: "/api/apps/metadata", method: "POST" },
-    { path: "/api/apps/assets/presign", method: "POST" },
-    { path: "/api/apps/assets", method: "POST" },
-    { path: "/api/apps/assets/import", method: "POST" },
-    { path: "/api/apps/assets/*", method: "DELETE" },
+    { path: "/api/hubs", method: "POST" },
+    { path: "/api/hubs/*", method: "PATCH" },
+    { path: "/api/hubs/*/submit", method: "POST" },
+    { path: "/api/hubs/logo/presign", method: "POST" },
+    { path: "/api/hubs/logo", method: "POST" },
+    { path: "/api/hubs/logo", method: "DELETE" },
   ],
 });
 

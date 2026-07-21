@@ -8,44 +8,45 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Doc ownership (root vs `apps/web`)
 
-| Doc                                  | Owns                                                                                                                                                              |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`/AGENTS.md` (repo root)**         | Product + monorepo: MRBD, proxy/Scramjet, **directory/submit architecture**, workspace layout, commands, styling tokens                                           |
-| **`apps/web/AGENTS.md` (this file)** | App-local: Next.js 16 quirks, **button / link / Copy icon conventions**, **simulator state ownership**, **listing URL / submit form rules**, web-only performance |
+| Doc                                  | Owns                                                                                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`/AGENTS.md` (repo root)**         | Product + monorepo: MRBD, proxy/Scramjet, **hub directory / submit architecture**, workspace layout, commands, styling tokens                           |
+| **`apps/web/AGENTS.md` (this file)** | App-local: Next.js 16 quirks, **button / link / Copy icon conventions**, **simulator state ownership**, **hub submit form rules**, web-only performance |
 
 Do not duplicate long product architecture here — link or one-line point to root. Do not put Next/shadcn/slider/state rules in root.
 
 ---
 
-## Listing URLs
+## Hub directory
 
-Canonical detail path is `/apps/{slug}/{publicId}` via `listingPath` in `src/lib/apps/public-id.ts`.
+Public browse is a single flat page at `/hubs` (shadcn Registry Directory style). Client search + pagination via nuqs (`?q=` / `?page=`). No detail/category/collection routes — legacy paths redirect to `/hubs`.
 
-| Concern             | Owner                    | Rules                                                                                                                    |
-| ------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| **Stable identity** | `publicId`               | Resolve published detail with `getPublishedListingByPublicId`. Never key public routes on slug alone.                    |
-| **SEO crumb**       | `slug`                   | Derived from `name` (`slugifyName`); not unique. If the path slug ≠ row slug, `permanentRedirect` to the canonical path. |
-| **Browse routes**   | static segments          | `/apps/category/*`, `/apps/categories`, and `/apps/collections/*` are reserved — not legacy slug redirects.              |
-| **Legacy links**    | `/apps/[slug]`           | Redirect only when exactly one published row matches; otherwise 404.                                                     |
-| **Draft deep-link** | `?id=` on `/apps/submit` | Public id (Crockford), not internal uuid. Asset/draft APIs accept either and resolve to internal `apps.id` for R2 keys.  |
+| Concern             | Owner                        | Rules                                                                                  |
+| ------------------- | ---------------------------- | -------------------------------------------------------------------------------------- |
+| **Stable identity** | `publicId`                   | 10-char Crockford (`lib/hubs/public-id.ts`). Draft deep-link `?id=` on `/hubs/submit`. |
+| **Slug**            | derived from `name`          | Not unique; not used in public browse URLs.                                            |
+| **Try**             | `launchUrl` (required)       | Row action → `/simulator?url=…`.                                                       |
+| **Logo**            | R2 `logoObjectKey` on `hubs` | Presign → PUT → register (`lib/hubs/upload-client.ts`).                                |
 
-Directory UI: `src/components/listings/`. Listing queries: `src/lib/apps/queries.ts`. Search: `src/lib/apps/search.ts` + FTS `app_search` (`search-index.ts`; `pnpm db --rebuild-search`). Shelves: `src/lib/collections/queries.ts` (public) + `admin.ts` (Padme CRUD; cover uploads deferred). Browse URL helpers: `src/lib/apps/browse-params.ts`. Header palette: `src/components/layout/search-command.tsx`. Padme collections: `/padme/collections` + `/api/padme/collections/*`.
+Directory UI: `src/components/directory/`. Queries: `src/lib/hubs/queries.ts`. Header palette: `src/components/layout/search-command.tsx` (client filter over `GET /api/hubs/list`).
+
+**Future:** when app listings return, `apps.hubId` MUST be `NOT NULL` → `hubs(id)`.
 
 ---
 
-## Submit form
+## Hub submit form
 
-`/apps/submit` — one page, progressive: details → media → submit. Product overview in root `AGENTS.md`; form mechanics here.
+`/hubs/submit` — name, homepage, launch URL, contact email, description (optional), logo. Product overview in root `AGENTS.md`.
 
-| Concern        | Rule                                                                                                                                                                                                                 |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Stub draft** | Create lazily on first save or upload (`POST /api/apps` `{ stub: true }`). Do **not** create on mount (avoids bounce DB rows). Deduplicate in-flight create with a promise ref.                                      |
-| **Autosave**   | Blur/save when Zod `submitFormValuesSchema` passes → `PATCH /api/apps/[id]`. Quiet (no success toast); submit surfaces errors.                                                                                       |
-| **Media**      | Shared `Attachment` UI (`src/components/ui/attachment.tsx`) for icon / screenshots / video. Upload path: validate → presign → R2 PUT → register (`src/lib/apps/upload-client.ts`). Register only after PUT succeeds. |
-| **Submit**     | Requires valid details + ready icon; then persist draft + `POST …/submit` → confirmation.                                                                                                                            |
-| **Form lib**   | TanStack Form + Zod (`draft-schema.ts`). Type the form as `SubmitFormApi` — do not pass `form: any`.                                                                                                                 |
+| Concern        | Rule                                                                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stub draft** | Create lazily on first save or upload (`POST /api/hubs` `{ stub: true }`). Do **not** create on mount. Deduplicate in-flight create with a promise ref. |
+| **Autosave**   | Blur when Zod `submitHubFormValuesSchema` passes → `PATCH /api/hubs/[id]`. Quiet (no success toast).                                                    |
+| **Logo**       | validate → presign → R2 PUT → register (`lib/hubs/upload-client.ts`).                                                                                   |
+| **Submit**     | Valid details + ready logo → `POST …/submit` → confirmation.                                                                                            |
+| **Form lib**   | TanStack Form + Zod (`lib/hubs/draft-schema.ts`).                                                                                                       |
 
-Key files: `src/components/submit/*`, `src/lib/apps/draft.ts`, `draft-schema.ts`, `upload-client.ts`, `api-error.ts`.
+Key files: `src/components/submit/hub-submit-form.tsx`, `src/lib/hubs/draft.ts`, `upload-client.ts`, `api-error.ts`.
 
 ---
 
@@ -106,7 +107,7 @@ The button tightens padding on the icon side via `has-data-[icon=inline-start]:p
 
 ### Copy icon
 
-Use the shared rotated Copy from `@/components/icons/copy` — **not** `lucide-react`'s `Copy` — so clipboard affordances match across listing, submit, and simulator:
+Use the shared rotated Copy from `@/components/icons/copy` — **not** `lucide-react`'s `Copy` — so clipboard affordances match across submit and simulator:
 
 ```tsx
 import { Copy } from "@/components/icons/copy";
@@ -124,19 +125,9 @@ Style navigation / external links like buttons with `buttonVariants()` + `classN
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 
-<Link href="/apps/submit" className={buttonVariants({ variant: "brand", size: "lg" })}>
+<Link href="/hubs/submit" className={buttonVariants({ variant: "brand", size: "lg" })}>
   Submit
-</Link>
-
-<a
-  href={url}
-  target="_blank"
-  rel="noopener noreferrer"
-  className={buttonVariants({ variant: "outline" })}
->
-  <Glasses data-icon="inline-start" />
-  Preview in simulator
-</a>
+</Link>;
 ```
 
 For custom hit targets that only need a button-looking chip (e.g. copy-link row), put `buttonVariants(...)` on an inner `<span>` with `pointer-events-none` and keep the real interaction on the outer control.

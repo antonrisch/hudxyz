@@ -12,7 +12,7 @@ import {
   mintSubmitSessionValue,
   submitSessionCookieOptions,
   verifySubmitSessionValue,
-} from "@/lib/apps/submit-session";
+} from "@/lib/hubs/submit-session";
 
 /**
  * Padme unlock + API gate.
@@ -20,12 +20,12 @@ import {
  * Page routes without a cookie pass through so the App Router can `notFound()`.
  * `/api/padme/*` without a cookie → 404.
  *
- * Also mints the anon submit-session cookie on `/apps/submit`.
+ * Also mints the anon submit-session cookie on `/hubs/submit`.
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname === "/apps/submit" || pathname.startsWith("/apps/submit/")) {
+  if (pathname === "/hubs/submit" || pathname.startsWith("/hubs/submit/")) {
     return mintSubmitSessionIfNeeded(request);
   }
 
@@ -108,7 +108,7 @@ export const config = {
     "/padme/:path*",
     "/api/padme",
     "/api/padme/:path*",
-    "/apps/submit",
-    "/apps/submit/:path*",
+    "/hubs/submit",
+    "/hubs/submit/:path*",
   ],
 };

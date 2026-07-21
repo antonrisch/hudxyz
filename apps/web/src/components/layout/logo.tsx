@@ -28,7 +28,7 @@ export function Logo({
           !showWordmarkOnMobile && "hidden sm:inline",
         )}
       >
-        hudxyz
+        hud.xyz
       </span>
     </Link>
   );
