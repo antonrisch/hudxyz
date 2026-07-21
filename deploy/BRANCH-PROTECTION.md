@@ -37,6 +37,14 @@ If a bot-authored PR does not trigger required CI checks (GitHub’s default for
 PRs), create a fine-grained PAT or GitHub App with `contents` + `pull-requests` write, store it
 as `RELEASE_PLEASE_TOKEN` / `PROMOTE_TOKEN`, and point the workflows at that secret.
 
+Also enable **Settings → Actions → General → Workflow permissions**:
+
+- Read and write permissions
+- Allow GitHub Actions to create and approve pull requests
+
+Without that checkbox, `promote-dev.yml` fails with
+`GitHub Actions is not permitted to create or approve pull requests`.
+
 ## Verification checklist
 
 1. Merge a conventional-commit feature PR into `dev`.
