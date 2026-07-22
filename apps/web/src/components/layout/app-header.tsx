@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 const SITE_NAV = [
   { label: "Simulator", href: "/simulator" },
-  { label: "Hubs Directory", href: "/hubs" },
+  { label: "Directory", href: "/hubs" },
 ] as const;
 
 export function AppHeader() {
