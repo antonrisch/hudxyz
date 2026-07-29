@@ -61,7 +61,7 @@ Storage: Cloudflare R2; keys via `lib/apps/asset-keys.ts`; public host `R2_PUBLI
 - [ ] Cannot submit without name, slug, launchUrl, categories, icon
 - [ ] Screenshot cap and single preview enforced
 - [ ] Failed R2 PUT does not leave a registered DB row (register only after PUT succeeds)
-- [ ] Works against dev bucket (`assets-kenobi` / env) and prod bucket via env only
+- [ ] Works against dev bucket (`assets-dev` / env) and prod bucket via env only
 
 ## Deferred
 

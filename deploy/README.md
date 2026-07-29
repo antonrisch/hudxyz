@@ -2,7 +2,7 @@
 
 The Scramjet proxy needs a Wisp server to make the outbound requests (browsers can't open raw sockets). It can't run on Vercel (no persistent WebSocket), so it runs on an always-on host behind nginx TLS.
 
-Live on **`kenobi.hudbox.dev`**: wisp on `127.0.0.1:4000`, nginx terminates TLS and proxies `wss://kenobi.hudbox.dev/wisp/` to it.
+Example host **`wisp.example.com`**: wisp on `127.0.0.1:4000`, nginx terminates TLS and proxies `wss://wisp.example.com/wisp/` to it. Replace with your real hostname, SSH user, and paths.
 
 App release / promotion flow (dev → main, Release Please): [RELEASE.md](./RELEASE.md). Branch rules: [BRANCH-PROTECTION.md](./BRANCH-PROTECTION.md). Incidents: [RUNBOOK.md](./RUNBOOK.md). Public MDX docs/changelog: deferred — [`docs/prd/07-mdx-docs-and-changelog.md`](../docs/prd/07-mdx-docs-and-changelog.md).
 
@@ -24,9 +24,9 @@ browser ──wss──> nginx (:443 TLS) ──> 127.0.0.1:4000 (wisp) ──> 
 **2. App**
 
 ```sh
-ssh anton@kenobi.hudbox.dev 'mkdir -p ~/wisp'
-scp apps/web/scripts/wisp-server.mjs deploy/wisp/package.json anton@kenobi.hudbox.dev:~/wisp/
-ssh anton@kenobi.hudbox.dev 'cd ~/wisp && npm install'
+ssh deploy@wisp.example.com 'mkdir -p ~/wisp'
+scp apps/web/scripts/wisp-server.mjs deploy/wisp/package.json deploy@wisp.example.com:~/wisp/
+ssh deploy@wisp.example.com 'cd ~/wisp && npm install'
 ```
 
 **3. systemd** — edit `wisp.service` for the box (`User`, paths, `which node`), then:
@@ -37,36 +37,36 @@ sudo systemctl daemon-reload && sudo systemctl enable --now wisp
 curl -s 127.0.0.1:4000        # -> wisp up
 ```
 
-**4. nginx** (kenobi already has TLS via certbot) — from `nginx-wisp.conf`: put the `map` + `limit_conn_zone` in `/etc/nginx/conf.d/wisp-map.conf`, add the `location /wisp/` to the 443 server block, then:
+**4. nginx** (host already has TLS via certbot) — from `nginx-wisp.conf`: put the `map` + `limit_conn_zone` in `/etc/nginx/conf.d/wisp-map.conf`, add the `location /wisp/` to the 443 server block, then:
 
 ```sh
 sudo nginx -t && sudo systemctl reload nginx
-curl -s https://kenobi.hudbox.dev/wisp/    # -> wisp up
+curl -s https://wisp.example.com/wisp/    # -> wisp up
 # full ws path:
 curl -s -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" \
   -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
-  https://kenobi.hudbox.dev/wisp/ | head -1    # -> HTTP/1.1 101 Switching Protocols
+  https://wisp.example.com/wisp/ | head -1    # -> HTTP/1.1 101 Switching Protocols
 ```
 
-**5. App env** — Vercel: `NEXT_PUBLIC_WISP_URL=wss://kenobi.hudbox.dev/wisp/`, then redeploy (`NEXT_PUBLIC_` is build-time).
+**5. App env** — Vercel: `NEXT_PUBLIC_WISP_URL=wss://wisp.example.com/wisp/`, then redeploy (`NEXT_PUBLIC_` is build-time).
 
 ## Healthcheck (healthchecks.io)
 
-Push from kenobi — checks local wisp (no nginx Origin header needed). If the ping stops, healthchecks emails you.
+Push from the wisp host — checks local wisp (no nginx Origin header needed). If the ping stops, healthchecks emails you.
 
 **1. healthchecks.io** — check name `hudxyz`, period **1 min**, grace **5 min** (tune to taste).
 
-**2. On kenobi**
+**2. On the wisp host**
 
 ```sh
-scp deploy/wisp-healthcheck.sh anton@kenobi.hudbox.dev:~/wisp/
-ssh anton@kenobi.hudbox.dev 'chmod +x ~/wisp/wisp-healthcheck.sh'
+scp deploy/wisp-healthcheck.sh deploy@wisp.example.com:~/wisp/
+ssh deploy@wisp.example.com 'chmod +x ~/wisp/wisp-healthcheck.sh'
 ```
 
-**3. Cron** (as `anton`, `crontab -e`)
+**3. Cron** (as `deploy`, `crontab -e`)
 
 ```cron
-* * * * * HC_PING_URL=https://hc-ping.com/<ping-key>/hudxyz /home/anton/wisp/wisp-healthcheck.sh
+* * * * * HC_PING_URL=https://hc-ping.com/<ping-key>/hudxyz /home/deploy/wisp/wisp-healthcheck.sh
 ```
 
 **4. Test**
@@ -101,7 +101,7 @@ ls /var/log/wisp/
 After editing `wisp-server.mjs` or the unit:
 
 ```sh
-scp apps/web/scripts/wisp-server.mjs anton@kenobi.hudbox.dev:~/wisp/
+scp apps/web/scripts/wisp-server.mjs deploy@wisp.example.com:~/wisp/
 sudo cp deploy/wisp.service /etc/systemd/system/wisp.service   # only if the unit changed
 sudo systemctl daemon-reload && sudo systemctl restart wisp
 systemctl status wisp --no-pager && curl -s 127.0.0.1:4000     # active + wisp up
