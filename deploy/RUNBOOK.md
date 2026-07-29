@@ -1,6 +1,6 @@
 # Production runbook
 
-Solo-operator incident response for hudxyz.com. DNS lives on **Bunny**; the Next app on **Vercel**; Wisp egress on **Hetzner** (`kenobi.hudbox.dev`).
+Solo-operator incident response for hudxyz.com. DNS lives with your DNS provider; the Next app on **Vercel**; Wisp egress on an always-on **Linux VPS** (`wisp.example.com`).
 
 `hudxyz.com` is **deprecated** — canonical site is `https://hudxyz.com`. Keep the old name only until DNS/redirect cutover is finished, then drop it from nginx Origin allowlist.
 
@@ -8,7 +8,7 @@ Solo-operator incident response for hudxyz.com. DNS lives on **Bunny**; the Next
 
 ```
 Browser ──HTTPS──> hudxyz.com (Vercel / Next.js)
-                 └── wss ──> kenobi.hudbox.dev (nginx) ──> wisp (:4000) ──> internet
+                 └── wss ──> wisp.example.com (nginx) ──> wisp (:4000) ──> internet
 ```
 
 ## Severity guide
@@ -23,9 +23,9 @@ Browser ──HTTPS──> hudxyz.com (Vercel / Next.js)
 
 Solo dev — you are L1/L2/L3.
 
-1. Check [Vercel Status](https://www.vercel-status.com) and Hetzner status.
+1. Check [Vercel Status](https://www.vercel-status.com) and your VPS provider status.
 2. Open Sentry → filter `environment:production`, last 1h.
-3. If Wisp-related: `ssh anton@kenobi.hudbox.dev` and check wisp (below).
+3. If Wisp-related: `ssh deploy@wisp.example.com` and check wisp (below).
 
 ## Rollback — Vercel (app)
 
@@ -39,22 +39,22 @@ Fastest path when a bad deploy shipped:
 
 Release tags (`vX.Y.Z`) are historical records from Release Please — rollback the deploy, then ship a fix-forward patch. See [RELEASE.md](./RELEASE.md).
 
-## Rollback / restart — Wisp (Hetzner)
+## Rollback / restart — Wisp (VPS)
 
 ```sh
-ssh anton@kenobi.hudbox.dev
+ssh deploy@wisp.example.com
 systemctl status wisp --no-pager
 journalctl -u wisp -n 100 --no-pager          # recent errors / refusals
 curl -s 127.0.0.1:4000                          # -> wisp up
-curl -s https://kenobi.hudbox.dev/wisp/       # -> wisp up (through nginx)
+curl -s https://wisp.example.com/wisp/       # -> wisp up (through nginx)
 ```
 
 Restart after config or script change:
 
 ```sh
 # from laptop — push new script
-scp apps/web/scripts/wisp-server.mjs anton@kenobi.hudbox.dev:~/wisp/
-ssh anton@kenobi.hudbox.dev 'sudo systemctl restart wisp && curl -s 127.0.0.1:4000'
+scp apps/web/scripts/wisp-server.mjs deploy@wisp.example.com:~/wisp/
+ssh deploy@wisp.example.com 'sudo systemctl restart wisp && curl -s 127.0.0.1:4000'
 ```
 
 Full wisp deploy steps: [deploy/README.md](./README.md).
@@ -64,9 +64,9 @@ Full wisp deploy steps: [deploy/README.md](./README.md).
 ### Simulator stuck / proxy not loading
 
 - Browser devtools → **Console** and **Network** → WebSocket to `wisp` (101 Switching Protocols?)
-- Verify Vercel env: `NEXT_PUBLIC_WISP_URL=wss://kenobi.hudbox.dev/wisp/`
+- Verify Vercel env: `NEXT_PUBLIC_WISP_URL=wss://wisp.example.com/wisp/`
 - Check nginx origin allowlist still permits `https://hudxyz.com` and your preview host if testing previews
-- `journalctl -u wisp -f` on kenobi while reproducing
+- `journalctl -u wisp -f` on the wisp host while reproducing
 
 ### 403 on Wisp WebSocket
 
@@ -79,8 +79,8 @@ nginx blocks requests whose `Origin` is not `*.hudxyz.com` (or deprecated `*.hud
 
 ### SSL / DNS
 
-- **Bunny** → confirm A/CNAME for `hudxyz.com` still points at Vercel
-- **kenobi** TLS: `sudo certbot certificates` on the VPS if wss fails after cert renewal
+- DNS provider → confirm A/CNAME for `hudxyz.com` still points at Vercel
+- Wisp host TLS: `sudo certbot certificates` on the VPS if wss fails after cert renewal
 
 ## Communication
 

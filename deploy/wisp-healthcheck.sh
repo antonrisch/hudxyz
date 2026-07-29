@@ -1,5 +1,5 @@
 #!/bin/sh
-# Push wisp liveness to healthchecks.io. Run from cron/timer on kenobi.
+# Push wisp liveness to healthchecks.io. Run from cron/timer on the wisp host.
 # HC_PING_URL=https://hc-ping.com/<ping-key>/hudxyz
 set -eu
 

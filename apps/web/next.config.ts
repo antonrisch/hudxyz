@@ -54,7 +54,6 @@ const marketingRoutes = [
 
 const nextConfig: NextConfig = {
   images: {
-    // Prod `assets.hudxyz.com` plus env hosts like `assets-kenobi.hudxyz.com`.
     remotePatterns: [
       {
         protocol: "https",
