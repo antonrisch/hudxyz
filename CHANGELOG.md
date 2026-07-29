@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.0](https://github.com/antonrisch/hudxyz/compare/v0.1.0...v0.2.0) (2026-07-29)
+
+
+### Features
+
+* **web:** add hud.xyz watermarks to simulator exports ([6190d42](https://github.com/antonrisch/hudxyz/commit/6190d42c93a64c8aad5e993b05e2a66ac0087382))
+* **web:** add Tools dropdown to simulator header ([5b67ddb](https://github.com/antonrisch/hudxyz/commit/5b67ddb4e8c8f402e1d998f3ceebf91cf7421c99))
+* **web:** add Tools dropdown to simulator header ([ad1b4f1](https://github.com/antonrisch/hudxyz/commit/ad1b4f14db6be998dcf3b15daa05ab2651bb5696))
+* **web:** capture simulator screenshots at 2x resolution ([efa3408](https://github.com/antonrisch/hudxyz/commit/efa3408c30a4c3d0925961801c0701fb675dffdf))
+* **web:** countdown on record button after permission ([49faa99](https://github.com/antonrisch/hudxyz/commit/49faa9910bdd5fc02ba71a3d8d4e048257a3903b))
+* **web:** expand consent-gated simulator analytics foundation ([420f4f0](https://github.com/antonrisch/hudxyz/commit/420f4f09161b10fae64a15c80f1d828eb8feb19c))
+* **web:** expand simulator telemetry and Open on Glasses handoff ([e10baf0](https://github.com/antonrisch/hudxyz/commit/e10baf07dd2fabba34bcc9e0dee6bf4de19ff2ec))
+* **web:** improve Open on Glasses name prefilling helpers ([25841ce](https://github.com/antonrisch/hudxyz/commit/25841ceff8c9506a71f604aa16e9c0eb10a890e8))
+* **web:** instrument simulator loads and workflow outcomes ([7904f43](https://github.com/antonrisch/hudxyz/commit/7904f4346da473dae37f826626a8f033e156edfa))
+* **web:** restore shared CopyLinkRow for clipboard affordances ([d1a68fe](https://github.com/antonrisch/hudxyz/commit/d1a68fe078524e9000f0b3eb9dd1ae5b0865f3e7))
+* **web:** simulator export watermarks, record countdown, sharper screenshots ([64550cc](https://github.com/antonrisch/hudxyz/commit/64550ccc74c6cf1df4e9e5d4c700e825796462b8))
+
+
+### Bug Fixes
+
+* **web:** wait after record permission for window resize ([b990c5d](https://github.com/antonrisch/hudxyz/commit/b990c5de661580184056f4bf39a635a749096873))
+
 ## 0.1.0 (2026-07-21)
 
 
